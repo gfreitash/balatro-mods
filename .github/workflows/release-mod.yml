@@ -23,19 +23,52 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV
 
+      - name: Check if mod folder exists
+        run: |
+          if [ ! -d "$MOD_NAME" ]; then
+            echo "Error: Mod folder '$MOD_NAME' does not exist"
+            exit 1
+          fi
+
+      - name: Create _common folder if it doesn't exist
+        run: |
+          if [ ! -d "_common" ]; then
+            echo "Warning: _common folder does not exist, creating empty folder"
+            mkdir -p _common
+          fi
+
       - name: List mod and _common/ contents
         run: |
           echo "Mod folder: $MOD_NAME"
-          ls -l "$MOD_NAME"
+          ls -la "$MOD_NAME"
           echo "_common folder:"
-          ls -l _common
+          ls -la _common
+
+      - name: Create temporary directory structure
+        run: |
+          mkdir -p temp/$MOD_NAME/common
+          cp -r $MOD_NAME/* temp/$MOD_NAME/
+          if [ -d "_common" ] && [ "$(ls -A _common)" ]; then
+            cp -r _common/* temp/$MOD_NAME/common/
+          fi
 
       - name: Create release zip
         run: |
-          zip -r "$ZIP_NAME" "$MOD_NAME" _common
+          cd temp
+          zip -r "../$ZIP_NAME" "$MOD_NAME"
+          cd ..
 
       - name: Upload zip as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ZIP_NAME }}
           path: ${{ env.ZIP_NAME }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.ZIP_NAME }}
+          name: ${{ env.MOD_NAME }} v${{ env.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

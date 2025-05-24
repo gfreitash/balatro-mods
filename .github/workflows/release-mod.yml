@@ -1,0 +1,41 @@
+name: Release Mod
+
+on:
+  push:
+    tags:
+      - '*__v*.*.*'
+
+jobs:
+  build-and-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up variables from tag
+        id: vars
+        run: |
+          TAG_NAME="${GITHUB_REF##*/}"
+          MOD_NAME="${TAG_NAME%%__v*}"
+          VERSION="${TAG_NAME#*__v}"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "MOD_NAME=$MOD_NAME" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV
+
+      - name: List mod and _common/ contents
+        run: |
+          echo "Mod folder: $MOD_NAME"
+          ls -l "$MOD_NAME"
+          echo "_common folder:"
+          ls -l _common
+
+      - name: Create release zip
+        run: |
+          zip -r "$ZIP_NAME" "$MOD_NAME" _common
+
+      - name: Upload zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP_NAME }}
+          path: ${{ env.ZIP_NAME }}

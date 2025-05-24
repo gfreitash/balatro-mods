@@ -1,0 +1,14 @@
+{
+    "id": "black_seal",
+    "name": "Black Seal",
+    "author": [
+      "Infarctus",
+      "Riosodu"
+    ],
+    "description": "Adds a Black Seal to the game with a configurable spawn chance.",
+    "website": "https://www.nexusmods.com/balatro/mods/411",
+    "prefix": "blac",
+    "main_file": "src/init.lua",
+    "version": "3.1.0"
+}
+  

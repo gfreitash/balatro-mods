@@ -1,0 +1,12 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+    "workspace.library": [
+        ".lib"
+    ],
+    "diagnostics.disable": [
+        "lowercase-global"
+    ],
+    "types": {
+        "weakUnionCheck": true
+    }
+}

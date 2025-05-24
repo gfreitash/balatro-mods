@@ -1,0 +1,257 @@
+[manifest]
+version = "1.1.0" # Incremented version for new changes
+dump_lua = true # Optional: Keep enabled for debugging
+
+# --- Stake 5 / Blue Stake Changes (Keep as before) ---
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "if self.GAME.stake >= 5 then self.GAME.starting_params.discards = self.GAME.starting_params.discards - 1 end"
+position = "at"
+payload = "if self.GAME.stake >= 5 then self.GAME.modifiers.enable_perishables_in_shop = true end"
+match_indent = true
+times = 1
+
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/game_object.lua"]'
+pattern = '''
+        modifiers = function()
+             G.GAME.starting_params.discards = G.GAME.starting_params.discards - 1
+        end,
+        colour = G.C.BLUE,
+'''
+position = "at"
+payload = '''
+        modifiers = function()
+            G.GAME.modifiers.enable_perishables_in_shop = true
+        end,
+        colour = G.C.BLUE,
+'''
+match_indent = true
+times = 1
+
+# --- Stake 7 / Orange Stake Changes (Keep as before) ---
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "if self.GAME.stake >= 7 then self.GAME.modifiers.enable_perishables_in_shop = true end"
+position = "at"
+payload = "if self.GAME.stake >= 7 then self.GAME.modifiers.enable_rentals_in_shop = true end"
+match_indent = true
+times = 1
+
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/game_object.lua"]'
+pattern = '''
+        modifiers = function()
+            G.GAME.modifiers.enable_perishables_in_shop = true
+        end,
+        colour = G.C.ORANGE,
+'''
+position = "at"
+payload = '''
+        modifiers = function()
+            G.GAME.modifiers.enable_rentals_in_shop = true
+        end,
+        colour = G.C.ORANGE,
+'''
+match_indent = true
+times = 1
+
+# --- Stake 8 / Gold Stake Changes (Modified Payload) ---
+
+# Modify the Stake 8 logic in game.lua
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+# Find the original Stake 8 line (or the first line if it was multi-line)
+pattern = "if self.GAME.stake >= 8 then self.GAME.modifiers.enable_rentals_in_shop = true end"
+# Replace the entire matched line/block
+position = "at"
+payload = '''
+if self.GAME.stake >= 8 then
+        self.GAME.win_ante = 9
+        self.GAME.interest_base = 6
+        self.GAME.interest_cap = 30
+end
+'''
+match_indent = true
+times = 1
+
+# Modify the Gold Stake modifier function in game_object.lua
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/game_object.lua"]'
+# Find the line within the Gold Stake's modifier function that we previously targeted
+pattern = '''
+        modifiers = function()
+            G.GAME.modifiers.enable_rentals_in_shop = true
+        end,
+        colour = G.C.GOLD,
+'''
+# Replace that line
+position = "at"
+# New payload: Set interest_base to 6
+# Note: We replace only the single line here, within the existing function structure.
+payload = '''
+        modifiers = function()
+            G.GAME.win_ante = 9
+            G.GAME.interest_base = 6
+            G.GAME.interest_cap = 30
+        end,
+        colour = G.C.GOLD,
+'''
+match_indent = true
+times = 1
+
+# --- Interest Calculation Changes ---
+
+# Add interest_base to game setup in game.lua
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+# Find the line defining interest_amount
+pattern = "interest_amount = 1,"
+# Insert the new line after it
+position = "after"
+# The new line to add, including the comma
+payload = "interest_base = 5,"
+match_indent = true 
+times = 1
+
+# Modify Seed Money and Money Tree extra in game.lua
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+# Find the line defining interest_amount
+pattern = '''
+        v_seed_money=       {order = 21,    discovered = false, unlocked = true , available = true, cost = 10, name = "Seed Money", pos = {x=1,y=2}, set = "Voucher", config = {extra = 50}},
+'''
+# Insert the new line after it
+position = "after"
+# The new line to add, including the comma
+payload = '''
+        v_seed_money=       {order = 21,    discovered = false, unlocked = true , available = true, cost = 10, name = "Seed Money", pos = {x=1,y=2}, set = "Voucher", config = {extra = 10}},
+'''
+match_indent = true
+times = 1
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+# Find the line defining interest_amount
+pattern = '''
+        v_money_tree=       {order = 22,    discovered = false, unlocked = false, available = true, cost = 10, name = "Money Tree", pos = {x=1,y=3}, set = "Voucher", config = {extra = 100}, requires = {'v_seed_money'},unlock_condition = {type = 'interest_streak', extra = 10}},
+'''
+# Insert the new line after it
+position = "after"
+# The new line to add, including the comma
+payload = '''
+        v_money_tree=       {order = 22,    discovered = false, unlocked = false, available = true, cost = 10, name = "Money Tree", pos = {x=1,y=3}, set = "Voucher", config = {extra = 20}, requires = {'v_seed_money'},unlock_condition = {type = 'interest_streak', extra = 10}},
+'''
+match_indent = true
+times = 1
+
+# Modify Seed Money and Money Tree calculation in card.lua
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+# Find the line defining interest_amount
+pattern = '''
+    if center_table.name == 'Seed Money' or center_table.name == 'Money Tree' then
+        G.E_MANAGER:add_event(Event({func = function()
+            G.GAME.interest_cap = center_table.extra
+            return true end }))
+    end
+'''
+# Insert the new line after it
+position = "after"
+# The new line to add, including the comma
+payload = '''
+    if center_table.name == 'Seed Money' or center_table.name == 'Money Tree' then
+        G.E_MANAGER:add_event(Event({func = function()
+            G.GAME.interest_cap = center_table.extra * G.GAME.interest_base
+            return true end }))
+    end
+'''
+match_indent = true
+times = 1
+
+
+# Modify interest calculation in common_events.lua
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+# Find the exact line with the hardcoded 5
+pattern = '''
+                    table.insert(left_text,{n=G.UIT.O, config={object = DynaText({string = {" "..localize{type = 'variable', key = 'interest', vars = {G.GAME.interest_amount, 5, G.GAME.interest_amount*G.GAME.interest_cap/5}}}, colours = {G.C.UI.TEXT_LIGHT}, shadow = true, pop_in = 0, scale = 0.4*scale, silent = true})}})
+'''
+# Replace the line
+position = "at"
+# The new line using G.GAME.interest_base
+payload =  '''
+                    table.insert(left_text,{n=G.UIT.O, config={object = DynaText({string = {" "..localize{type = 'variable', key = 'interest', vars = {G.GAME.interest_amount, G.GAME.interest_base, G.GAME.interest_amount*G.GAME.interest_cap/G.GAME.interest_base}}}, colours = {G.C.UI.TEXT_LIGHT}, shadow = true, pop_in = 0, scale = 0.4*scale, silent = true})}})
+'''
+match_indent = true
+times = 1
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+# Find the exact line with the hardcoded 5
+pattern = '''
+        elseif _c.name == "Seed Money" or _c.name == "Money Tree" then loc_vars = {cfg.extra/5}
+'''
+# Replace the line
+position = "at"
+# The new line using G.GAME.interest_base
+payload = '''
+        elseif _c.name == "Seed Money" or _c.name == "Money Tree" then loc_vars =  {_c.config.extra}
+'''
+match_indent = true
+times = 1
+
+# Modify interest calculation block in state_events.lua
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+# Find the first line of the interest calculation block
+pattern = '''
+    if G.GAME.dollars >= 5 and not G.GAME.modifiers.no_interest then
+        add_round_eval_row({bonus = true, name='interest', pitch = pitch, dollars = G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5)})
+        pitch = pitch + 0.06
+        if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
+            if G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5) == G.GAME.interest_amount*G.GAME.interest_cap/5 then 
+                G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak + 1
+            else
+                G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = 0
+            end
+        end
+        check_for_unlock({type = 'interest_streak'})
+        dollars = dollars + G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5)
+    end
+'''
+# Replace the entire block starting from that line
+position = "at"
+# The new multi-line block using G.GAME.interest_base and checking >= 1
+payload = '''
+    if G.GAME.dollars >= 1 and not G.GAME.modifiers.no_interest then
+        add_round_eval_row({bonus = true, name='interest', pitch = pitch, dollars = G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/G.GAME.interest_base), G.GAME.interest_cap/G.GAME.interest_base)})
+        pitch = pitch + 0.06
+        if not G.GAME.seeded and not G.GAME.challenge then
+            if G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/G.GAME.interest_base), G.GAME.interest_cap/G.GAME.interest_base) == G.GAME.interest_amount*G.GAME.interest_cap/G.GAME.interest_base then
+                G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak + 1
+            else
+                G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = 0
+            end
+        end
+        check_for_unlock({type = 'interest_streak'})
+        dollars = dollars + G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/G.GAME.interest_base), G.GAME.interest_cap/G.GAME.interest_base)
+    end
+'''
+match_indent = true
+times = 1

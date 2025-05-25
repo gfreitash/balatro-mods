@@ -9,7 +9,7 @@ jobs:
   build-and-zip:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Allows creating and updating releases
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,10 +20,13 @@ jobs:
           TAG_NAME="${GITHUB_REF##*/}"
           MOD_NAME="${TAG_NAME%%__v*}"
           VERSION="${TAG_NAME#*__v}"
+          LATEST_TAG="${MOD_NAME}__latest"
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "MOD_NAME=$MOD_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV
+          echo "LATEST_ZIP_NAME=${MOD_NAME}.zip" >> $GITHUB_ENV
 
       - name: Check if mod folder exists
         run: |
@@ -39,13 +42,6 @@ jobs:
             mkdir -p _common
           fi
 
-      - name: List mod and _common/ contents
-        run: |
-          echo "Mod folder: $MOD_NAME"
-          ls -la "$MOD_NAME"
-          echo "_common folder:"
-          ls -la _common
-
       - name: Create temporary directory structure
         run: |
           mkdir -p temp/$MOD_NAME/common
@@ -54,23 +50,68 @@ jobs:
             cp -r _common/* temp/$MOD_NAME/common/
           fi
 
-      - name: Create release zip
+      - name: Create release zips
         run: |
           cd temp
+          # Create versioned zip
           zip -r "../$ZIP_NAME" "$MOD_NAME"
+          # Create latest zip (same content, different name)
+          zip -r "../$LATEST_ZIP_NAME" "$MOD_NAME"
           cd ..
 
-      - name: Upload zip as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ZIP_NAME }}
-          path: ${{ env.ZIP_NAME }}
+      - name: Check for existing latest release
+        id: check_latest
+        run: |
+          # Check if latest tag exists
+          if git ls-remote --tags origin | grep -q "refs/tags/$LATEST_TAG"; then
+            echo "latest_exists=true" >> $GITHUB_OUTPUT
+            echo "Latest tag $LATEST_TAG exists, will update it"
+          else
+            echo "latest_exists=false" >> $GITHUB_OUTPUT
+            echo "Latest tag $LATEST_TAG does not exist, will create it"
+          fi
 
-      - name: Create GitHub Release
+      - name: Delete existing latest release if it exists
+        if: steps.check_latest.outputs.latest_exists == 'true'
+        run: |
+          # Delete the release (this also deletes the tag)
+          gh release delete "$LATEST_TAG" --yes || true
+          # Make sure the tag is also deleted locally and remotely
+          git tag -d "$LATEST_TAG" || true
+          git push origin ":refs/tags/$LATEST_TAG" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create versioned release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.TAG_NAME }}
           files: ${{ env.ZIP_NAME }}
           name: ${{ env.MOD_NAME }} v${{ env.VERSION }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create/Update latest release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.LATEST_TAG }}
+          files: ${{ env.LATEST_ZIP_NAME }}
+          name: ${{ env.MOD_NAME }} (Latest)
+          body: |
+            **Latest Version:** v${{ env.VERSION }}
+
+            This release always contains the most recent version of ${{ env.MOD_NAME }}.
+
+            For version-specific releases, see: [${{ env.MOD_NAME }} v${{ env.VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_NAME }})
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.MOD_NAME }}-releases
+          path: |
+            ${{ env.ZIP_NAME }}
+            ${{ env.LATEST_ZIP_NAME }}

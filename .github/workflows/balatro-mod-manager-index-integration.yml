@@ -104,7 +104,7 @@ jobs:
           MOD_NAME="${{ matrix.mod_name }}"
           LATEST_TAG="${MOD_NAME}__latest"
 
-          # Get version from the Latest release description
+          # Get version from the Latest release description (simpler approach)
           LATEST_VERSION=$(gh release view "$LATEST_TAG" --repo ${{ github.repository }} --json body --jq '.body' | \
             grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^v//')
 
@@ -117,7 +117,6 @@ jobs:
           echo "📋 Latest version for $MOD_NAME: $LATEST_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Check if mod exists in index
         id: check_exists
@@ -236,7 +235,10 @@ jobs:
 
           **Mod:** \`${{ env.AUTHOR }}@${MOD_NAME}\`
           **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
-          **Commit:** ${GITHUB_SHA:0:7}"
+          **Commit:** ${GITHUB_SHA:0:7}
+
+          ---
+          **Note:** This PR was created automatically, but I actively monitor all submissions and will respond to any review comments or feedback. Feel free to suggest changes or ask questions!"
             echo "🔄 Preparing update for existing mod..."
           else
             BRANCH_NAME="add-${MOD_NAME}-${TIMESTAMP}"
@@ -249,7 +251,10 @@ jobs:
           - Automated submission from mono-repository
 
           **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
-          **Commit:** ${GITHUB_SHA:0:7}"
+          **Commit:** ${GITHUB_SHA:0:7}
+
+          ---
+          **Note:** This PR was created automatically, but I actively monitor all submissions and will respond to any review comments or feedback. Feel free to suggest changes or ask questions!"
             echo "🆕 Preparing submission for new mod..."
           fi
 
@@ -265,6 +270,40 @@ jobs:
           # Show what was copied for debugging
           echo "📋 Files in submission:"
           find mods -type f | head -20
+
+          # Check for existing open PRs before proceeding
+          echo "🔍 Checking for existing open PRs for $MOD_NAME..."
+
+          # Switch to default token for checking PRs (read-only operation)
+          export TEMP_GITHUB_TOKEN="$GITHUB_TOKEN"
+          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+
+          # Search for open PRs that mention this mod in the title
+          EXISTING_PRS=$(gh pr list \
+            --repo "${{ env.TARGET_REPO }}" \
+            --state open \
+            --search "in:title ${{ env.AUTHOR }}@${MOD_NAME}" \
+            --json number,title,headRefName \
+            --jq '.[] | select(.title | contains("${{ env.AUTHOR }}@'${MOD_NAME}'")) | {number, title, branch: .headRefName}')
+
+          if [ -n "$EXISTING_PRS" ]; then
+            echo "⚠️ Found existing open PR(s) for ${{ env.AUTHOR }}@${MOD_NAME}:"
+            echo "$EXISTING_PRS" | jq -r '"#\(.number): \(.title) (\(.branch))"'
+            echo "🚫 Skipping PR creation - existing open PR found for $MOD_NAME"
+
+            # Add to job summary
+            echo "## ⚠️ PR Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** Existing open PR found" >> $GITHUB_STEP_SUMMARY
+            echo "**Existing PRs:**" >> $GITHUB_STEP_SUMMARY
+            echo "$EXISTING_PRS" | jq -r '"- #\(.number): \(.title)"' >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "✅ No existing open PRs found for ${{ env.AUTHOR }}@${MOD_NAME}"
+          fi
+
+          # Switch back to PAT for PR creation
+          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN"
 
           # Stage changes
           git add .
@@ -299,7 +338,7 @@ jobs:
           echo "✅ PR created successfully: $PR_URL"
 
           # Add PR URL to job summary
-          echo "## Pull Request Created" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Pull Request Created" >> $GITHUB_STEP_SUMMARY
           echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** [$PR_TITLE]($PR_URL)" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY

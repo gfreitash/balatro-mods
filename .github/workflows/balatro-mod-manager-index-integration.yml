@@ -156,32 +156,35 @@ jobs:
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
           # Define the target repository here
-          # IMPORTANT: CHANGE THIS BACK TO 'skyline69/balatro-mod-index' FOR PRODUCTION!
-          TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index" # <-- TEMPORARY CHANGE FOR TESTING
+          TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index" # <-- Your test repo
           TARGET_BRANCH: "master"
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Use the target repo variable for forking
-          # Fork if not already forked (this will fork TARGET_REPO)
-          gh repo fork "$TARGET_REPO" --clone=false || true
+          # Extract repo name and owner
+          TARGET_REPO_NAME=$(echo "$TARGET_REPO" | cut -d'/' -f2)
+          TARGET_REPO_OWNER=$(echo "$TARGET_REPO" | cut -d'/' -f1)
 
-          # Use your own username and the target repo name for cloning your fork
-          # Clone your fork of the target repo
-          TARGET_REPO_NAME=$(echo "$TARGET_REPO" | cut -d'/' -f2) # Extract repo name like 'test-balatro-mod-index'
-          gh repo clone "gfreitash/$TARGET_REPO_NAME" mod-index-fork # <-- Use your username and the target repo name
+          # Fork the target repo to your account (gfreitash)
+          echo "Forking $TARGET_REPO to gfreitash/$TARGET_REPO_NAME"
+          gh repo fork "$TARGET_REPO" --clone=false || echo "Fork may already exist, continuing..."
 
+          # Clone YOUR fork (not the original)
+          echo "Cloning gfreitash/$TARGET_REPO_NAME"
+          gh repo clone "gfreitash/$TARGET_REPO_NAME" mod-index-fork
           cd mod-index-fork
 
-          # Sync with upstream - point to the target repo, not the real one
-          git remote add upstream https://github.com/"$TARGET_REPO".git || true # <-- Use TARGET_REPO
-          git fetch upstream || true # Fetch might fail if upstream isn't added correctly, tolerate it for now
-          git checkout $TARGET_BRANCH
-          git merge upstream/$TARGET_BRANCH || true # Merge might fail if no changes, tolerate it
+          # Add the original repo as upstream
+          git remote add upstream "https://github.com/$TARGET_REPO.git" || true
+          git fetch upstream || true
+
+          # Make sure we're on the right branch and sync with upstream
+          git checkout $TARGET_BRANCH || git checkout -b $TARGET_BRANCH
+          git merge upstream/$TARGET_BRANCH || echo "No changes to merge"
+          git push origin $TARGET_BRANCH || echo "Branch already up to date"
 
           # Create branch name
-          # ... (rest of branch name and title logic remains the same) ...
           if [ "$IS_UPDATE" = "true" ]; then
             BRANCH_NAME="update-${MOD_NAME}-mod-$(date +%s)"
             PR_TITLE="Update riosodu@${MOD_NAME} mod"
@@ -204,11 +207,19 @@ jobs:
           # Create and switch to branch
           git checkout -b "$BRANCH_NAME"
 
+          # Ensure mods directory exists
+          mkdir -p mods
+
           # Copy submission files
           cp -r ../submission/* mods/
 
+          # Debug: Show what was copied
+          echo "Files copied to mods/:"
+          ls -la mods/
+
           # Check if there are actually changes to commit
-          if git diff --quiet && git diff --cached --quiet; then
+          git add .
+          if git diff --cached --quiet; then
             if [ "$FORCE_UPDATE" != "true" ]; then
               echo "No changes detected, skipping PR creation"
               exit 0
@@ -216,16 +227,13 @@ jobs:
           fi
 
           # Commit and push
-          git add .
           git commit -m "$(echo "$PR_TITLE" | sed 's/riosodu@//')"
           git push origin "$BRANCH_NAME"
 
-          # Use the target repo variable for PR creation
-          # Create PR against the target repo
+          # Create PR against the ORIGINAL repo (not your fork)
           gh pr create \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --base $TARGET_BRANCH \
-            --head "$BRANCH_NAME" \
-            --repo "$TARGET_REPO" # <-- Use TARGET_REPO
-
+            --head "gfreitash:$BRANCH_NAME" \
+            --repo "$TARGET_REPO"

@@ -62,10 +62,6 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_mods != '[]'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write      # For cloning, committing, and pushing
-      pull-requests: write # For creating PRs
-      metadata: read
     strategy:
       matrix:
         mod_name: ${{ fromJson(needs.detect-changes.outputs.changed_mods) }}
@@ -135,89 +131,126 @@ jobs:
 
       - name: Fork and submit to Balatro Mod Index
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT instead of GITHUB_TOKEN
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           MOD_NAME: ${{ matrix.mod_name }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
-          # Define the target repository here
-          TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index" # <-- Your test repo
+          TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
           TARGET_BRANCH: "master"
+          # Make the fork owner configurable
+          FORK_OWNER: ${{ github.repository_owner }} # or hardcode your username
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Configure git with your actual details (not bot)
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
-          # Extract repo name and owner
           TARGET_REPO_NAME=$(echo "$TARGET_REPO" | cut -d'/' -f2)
           TARGET_REPO_OWNER=$(echo "$TARGET_REPO" | cut -d'/' -f1)
 
-          # Fork the target repo to your account (gfreitash)
-          echo "Forking $TARGET_REPO to gfreitash/$TARGET_REPO_NAME"
-          gh repo fork "$TARGET_REPO" --clone=false || echo "Fork may already exist, continuing..."
+          echo "🍴 Forking $TARGET_REPO to $FORK_OWNER/$TARGET_REPO_NAME"
 
-          # Clone YOUR fork (not the original)
-          echo "Cloning gfreitash/$TARGET_REPO_NAME"
-          gh repo clone "gfreitash/$TARGET_REPO_NAME" mod-index-fork
+          # Check if fork already exists
+          if gh repo view "$FORK_OWNER/$TARGET_REPO_NAME" >/dev/null 2>&1; then
+            echo "✅ Fork already exists"
+          else
+            echo "🔄 Creating fork..."
+            gh repo fork "$TARGET_REPO" --clone=false
+          fi
+
+          # Clone the fork
+          echo "📥 Cloning fork..."
+          gh repo clone "$FORK_OWNER/$TARGET_REPO_NAME" mod-index-fork
           cd mod-index-fork
 
-          # Add the original repo as upstream
-          git remote add upstream "https://github.com/$TARGET_REPO.git" || true
-          git fetch upstream || true
+          # Set up upstream and sync
+          echo "🔄 Syncing with upstream..."
+          git remote add upstream "https://github.com/$TARGET_REPO.git" 2>/dev/null || true
+          git fetch upstream
 
-          # Make sure we're on the right branch and sync with upstream
-          git checkout $TARGET_BRANCH || git checkout -b $TARGET_BRANCH
-          git merge upstream/$TARGET_BRANCH || echo "No changes to merge"
-          git push origin $TARGET_BRANCH || echo "Branch already up to date"
+          # Ensure we're on the target branch and synced
+          git checkout $TARGET_BRANCH 2>/dev/null || git checkout -b $TARGET_BRANCH upstream/$TARGET_BRANCH
+          git reset --hard upstream/$TARGET_BRANCH
 
-          # Create branch name
+          # Push the synced branch to your fork
+          git push origin $TARGET_BRANCH --force-with-lease
+
+          # Create unique branch name with timestamp
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           if [ "$IS_UPDATE" = "true" ]; then
-            BRANCH_NAME="update-${MOD_NAME}-mod-$(date +%s)"
+            BRANCH_NAME="update-${MOD_NAME}-${TIMESTAMP}"
             PR_TITLE="Update riosodu@${MOD_NAME} mod"
-            PR_BODY="**Automated update** of the ${MOD_NAME} mod from balatro-mods repository.
+            PR_BODY="**Automated update** of the ${MOD_NAME} mod
 
-          Changes may include:
-          - Updated description or metadata
-          - New thumbnail image
-          - Version information update
+          **Changes:**
+          - Updated mod metadata and description
+          - Refreshed from source repository
+          - Automated via GitHub Actions
 
-          This is an automated update from the mono-repository."
+          **Mod:** \`riosodu@${MOD_NAME}\`
+          **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+          **Commit:** ${GITHUB_SHA:0:7}"
           else
-            BRANCH_NAME="add-${MOD_NAME}-mod"
+            BRANCH_NAME="add-${MOD_NAME}-${TIMESTAMP}"
             PR_TITLE="Add riosodu@${MOD_NAME} mod"
-            PR_BODY="**New mod submission** of the ${MOD_NAME} mod from balatro-mods repository.
+            PR_BODY="**New mod submission** for ${MOD_NAME}
 
-          This is an automated submission from the mono-repository."
+          **Mod Details:**
+          - Author: riosodu
+          - Name: ${MOD_NAME}
+          - Automated submission from mono-repository
+
+          **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+          **Commit:** ${GITHUB_SHA:0:7}"
           fi
 
-          # Create and switch to branch
+          # Create and switch to feature branch
+          echo "🌿 Creating branch: $BRANCH_NAME"
           git checkout -b "$BRANCH_NAME"
 
-          # Ensure mods directory exists
-          mkdir -p mods
-
           # Copy submission files
+          echo "📁 Copying submission files..."
+          mkdir -p mods
           cp -r ../submission/* mods/
 
-          # Debug: Show what was copied
-          echo "Files copied to mods/:"
-          ls -la mods/
+          # Show what was copied for debugging
+          echo "📋 Files in submission:"
+          find mods -type f | head -20
 
-          # Check if there are actually changes to commit
+          # Stage changes
           git add .
+
+          # Check if there are changes to commit
           if git diff --cached --quiet; then
             if [ "$FORCE_UPDATE" != "true" ]; then
-              echo "No changes detected, skipping PR creation"
+              echo "ℹ️ No changes detected, skipping PR creation"
               exit 0
+            else
+              echo "🔧 Force update requested, creating empty commit"
+              git commit --allow-empty -m "$PR_TITLE (forced update)"
             fi
+          else
+            echo "💾 Committing changes..."
+            git commit -m "$PR_TITLE"
           fi
 
-          # Commit and push
-          git commit -m "$(echo "$PR_TITLE" | sed 's/riosodu@//')"
+          # Push the feature branch
+          echo "📤 Pushing to origin/$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
 
-          # Create PR against the ORIGINAL repo (not your fork)
-          gh pr create \
+          # Create PR to the original repository
+          echo "🎯 Creating PR to $TARGET_REPO"
+          PR_URL=$(gh pr create \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --base $TARGET_BRANCH \
-            --head "gfreitash:$BRANCH_NAME" \
-            --repo "$TARGET_REPO"
+            --head "$FORK_OWNER:$BRANCH_NAME" \
+            --repo "$TARGET_REPO")
+
+          echo "✅ PR created successfully: $PR_URL"
+
+          # Optional: Add PR URL to job summary
+          echo "## 🎉 Pull Request Created" >> $GITHUB_STEP_SUMMARY
+          echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** [$PR_TITLE]($PR_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY

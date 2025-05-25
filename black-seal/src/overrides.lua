@@ -49,7 +49,7 @@ function Card:use_consumeable(area, copier)
         or not BSM.config.override_ectoplasm_effect
     then
         if self.ability and self.ability.name == 'Ectoplasm' then
-            BSM.utils.sendDebugMessage("Using ORIGINAL Ectoplasm use_consumeable (Override Disabled)")
+            RIOSODU_SHARED.utils.sendDebugMessage("Using ORIGINAL Ectoplasm use_consumeable (Override Disabled)")
         end
         return BSM.original.Card_use_consumeable(self, area, copier)
     end
@@ -57,7 +57,7 @@ function Card:use_consumeable(area, copier)
     -----------------------------------------------------
     -- Ectoplasm - BLACK SEAL OVERRIDE LOGIC
     -----------------------------------------------------
-    BSM.utils.sendDebugMessage("Using OVERRIDDEN Ectoplasm use_consumeable (Black Seal)")
+    RIOSODU_SHARED.utils.sendDebugMessage("Using OVERRIDDEN Ectoplasm use_consumeable (Black Seal)")
 
     -- Standard initial setup steps
     stop_use()
@@ -65,7 +65,7 @@ function Card:use_consumeable(area, copier)
 
     -- Early return if debuffed
     if self.debuff then
-        BSM.utils.sendDebugMessage("Ectoplasm Override: Cannot use (card is debuffed).")
+        RIOSODU_SHARED.utils.sendDebugMessage("Ectoplasm Override: Cannot use (card is debuffed).")
         return nil -- Match original debuff return
     end
 
@@ -73,7 +73,7 @@ function Card:use_consumeable(area, copier)
 
     -- Early return if incorrect number of cards highlighted
     if not G.hand or #G.hand.highlighted ~= 1 then
-        BSM.utils.sendDebugMessage("Ectoplasm Override: Cannot use (requires exactly 1 highlighted card).")
+        RIOSODU_SHARED.utils.sendDebugMessage("Ectoplasm Override: Cannot use (requires exactly 1 highlighted card).")
         show_nope_feedback(used_tarot)
         return
     end
@@ -83,7 +83,7 @@ function Card:use_consumeable(area, copier)
     -- Early return if target card is invalid or already sealed
     if not target_card or type(target_card.set_seal) ~= 'function'
     then
-        BSM.utils.sendDebugMessage("Ectoplasm Override: Cannot apply seal (target invalid).")
+        RIOSODU_SHARED.utils.sendDebugMessage("Ectoplasm Override: Cannot apply seal (target invalid).")
         show_nope_feedback(used_tarot)
         return
     end
@@ -101,7 +101,7 @@ function Card:use_consumeable(area, copier)
         trigger = 'after',
         delay = 0.1,
         func = function()
-            BSM.utils.sendDebugMessage(
+            RIOSODU_SHARED.utils.sendDebugMessage(
                 "Ectoplasm Override: Applying Black Seal to target card."
             )
             target_card:set_seal(BSM.black_seal_id_full, nil, true)
@@ -111,12 +111,12 @@ function Card:use_consumeable(area, copier)
                 G.GAME.ecto_minus = G.GAME.ecto_minus or 1
                 G.hand:change_size(-G.GAME.ecto_minus)
                 G.GAME.ecto_minus = G.GAME.ecto_minus + 1
-                BSM.utils.sendDebugMessage(
+                RIOSODU_SHARED.utils.sendDebugMessage(
                     "Ectoplasm Override: Reduced hand size. Next reduction: "
                     .. G.GAME.ecto_minus
                 )
             else
-                BSM.utils.sendDebugMessage(
+                RIOSODU_SHARED.utils.sendDebugMessage(
                     "Ectoplasm Override: Hand size reduction skipped (config)."
                 )
             end

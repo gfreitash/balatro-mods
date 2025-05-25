@@ -1,6 +1,6 @@
 -- src/ui/tabs.lua
 
-BSM.utils.sendDebugMessage("UI tabs module loading...")
+RIOSODU_SHARED.utils.sendDebugMessage("UI tabs module loading...")
 
 -- --- UI Definition for the Config Tab ---
 --- comment
@@ -48,7 +48,7 @@ function BSM.UI.createConfigTabDefinition()
             inactive_colour = G.C.WHITE,
             active_colour = G.C.BLUE,
             callback = function()
-              BSM.utils.sendDebugMessage("Ectoplasm override toggled.")
+              RIOSODU_SHARED.utils.sendDebugMessage("Ectoplasm override toggled.")
               BSM.utils.update_ectoplasm_text()
               SMODS.save_mod_config(BSM.mod)
             end,
@@ -63,36 +63,8 @@ function BSM.UI.createConfigTabDefinition()
             inactive_colour = G.C.WHITE,
             active_colour = G.C.BLUE,
             callback = function()
-              BSM.utils.sendDebugMessage("Ectoplasm hand size reduction toggled.")
+              RIOSODU_SHARED.utils.sendDebugMessage("Ectoplasm hand size reduction toggled.")
               BSM.utils.update_ectoplasm_text()
-              SMODS.save_mod_config(BSM.mod)
-            end,
-          })
-        }),
-        RIOSODU_SHARED.UIDEF.create_option_box({
-          RIOSODU_SHARED.UIDEF.create_option_toggle({
-            ref_table = BSM.config,
-            ref_value = "debug_logging_enabled",
-            label = localize('debug_logging_enabled'),
-            info = localize('debug_logging_enabled_info'),
-            inactive_colour = G.C.WHITE,
-            active_colour = G.C.BLUE,
-            callback = function()
-              BSM.utils.sendDebugMessage("Debug logging toggled.")
-              SMODS.save_mod_config(BSM.mod)
-            end,
-          })
-        }),
-        RIOSODU_SHARED.UIDEF.create_option_box({
-          RIOSODU_SHARED.UIDEF.create_option_toggle({
-            ref_table = BSM.config,
-            ref_value = "debug_keybinds_enabled",
-            label = localize('debug_keybinds_enabled'),
-            info = localize('debug_keybinds_enabled_info'),
-            inactive_colour = G.C.WHITE,
-            active_colour = G.C.BLUE,
-            callback = function()
-              BSM.utils.sendDebugMessage("Debug keybinds toggled.")
               SMODS.save_mod_config(BSM.mod)
             end,
           })
@@ -103,4 +75,4 @@ function BSM.UI.createConfigTabDefinition()
   }
 end
 
-BSM.utils.sendDebugMessage("UI tabs module loaded.")
+RIOSODU_SHARED.utils.sendDebugMessage("UI tabs module loaded.")

@@ -6,5 +6,6 @@
   "prefix": "riosodu_shared",
   "main_file": "main.lua",
   "version": "1.0.0",
+  "priority": -1,
   "dependencies": []
 }

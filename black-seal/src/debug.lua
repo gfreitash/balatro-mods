@@ -1,40 +1,24 @@
 -- src/debug.lua
 
--- --- Common Utility: Debug Messaging ---
----@param msg string The message to log
-function BSM.utils.sendDebugMessage(msg)
-  -- Check the config setting before logging
-  if BSM.config.debug_logging_enabled then
-    if SMODS and SMODS.log then
-      SMODS.log(BSM.mod_id .. ": " .. tostring(msg))
-    elseif G and G.log and G.log.debug then
-      G.log.debug(BSM.mod_id .. ": " .. tostring(msg))
-    else
-      print(BSM.mod_id .. ": " .. tostring(msg))
-    end
-  end
-end
 
-BSM.utils.sendDebugMessage("Debug module loading...")
+RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id, "Debug module loading...")
 
--- Only enable debug features if the config option is true
-if BSM.config.debug_features_enabled then
-  BSM.utils.sendDebugMessage("Debug features enabled. Registering keybinds...")
+-- Only enable debug features if common config allows
+if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_features_enabled then
+  RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id, "Debug features enabled. Registering keybinds...")
 
   -- Keybind to apply Black Seal to hand
   -- Uses the key configured in config.lua
-  SMODS.Keybind({
-    key_pressed = BSM.config.debug_apply_seal_key,
+  RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
+    key_pressed = 'f9',
     name = 'apply_black_seal_to_hand',
-    desc = 'Apply Black Seal to all cards in hand ('
-        .. BSM.config.debug_apply_seal_key:upper()
-        .. ')', -- Show key in description
+    desc = 'Apply Black Seal to all cards in hand',
 
     action = function(self)
       local seal_key_to_apply = BSM.black_seal_id_full -- Get the full seal key from BSM
       local cards_sealed = 0
 
-      BSM.utils.sendDebugMessage(
+      RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id,
         "Attempting to apply seal '"
         .. seal_key_to_apply
         .. "' to hand cards..."
@@ -44,7 +28,7 @@ if BSM.config.debug_features_enabled then
       for i, card_in_hand in ipairs(G.hand.cards) do
         -- Check if it's a valid card object with the set_seal method
         if card_in_hand and type(card_in_hand.set_seal) == 'function' then
-          BSM.utils.sendDebugMessage(
+          RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id,
             "Applying seal to card #"
             .. i
             .. " (Current seal: "
@@ -60,12 +44,12 @@ if BSM.config.debug_features_enabled then
         end
       end
 
-      BSM.utils.sendDebugMessage(
+      RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id,
         "Finished applying seal. Sealed " .. cards_sealed .. " cards."
       )
     end,
   })
-  BSM.utils.sendDebugMessage(
+  RIOSODU_SHARED.utils.sendDebugMessage(
     "Keybind '"
     .. BSM.config.debug_apply_seal_key:upper()
     .. "' for applying seal registered."
@@ -77,7 +61,7 @@ if BSM.config.debug_features_enabled then
   -- Function to test seal weights by polling repeatedly using events
   local function test_seal_weights_evented()
     if not G.GAME or not G.E_MANAGER or not SMODS or not SMODS.poll_seal then
-      BSM.utils.sendDebugMessage(
+      RIOSODU_SHARED.utils.sendDebugMessage(
         "Test Seal Weights (Evented): Cannot run test: Game state, Event Manager, or SMODS.poll_seal not available."
       )
       return
@@ -87,7 +71,7 @@ if BSM.config.debug_features_enabled then
     local seal_counts = {}
     local polls_completed = 0
 
-    BSM.utils.sendDebugMessage(
+    RIOSODU_SHARED.utils.sendDebugMessage(
       "Test Seal Weights (Evented): Scheduling "
       .. num_polls
       .. " seal polls as non-blocking events (using SMODS.poll_seal)..."
@@ -111,7 +95,7 @@ if BSM.config.debug_features_enabled then
 
             -- Optional: Print progress periodically
             -- if polls_completed % (num_polls / 10) == 0 then
-            --     BSM.utils.sendDebugMessage("... " .. polls_completed .. "/" .. num_polls .. " polls completed ...")
+            --     RIOSODU_SHARED.utils.sendDebugMessage("... " .. polls_completed .. "/" .. num_polls .. " polls completed ...")
             -- end
 
             return true -- This individual polling event is complete
@@ -132,7 +116,7 @@ if BSM.config.debug_features_enabled then
           end
 
           -- All poll events have completed! Now print the results with percentages.
-          BSM.utils.sendDebugMessage(
+          RIOSODU_SHARED.utils.sendDebugMessage(
             "Test Seal Weights (Evented): Polling complete. Results:"
           )
 
@@ -159,7 +143,7 @@ if BSM.config.debug_features_enabled then
           local total_successful_polls = num_polls - no_seal_count
 
           if #sorted_keys == 0 then
-            BSM.utils.sendDebugMessage("  (No results recorded)")
+            RIOSODU_SHARED.utils.sendDebugMessage("  (No results recorded)")
           else
             for _, key in ipairs(sorted_keys) do
               local count = seal_counts[key] or 0
@@ -190,11 +174,11 @@ if BSM.config.debug_features_enabled then
                 end
               end
 
-              BSM.utils.sendDebugMessage(line_output)
+              RIOSODU_SHARED.utils.sendDebugMessage(line_output)
             end
           end
 
-          BSM.utils.sendDebugMessage(
+          RIOSODU_SHARED.utils.sendDebugMessage(
             "Test Seal Weights (Evented): Finished printing results."
           )
 
@@ -203,37 +187,27 @@ if BSM.config.debug_features_enabled then
       })
     )
 
-    BSM.utils.sendDebugMessage(
+    RIOSODU_SHARED.utils.sendDebugMessage(
       "Test Seal Weights (Evented): All polling events scheduled. Results will appear once all polls complete."
     )
   end
 
   -- Keybind to trigger the event-based seal weight test function
   -- Uses the key configured in config.lua
-  SMODS.Keybind({
-    key_pressed = BSM.config.debug_test_weights_key, -- Use configured key
+  RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
+    key_pressed = 'f10',
     name = 'test_seal_weights_evented',
-    -- Reference num_polls which is now defined in the correct scope
-    desc = 'Poll SMODS.poll_seal '
-        .. num_polls
-        .. ' times ('
-        .. BSM.config.debug_test_weights_key:upper()
-        .. ')',
-    action = test_seal_weights_evented, -- Call the evented function
+    desc = 'Poll SMODS.poll_seal ' .. num_polls .. ' times',
+    action = test_seal_weights_evented
   })
-  BSM.utils.sendDebugMessage(
-    "Keybind '"
-    .. BSM.config.debug_test_weights_key:upper()
-    .. "' for testing weights registered."
-  )
 
   -- Function to add a random Joker using SMODS.add_card
   local function add_random_joker()
-    BSM.utils.sendDebugMessage("Debug key pressed: Attempting to add random Joker...")
+    RIOSODU_SHARED.utils.sendDebugMessage("Debug key pressed: Attempting to add random Joker...")
     if SMODS and SMODS.add_card then
       local added_card = SMODS.add_card({ set = 'Joker' })
       if added_card then
-        BSM.utils.sendDebugMessage(
+        RIOSODU_SHARED.utils.sendDebugMessage(
           "Successfully added Joker: " .. (added_card.name or 'Unknown Joker')
         )
         -- Optional: Add visual feedback like juicing the card
@@ -241,82 +215,45 @@ if BSM.config.debug_features_enabled then
           added_card:juice_up(0.5, 0.5)
         end
       else
-        BSM.utils.sendDebugMessage("SMODS.add_card called, but failed to add a Joker.")
+        RIOSODU_SHARED.utils.sendDebugMessage("SMODS.add_card called, but failed to add a Joker.")
       end
     else
-      BSM.utils.sendDebugMessage("Cannot add Joker: SMODS.add_card function not found.")
+      RIOSODU_SHARED.utils.sendDebugMessage("Cannot add Joker: SMODS.add_card function not found.")
     end
   end
 
   -- Keybind to trigger adding a random Joker
   -- Assumes a key like 'j' is configured in config.lua as BSM.config.debug_add_joker_key
   -- Example config entry: debug_add_joker_key = 'j'
-  if BSM.config.debug_add_joker_key then
-    SMODS.Keybind({
-      key_pressed = BSM.config.debug_add_joker_key,
-      name = 'add_random_joker',
-      desc = 'Add a random Joker ('
-          .. BSM.config.debug_add_joker_key:upper()
-          .. ')',
-      action = add_random_joker,
-    })
-    BSM.utils.sendDebugMessage(
-      "Keybind '"
-      .. BSM.config.debug_add_joker_key:upper()
-      .. "' for adding Joker registered."
-    )
-  else
-    BSM.utils.sendDebugMessage(
-      "Keybind for adding Joker not registered: 'debug_add_joker_key' not found in config."
-    )
-  end
+  RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
+    key_pressed = 'j',
+    name = 'add_random_joker',
+    desc = 'Add a random Joker',
+    action = add_random_joker
+  })
 
   local function open_spectral_pack()
     if G.STATE ~= G.STATES.SHOP then
-      BSM.utils.sendDebugMessage("Debug key pressed: Not in shop, cannot open pack.")
+      RIOSODU_SHARED.utils.sendDebugMessage("Debug key pressed: Not in shop, cannot open pack.")
       return
     end
 
     local key = 'p_spectral_mega_1'
     local card = Card(G.shop_booster.T.x + G.shop_booster.T.w/2,
     G.shop_booster.T.y, G.CARD_W*1.27, G.CARD_H*1.27, G.P_CARDS.empty, G.P_CENTERS[key], {bypass_discovery_center = true, bypass_discovery_ui = true})
-    
+
     G.FUNCS.use_card({config={ref_table = card }})
   end
 
-  if BSM.config.debug_open_spectral_pack_key then
-    SMODS.Keybind({
-      key_pressed = BSM.config.debug_open_spectral_pack_key,
-      name = 'open_spectral_pack',
-      desc = 'Open Spectral Pack ('
-          .. BSM.config.debug_open_spectral_pack_key:upper()
-          .. ')',
-      action = open_spectral_pack,
-    })
-    BSM.utils.sendDebugMessage(
-      "Keybind '"
-      .. BSM.config.debug_open_spectral_pack_key:upper()
-      .. "' for opening spectral pack registered."
-    )
-  else
-    BSM.utils.sendDebugMessage(
-      "Keybind for opening spectral pack not registered: 'debug_open_spectral_pack_key' not found in config."
-    )
-  end
-
-  local function restart_game()
-    SMODS.restart_game()
-  end
-
-  SMODS.Keybind({
-    key_pressed = 'f12',
-    name = 'restart_game',
-    desc = 'Restart Game (F12)',
-    action = restart_game,
+  RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
+    key_pressed = 'k',
+    name = 'open_spectral_pack',
+    desc = 'Open Spectral Pack',
+    action = open_spectral_pack
   })
-  BSM.utils.sendDebugMessage("Keybind 'F12' for restarting game registered.")
+
 else
-  BSM.utils.sendDebugMessage("Debug features disabled in config.")
+  RIOSODU_SHARED.utils.sendDebugMessage("Debug features disabled in config.")
 end
 
-BSM.utils.sendDebugMessage("Debug module loaded.")
+RIOSODU_SHARED.utils.sendDebugMessage("Debug module loaded.")

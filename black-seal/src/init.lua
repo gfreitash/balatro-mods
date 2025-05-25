@@ -55,17 +55,17 @@ BSM.include("src/overrides.lua") -- Includes the overrides for original function
 BSM.include("src/ui/tabs.lua") -- Includes UI definitions
 
 -- --- SMODS Hooks ---
--- (Keep config_tab, extra_tabs, debug_info hooks as before)
 
 SMODS.current_mod.config_tab = function() return BSM.UI.createConfigTabDefinition() end
 SMODS.current_mod.debug_info = function(self)
-  return {
-    ["Debug Logging Enabled"] = tostring(BSM.config.debug_logging_enabled),
-    ["Debug Features Enabled"] = tostring(BSM.config.debug_features_enabled),
-    ["Apply Seal Keybind"] = BSM.config.debug_apply_seal_key,
-    ["Test Weights Keybind"] = BSM.config.debug_test_weights_key,
+  local info = {
     ["Black Seal Spawn Percentage"] = tostring(BSM.config.black_seal_percentage) .. "%",
+    ["Debug Settings"] = "Managed by Riosodu Commons mod."
   }
+  if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_features_enabled then
+    info["Black Seal Debug Keybinds"] = "F9 (Apply Seal), F10 (Test Weights), J (Add Joker), K (Open Spectral)"
+  end
+  return info
 end
 
-BSM.utils.sendDebugMessage("Initialization complete.")
+RIOSODU_SHARED.utils.sendDebugMessage("Initialization complete.")

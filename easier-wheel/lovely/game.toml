@@ -12,3 +12,4 @@ position = "at"
 payload = '''
         c_wheel_of_fortune= {order = 11,    discovered = false, cost = 3, consumeable = true, name = "The Wheel of Fortune", pos = {x=0,y=1}, set = "Tarot", effect = "Round Bonus", cost_mult = 1.0, config = {extra = 3}},
 '''
+match_indent=false

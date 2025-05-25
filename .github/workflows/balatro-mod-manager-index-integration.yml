@@ -36,11 +36,14 @@ jobs:
       - name: Detect changed mods
         id: changes
         run: |
+          echo "🔍 Detecting changed mods..."
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual trigger
+            echo "🎯 Manual trigger detected for mod: ${{ github.event.inputs.mod_name }}"
             echo "mods=[\"${{ github.event.inputs.mod_name }}\"]" >> $GITHUB_OUTPUT
           else
             # Auto-trigger: detect which mods had index files changed
+            echo "🤖 Auto-trigger: analyzing changed files..."
             changed_files=$(git diff --name-only HEAD~1 HEAD)
             mods=()
 
@@ -49,6 +52,7 @@ jobs:
                 mod_name="${BASH_REMATCH[1]}"
                 if [[ ! " ${mods[@]} " =~ " ${mod_name} " ]]; then
                   mods+=("$mod_name")
+                  echo "📦 Found changes in mod: $mod_name"
                 fi
               fi
             done
@@ -56,12 +60,18 @@ jobs:
             # Convert to JSON array
             printf -v joined '"%s",' "${mods[@]}"
             echo "mods=[${joined%,}]" >> $GITHUB_OUTPUT
+            echo "✅ Detection complete. Found ${#mods[@]} mod(s) with changes"
           fi
 
   update-index:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_mods != '[]'
     runs-on: ubuntu-latest
+    env:
+      TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
+      TARGET_BRANCH: "master"
+      FORK_OWNER: "gfreitash"
+      AUTHOR: "riosodu"
     strategy:
       matrix:
         mod_name: ${{ fromJson(needs.detect-changes.outputs.changed_mods) }}
@@ -71,77 +81,88 @@ jobs:
 
       - name: Verify mod and index files
         run: |
+          echo "🔍 Verifying mod structure for: ${{ matrix.mod_name }}"
           MOD_NAME="${{ matrix.mod_name }}"
           if [ ! -d "$MOD_NAME" ]; then
-            echo "Error: Mod folder '$MOD_NAME' does not exist"
+            echo "❌ Error: Mod folder '$MOD_NAME' does not exist"
             exit 1
           fi
           if [ ! -f "$MOD_NAME/index.meta.json" ]; then
-            echo "Error: index.meta.json not found in $MOD_NAME"
+            echo "❌ Error: index.meta.json not found in $MOD_NAME"
             exit 1
           fi
           if [ ! -f "$MOD_NAME/index.description.md" ]; then
-            echo "Error: index.description.md not found in $MOD_NAME"
+            echo "❌ Error: index.description.md not found in $MOD_NAME"
             exit 1
           fi
+          echo "✅ All required files found for $MOD_NAME"
 
       - name: Get latest version for mod
         id: version
         run: |
+          echo "🔍 Getting latest version for: ${{ matrix.mod_name }}"
           MOD_NAME="${{ matrix.mod_name }}"
           # Get the latest version from releases
           LATEST_VERSION=$(gh release list --repo ${{ github.repository }} --limit 100 | \
             grep "^${MOD_NAME}__v" | head -1 | awk '{print $1}' | sed "s/${MOD_NAME}__v//")
 
           if [ -z "$LATEST_VERSION" ]; then
-            echo "Warning: No releases found for $MOD_NAME, using 0.0.0"
+            echo "⚠️ Warning: No releases found for $MOD_NAME, using 0.0.0"
             LATEST_VERSION="0.0.0"
           fi
 
           echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "Latest version for $MOD_NAME: $LATEST_VERSION"
+          echo "📋 Latest version for $MOD_NAME: $LATEST_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if mod exists in index
         id: check_exists
         run: |
+          echo "🔍 Checking if mod exists in index..."
           MOD_NAME="${{ matrix.mod_name }}"
-          AUTHOR="riosodu"
 
           # Clone the mod index to check if mod already exists
-          gh repo clone skyline69/balatro-mod-index temp-index || exit 1
+          echo "📥 Cloning target repository to check existing mods..."
+          gh repo clone "${{ env.TARGET_REPO }}" temp-index || exit 1
 
-          if [ -d "temp-index/mods/${AUTHOR}@${MOD_NAME}" ]; then
+          if [ -d "temp-index/mods/${{ env.AUTHOR }}@${MOD_NAME}" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Mod ${AUTHOR}@${MOD_NAME} already exists in index"
+            echo "✅ Mod ${{ env.AUTHOR }}@${MOD_NAME} already exists in index"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Mod ${AUTHOR}@${MOD_NAME} is new to index"
+            echo "🆕 Mod ${{ env.AUTHOR }}@${MOD_NAME} is new to index"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare submission files
         run: |
+          echo "📁 Preparing submission files..."
           MOD_NAME="${{ matrix.mod_name }}"
-          AUTHOR="riosodu"
           VERSION="${{ steps.version.outputs.version }}"
 
-          mkdir -p "submission/${AUTHOR}@${MOD_NAME}"
+          mkdir -p "submission/${{ env.AUTHOR }}@${MOD_NAME}"
 
           # Process meta.json with dynamic values
+          echo "🔧 Processing meta.json with dynamic values..."
           jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_NAME}__latest/${MOD_NAME}.zip" \
              --arg folder "$MOD_NAME" \
              --arg version "$VERSION" \
              '. + {downloadURL: $url, folderName: $folder, version: $version}' \
-             "$MOD_NAME/index.meta.json" > "submission/${AUTHOR}@${MOD_NAME}/meta.json"
+             "$MOD_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_NAME}/meta.json"
 
-          cp "$MOD_NAME/index.description.md" "submission/${AUTHOR}@${MOD_NAME}/description.md"
+          echo "📝 Copying description file..."
+          cp "$MOD_NAME/index.description.md" "submission/${{ env.AUTHOR }}@${MOD_NAME}/description.md"
+
           if [ -f "$MOD_NAME/index.thumbnail.jpg" ]; then
-            cp "$MOD_NAME/index.thumbnail.jpg" "submission/${AUTHOR}@${MOD_NAME}/thumbnail.jpg"
+            echo "🖼️ Copying thumbnail image..."
+            cp "$MOD_NAME/index.thumbnail.jpg" "submission/${{ env.AUTHOR }}@${MOD_NAME}/thumbnail.jpg"
+          else
+            echo "ℹ️ No thumbnail found, skipping..."
           fi
 
+          echo "✅ Submission files prepared successfully"
 
       - name: Fork and submit to Balatro Mod Index
         env:
@@ -149,10 +170,8 @@ jobs:
           MOD_NAME: ${{ matrix.mod_name }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
-          TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
-          TARGET_BRANCH: "master"
-          FORK_OWNER: "gfreitash"
         run: |
+          echo "🚀 Starting fork and submission process..."
           # Configure git with your details
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
@@ -160,17 +179,17 @@ jobs:
           # Configure git to use the PAT for GitHub authentication
           git config --global url."https://$GITHUB_TOKEN@github.com/".insteadOf "https://github.com/"
 
-          TARGET_REPO_NAME=$(echo "$TARGET_REPO" | cut -d'/' -f2)
-          TARGET_REPO_OWNER=$(echo "$TARGET_REPO" | cut -d'/' -f1)
+          TARGET_REPO_NAME=$(echo "${{ env.TARGET_REPO }}" | cut -d'/' -f2)
+          TARGET_REPO_OWNER=$(echo "${{ env.TARGET_REPO }}" | cut -d'/' -f1)
 
-          echo "🍴 Forking $TARGET_REPO to $FORK_OWNER/$TARGET_REPO_NAME"
+          echo "🍴 Forking ${{ env.TARGET_REPO }} to ${{ env.FORK_OWNER }}/$TARGET_REPO_NAME"
 
           # Check if fork already exists
-          if gh repo view "$FORK_OWNER/$TARGET_REPO_NAME" >/dev/null 2>&1; then
+          if gh repo view "${{ env.FORK_OWNER }}/$TARGET_REPO_NAME" >/dev/null 2>&1; then
             echo "✅ Fork already exists"
           else
             echo "🔄 Creating fork..."
-            FORK_URL=$(gh repo fork "$TARGET_REPO" --clone=false)
+            FORK_URL=$(gh repo fork "${{ env.TARGET_REPO }}" --clone=false)
             echo "✅ Fork created: $FORK_URL"
 
             # Wait for fork to be fully available
@@ -180,53 +199,55 @@ jobs:
 
           # Clone the fork
           echo "📥 Cloning fork..."
-          gh repo clone "$FORK_OWNER/$TARGET_REPO_NAME" mod-index-fork
+          gh repo clone "${{ env.FORK_OWNER }}/$TARGET_REPO_NAME" mod-index-fork
           cd mod-index-fork
 
           # Set up upstream remote with authentication
           echo "🔄 Setting up upstream remote..."
-          git remote add upstream "https://$GITHUB_TOKEN@github.com/$TARGET_REPO.git" 2>/dev/null || true
+          git remote add upstream "https://$GITHUB_TOKEN@github.com/${{ env.TARGET_REPO }}.git" 2>/dev/null || true
           git fetch upstream
 
           # Ensure we're on the target branch and synced
           echo "🔄 Syncing with upstream..."
-          git checkout $TARGET_BRANCH 2>/dev/null || git checkout -b $TARGET_BRANCH upstream/$TARGET_BRANCH
-          git reset --hard upstream/$TARGET_BRANCH
+          git checkout ${{ env.TARGET_BRANCH }} 2>/dev/null || git checkout -b ${{ env.TARGET_BRANCH }} upstream/${{ env.TARGET_BRANCH }}
+          git reset --hard upstream/${{ env.TARGET_BRANCH }}
 
           # Configure the origin remote to use the token (important!)
-          git remote set-url origin "https://$GITHUB_TOKEN@github.com/$FORK_OWNER/$TARGET_REPO_NAME.git"
+          git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ env.FORK_OWNER }}/$TARGET_REPO_NAME.git"
 
           # Push the synced branch to your fork
           echo "📤 Syncing fork with upstream..."
-          git push origin $TARGET_BRANCH --force-with-lease
+          git push origin ${{ env.TARGET_BRANCH }} --force-with-lease
 
           # Create unique branch name with timestamp
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           if [ "$IS_UPDATE" = "true" ]; then
             BRANCH_NAME="update-${MOD_NAME}-${TIMESTAMP}"
-            PR_TITLE="Update riosodu@${MOD_NAME} mod"
-            PR_BODY="🔄 **Automated update** of the ${MOD_NAME} mod
+            PR_TITLE="Update ${{ env.AUTHOR }}@${MOD_NAME} mod"
+            PR_BODY="Automated update of the ${MOD_NAME} mod
 
           **Changes:**
           - Updated mod metadata and description
           - Refreshed from source repository
           - Automated via GitHub Actions
 
-          **Mod:** \`riosodu@${MOD_NAME}\`
+          **Mod:** \`${{ env.AUTHOR }}@${MOD_NAME}\`
           **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
           **Commit:** ${GITHUB_SHA:0:7}"
+            echo "🔄 Preparing update for existing mod..."
           else
             BRANCH_NAME="add-${MOD_NAME}-${TIMESTAMP}"
-            PR_TITLE="Add riosodu@${MOD_NAME} mod"
-            PR_BODY="✨ **New mod submission** for ${MOD_NAME}
+            PR_TITLE="Add ${{ env.AUTHOR }}@${MOD_NAME} mod"
+            PR_BODY="New mod submission for ${MOD_NAME}
 
           **Mod Details:**
-          - Author: riosodu
+          - Author: ${{ env.AUTHOR }}
           - Name: ${MOD_NAME}
           - Automated submission from mono-repository
 
           **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
           **Commit:** ${GITHUB_SHA:0:7}"
+            echo "🆕 Preparing submission for new mod..."
           fi
 
           # Create and switch to feature branch
@@ -264,18 +285,18 @@ jobs:
           git push origin "$BRANCH_NAME"
 
           # Create PR to the original repository
-          echo "🎯 Creating PR to $TARGET_REPO"
+          echo "🎯 Creating PR to ${{ env.TARGET_REPO }}"
           PR_URL=$(gh pr create \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
-            --base $TARGET_BRANCH \
-            --head "$FORK_OWNER:$BRANCH_NAME" \
-            --repo "$TARGET_REPO")
+            --base ${{ env.TARGET_BRANCH }} \
+            --head "${{ env.FORK_OWNER }}:$BRANCH_NAME" \
+            --repo "${{ env.TARGET_REPO }}")
 
           echo "✅ PR created successfully: $PR_URL"
 
           # Add PR URL to job summary
-          echo "## 🎉 Pull Request Created" >> $GITHUB_STEP_SUMMARY
+          echo "## Pull Request Created" >> $GITHUB_STEP_SUMMARY
           echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** [$PR_TITLE]($PR_URL)" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY

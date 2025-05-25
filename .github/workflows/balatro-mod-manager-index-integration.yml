@@ -131,19 +131,20 @@ jobs:
 
       - name: Fork and submit to Balatro Mod Index
         env:
-          # Use PAT instead of GITHUB_TOKEN
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           MOD_NAME: ${{ matrix.mod_name }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
           TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
           TARGET_BRANCH: "master"
-          # Make the fork owner configurable
-          FORK_OWNER: ${{ github.repository_owner }} # or hardcode your username
+          FORK_OWNER: "gfreitash"
         run: |
-          # Configure git with your actual details (not bot)
+          # Configure git with your details
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+          # Configure git to use the PAT for GitHub authentication
+          git config --global url."https://$GITHUB_TOKEN@github.com/".insteadOf "https://github.com/"
 
           TARGET_REPO_NAME=$(echo "$TARGET_REPO" | cut -d'/' -f2)
           TARGET_REPO_OWNER=$(echo "$TARGET_REPO" | cut -d'/' -f1)
@@ -155,7 +156,12 @@ jobs:
             echo "✅ Fork already exists"
           else
             echo "🔄 Creating fork..."
-            gh repo fork "$TARGET_REPO" --clone=false
+            FORK_URL=$(gh repo fork "$TARGET_REPO" --clone=false)
+            echo "✅ Fork created: $FORK_URL"
+
+            # Wait for fork to be fully available
+            echo "⏳ Waiting for fork to be fully available..."
+            sleep 10
           fi
 
           # Clone the fork
@@ -163,16 +169,21 @@ jobs:
           gh repo clone "$FORK_OWNER/$TARGET_REPO_NAME" mod-index-fork
           cd mod-index-fork
 
-          # Set up upstream and sync
-          echo "🔄 Syncing with upstream..."
-          git remote add upstream "https://github.com/$TARGET_REPO.git" 2>/dev/null || true
+          # Set up upstream remote with authentication
+          echo "🔄 Setting up upstream remote..."
+          git remote add upstream "https://$GITHUB_TOKEN@github.com/$TARGET_REPO.git" 2>/dev/null || true
           git fetch upstream
 
           # Ensure we're on the target branch and synced
+          echo "🔄 Syncing with upstream..."
           git checkout $TARGET_BRANCH 2>/dev/null || git checkout -b $TARGET_BRANCH upstream/$TARGET_BRANCH
           git reset --hard upstream/$TARGET_BRANCH
 
+          # Configure the origin remote to use the token (important!)
+          git remote set-url origin "https://$GITHUB_TOKEN@github.com/$FORK_OWNER/$TARGET_REPO_NAME.git"
+
           # Push the synced branch to your fork
+          echo "📤 Syncing fork with upstream..."
           git push origin $TARGET_BRANCH --force-with-lease
 
           # Create unique branch name with timestamp
@@ -180,7 +191,7 @@ jobs:
           if [ "$IS_UPDATE" = "true" ]; then
             BRANCH_NAME="update-${MOD_NAME}-${TIMESTAMP}"
             PR_TITLE="Update riosodu@${MOD_NAME} mod"
-            PR_BODY="**Automated update** of the ${MOD_NAME} mod
+            PR_BODY="🔄 **Automated update** of the ${MOD_NAME} mod
 
           **Changes:**
           - Updated mod metadata and description
@@ -193,7 +204,7 @@ jobs:
           else
             BRANCH_NAME="add-${MOD_NAME}-${TIMESTAMP}"
             PR_TITLE="Add riosodu@${MOD_NAME} mod"
-            PR_BODY="**New mod submission** for ${MOD_NAME}
+            PR_BODY="✨ **New mod submission** for ${MOD_NAME}
 
           **Mod Details:**
           - Author: riosodu
@@ -249,7 +260,7 @@ jobs:
 
           echo "✅ PR created successfully: $PR_URL"
 
-          # Optional: Add PR URL to job summary
+          # Add PR URL to job summary
           echo "## 🎉 Pull Request Created" >> $GITHUB_STEP_SUMMARY
           echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** [$PR_TITLE]($PR_URL)" >> $GITHUB_STEP_SUMMARY

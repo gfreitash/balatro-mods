@@ -51,8 +51,8 @@ BSM.include("src/debug.lua") -- Includes Debug keybinds
 BSM.include("src/main.lua") -- Includes Seal definition & initial weight setting
 BSM.include("src/callbacks.lua") -- Functions for callbacks and events
 BSM.include("src/overrides.lua") -- Includes the overrides for original functions
-BSM.include("src/ui/components.lua") -- Includes UI base components
-BSM.include("src/ui/tabs.lua") -- Includes UI definitions 
+-- UI components moved to common mod via manifest dependency
+BSM.include("src/ui/tabs.lua") -- Includes UI definitions
 
 -- --- SMODS Hooks ---
 -- (Keep config_tab, extra_tabs, debug_info hooks as before)

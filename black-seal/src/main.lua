@@ -94,18 +94,6 @@ SMODS.Seal({
   key = BSM.black_seal_id,
   atlas = BSM.state.seal_atlas_key,
   pos = { x = 0, y = 0 },
-  loc_txt = {
-    ['default'] = {
-      name = 'Black Seal',
-      label = 'Black Seal',
-      text = {
-        "If you play only this card:",
-        "add {C:dark_edition}negative{} to a random {C:attention}Joker{}",
-        "remove all {C:dark_edition}Black Seals{} from your deck",
-        "{C:inactive}(Effect does not trigger if card is debuffed){}",
-      },
-    },
-  },
   weight = BSM.utils.calculate_and_set_seal_weights(), -- Initial weight
   discovered = false,
   badge_colour = G.C.BLACK,

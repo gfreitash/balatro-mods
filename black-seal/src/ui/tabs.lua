@@ -21,15 +21,15 @@ function BSM.UI.createConfigTabDefinition()
         padding = 0.2,
       },
       nodes = {
-        BSM.UI.create_option_box({
-          BSM.UI.create_option_slider({
+        RIOSODU_SHARED.UIDEF.create_option_box({
+          RIOSODU_SHARED.UIDEF.create_option_slider({
             ref_table = BSM.config,
             ref_value = "black_seal_percentage",
-            label = "Black Seal Spawn Percentage",
+            label = localize('black_seal_spawn_percentage'),
             info = {
-              "Percentage chance (%) for a black seal to be picked randomly.",
-              "0% = Never spawn; 100% = Only black seals spawn.",
-              string.format("Equal chance with other seals: %.0f%%.", 100 / BSM.utils.seal_count()),
+              localize('black_seal_spawn_percentage_info1'),
+              localize('black_seal_spawn_percentage_info2'),
+              string.format(localize('black_seal_spawn_percentage_info3'), 100 / BSM.utils.seal_count()),
             },
             min = 0,
             max = 100,
@@ -39,14 +39,12 @@ function BSM.UI.createConfigTabDefinition()
             callback = 'bsm_calculate_and_set_seal_weights',
           })
         }),
-        BSM.UI.create_option_box({
-          BSM.UI.create_option_toggle({
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
             ref_table = BSM.config,
             ref_value = "override_ectoplasm_effect",
-            label = "Override Ectoplasm Effect",
-            info = {
-              "Ectoplasm adds a black seal to a card instead.",
-            },
+            label = localize('override_ectoplasm_effect'),
+            info = localize('override_ectoplasm_effect_info'),
             inactive_colour = G.C.WHITE,
             active_colour = G.C.BLUE,
             callback = function()
@@ -56,14 +54,12 @@ function BSM.UI.createConfigTabDefinition()
             end,
           })
         }),
-        BSM.UI.create_option_box({
-          BSM.UI.create_option_toggle({
+        RIOSODU_SHARED.UIDEF.create_option_box({
+          RIOSODU_SHARED.UIDEF.create_option_toggle({
             ref_table = BSM.config,
             ref_value = "ectoplasm_override_reduces_hand",
-            label = "Ectoplasm Reduces Hand Size",
-            info = {
-              "If ectoplasm should reduce hand size",
-            },
+            label = localize('ectoplasm_override_reduces_hand'),
+            info = localize('ectoplasm_override_reduces_hand_info'),
             inactive_colour = G.C.WHITE,
             active_colour = G.C.BLUE,
             callback = function()
@@ -73,12 +69,12 @@ function BSM.UI.createConfigTabDefinition()
             end,
           })
         }),
-        BSM.UI.create_option_box({
-          BSM.UI.create_option_toggle({
+        RIOSODU_SHARED.UIDEF.create_option_box({
+          RIOSODU_SHARED.UIDEF.create_option_toggle({
             ref_table = BSM.config,
             ref_value = "debug_logging_enabled",
-            label = "Enable Debug Logging",
-            info = "Logs detailed mod actions to the console.",
+            label = localize('debug_logging_enabled'),
+            info = localize('debug_logging_enabled_info'),
             inactive_colour = G.C.WHITE,
             active_colour = G.C.BLUE,
             callback = function()
@@ -87,12 +83,12 @@ function BSM.UI.createConfigTabDefinition()
             end,
           })
         }),
-        BSM.UI.create_option_box({
-          BSM.UI.create_option_toggle({
+        RIOSODU_SHARED.UIDEF.create_option_box({
+          RIOSODU_SHARED.UIDEF.create_option_toggle({
             ref_table = BSM.config,
             ref_value = "debug_keybinds_enabled",
-            label = "Enable Debug Keybinds",
-            info = "Enables testing keybinds. Requires restart.",
+            label = localize('debug_keybinds_enabled'),
+            info = localize('debug_keybinds_enabled_info'),
             inactive_colour = G.C.WHITE,
             active_colour = G.C.BLUE,
             callback = function()

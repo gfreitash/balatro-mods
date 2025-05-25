@@ -1,7 +1,11 @@
+--- Shared UI component definitions for mods
+--- This file was extracted from Black Seal's src/ui/components.lua
+--- Loaded via SMODS.load_file('common/ui/components.lua', current_mod.id)
+
 --- Helper function to create the standard option box container
 ---@param content UIBox[] The UI nodes to place inside the box
----@return UIBox The definihtion for the option box
-function BSM.UI.create_option_box(content)
+---@return UIBox The definition for the option box
+function RIOSODU_SHARED.UIDEF.create_option_box(content)
     return {
         n = G.UIT.R,
         config = {
@@ -14,12 +18,10 @@ function BSM.UI.create_option_box(content)
     }
 end
 
-
-
 --- Helper function to create a toggle widget
 --- @param args table The arguments for the toggle widget
 --- @return UIBox The definition for the toggle widget
-function BSM.UI.create_option_toggle(args)
+function RIOSODU_SHARED.UIDEF.create_option_toggle(args)
     local toggle_args = args or {}
     toggle_args.inactive_colour = args.inactive_colour or G.C.WHITE
     toggle_args.active_colour = args.active_colour or G.C.BLUE
@@ -30,28 +32,29 @@ function BSM.UI.create_option_toggle(args)
     -- Create info text rows
     if args.info then
         local info = {}
-        for _, v in ipairs(args.info --[=[@as string[]]=]) do
-            table.insert(info, { n = G.UIT.R, config = { align = "cm", minh = 0.005, }, nodes = {{
-                n = G.UIT.T,
-                config = { text = v, scale = 0.3, colour = HEX("b8c7d4"), },
-            }}})
+        for _, v in ipairs(args.info) do
+            table.insert(info, {
+                n = G.UIT.R,
+                config = { align = "cm", minh = 0.005 },
+                nodes = {{
+                    n = G.UIT.T,
+                    config = { text = v, scale = 0.3, colour = HEX("b8c7d4") },
+                }},
+            })
         end
 
         -- Replace info with ours
-        if info then
-            info = { n = G.UIT.R, config = { align = "cm" }, nodes = info }
-            toggle.nodes[2] = info
-        end
+        info = { n = G.UIT.R, config = { align = "cm" }, nodes = info }
+        toggle.nodes[2] = info
     end
 
     return toggle
 end
 
-
 --- Helper function to create a slider widget
 ---@param args table The arguments for the slider widget
 ---@return table
-function BSM.UI.create_option_slider(args)
+function RIOSODU_SHARED.UIDEF.create_option_slider(args)
     local slider_args = args or {}
     slider_args.w = args.w or 3 -- Default width
     slider_args.h = args.h or 0.5 -- Default height
@@ -62,20 +65,21 @@ function BSM.UI.create_option_slider(args)
     -- Create info text rows
     if args.info then
         local info = {}
-        for _, v in ipairs(args.info --[=[@as string[]]=]) do
-            table.insert(info, { n = G.UIT.R, config = { align = "cm", minh = 0.005, }, nodes = {{
-                n = G.UIT.T,
-                config = { text = v, scale = 0.3, colour = HEX("b8c7d4"), },
-            }}})
+        for _, v in ipairs(args.info) do
+            table.insert(info, {
+                n = G.UIT.R,
+                config = { align = "cm", minh = 0.005 },
+                nodes = {{
+                    n = G.UIT.T,
+                    config = { text = v, scale = 0.3, colour = HEX("b8c7d4") },
+                }},
+            })
         end
 
         -- Add info to the slider nodes
-        if info then
-            info = { n = G.UIT.R, config = { align = "cm" }, nodes = info }
-            slider.nodes[#slider.nodes+1] = info
-        end
+        info = { n = G.UIT.R, config = { align = "cm" }, nodes = info }
+        slider.nodes[#slider.nodes + 1] = info
     end
 
     return slider
-    
 end

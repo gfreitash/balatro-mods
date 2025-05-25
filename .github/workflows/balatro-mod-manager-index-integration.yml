@@ -149,73 +149,82 @@ jobs:
           path: submission/
 
 
-    #   - name: Fork and submit to Balatro Mod Index
-    #     env:
-    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #       MOD_NAME: ${{ matrix.mod_name }}
-    #       IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
-    #       FORCE_UPDATE: ${{ github.event.inputs.force_update }}
-    #     run: |
-    #       git config --global user.name "github-actions[bot]"
-    #       git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Fork and submit to Balatro Mod Index
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MOD_NAME: ${{ matrix.mod_name }}
+          IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
+          FORCE_UPDATE: ${{ github.event.inputs.force_update }}
+          # Define the target repository here
+          # IMPORTANT: CHANGE THIS BACK TO 'skyline69/balatro-mod-index' FOR PRODUCTION!
+          TARGET_REPO: "gfreitash/test-balatro-mod-index" # <-- TEMPORARY CHANGE FOR TESTING
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-    #       # Fork if not already forked
-    #       gh repo fork skyline69/balatro-mod-index --clone=false || true
+          # Use the target repo variable for forking
+          # Fork if not already forked (this will fork TARGET_REPO)
+          gh repo fork "$TARGET_REPO" --clone=false || true
 
-    #       # Clone your fork
-    #       gh repo clone gfreitash/balatro-mod-index mod-index-fork
-    #       cd mod-index-fork
+          # Use your own username and the target repo name for cloning your fork
+          # Clone your fork of the target repo
+          TARGET_REPO_NAME=$(echo "$TARGET_REPO" | cut -d'/' -f2) # Extract repo name like 'test-balatro-mod-index'
+          gh repo clone "gfreitash/$TARGET_REPO_NAME" mod-index-fork # <-- Use your username and the target repo name
 
-    #       # Sync with upstream
-    #       git remote add upstream https://github.com/skyline69/balatro-mod-index.git
-    #       git fetch upstream
-    #       git checkout main
-    #       git merge upstream/main
-    #       git push origin main
+          cd mod-index-fork
 
-    #       # Create branch name
-    #       if [ "$IS_UPDATE" = "true" ]; then
-    #         BRANCH_NAME="update-${MOD_NAME}-mod-$(date +%s)"
-    #         PR_TITLE="Update riosodu@${MOD_NAME} mod"
-    #         PR_BODY="**Automated update** of the ${MOD_NAME} mod from balatro-mods repository.
+          # Sync with upstream - point to the target repo, not the real one
+          git remote add upstream https://github.com/"$TARGET_REPO".git || true # <-- Use TARGET_REPO
+          git fetch upstream || true # Fetch might fail if upstream isn't added correctly, tolerate it for now
+          git checkout main
+          git merge upstream/main || true # Merge might fail if no changes, tolerate it
 
-    #       Changes may include:
-    #       - Updated description or metadata
-    #       - New thumbnail image
-    #       - Version information update
+          # Create branch name
+          # ... (rest of branch name and title logic remains the same) ...
+          if [ "$IS_UPDATE" = "true" ]; then
+            BRANCH_NAME="update-${MOD_NAME}-mod-$(date +%s)"
+            PR_TITLE="Update riosodu@${MOD_NAME} mod"
+            PR_BODY="**Automated update** of the ${MOD_NAME} mod from balatro-mods repository.
 
-    #       This is an automated update from the mono-repository."
-    #       else
-    #         BRANCH_NAME="add-${MOD_NAME}-mod"
-    #         PR_TITLE="Add riosodu@${MOD_NAME} mod"
-    #         PR_BODY="**New mod submission** of the ${MOD_NAME} mod from balatro-mods repository.
+          Changes may include:
+          - Updated description or metadata
+          - New thumbnail image
+          - Version information update
 
-    #       This is an automated submission from the mono-repository."
-    #       fi
+          This is an automated update from the mono-repository."
+          else
+            BRANCH_NAME="add-${MOD_NAME}-mod"
+            PR_TITLE="Add riosodu@${MOD_NAME} mod"
+            PR_BODY="**New mod submission** of the ${MOD_NAME} mod from balatro-mods repository.
 
-    #       # Create and switch to branch
-    #       git checkout -b "$BRANCH_NAME"
+          This is an automated submission from the mono-repository."
+          fi
 
-    #       # Copy submission files
-    #       cp -r ../submission/* mods/
+          # Create and switch to branch
+          git checkout -b "$BRANCH_NAME"
 
-    #       # Check if there are actually changes to commit
-    #       if git diff --quiet && git diff --cached --quiet; then
-    #         if [ "$FORCE_UPDATE" != "true" ]; then
-    #           echo "No changes detected, skipping PR creation"
-    #           exit 0
-    #         fi
-    #       fi
+          # Copy submission files
+          cp -r ../submission/* mods/
 
-    #       # Commit and push
-    #       git add .
-    #       git commit -m "$(echo "$PR_TITLE" | sed 's/riosodu@//')"
-    #       git push origin "$BRANCH_NAME"
+          # Check if there are actually changes to commit
+          if git diff --quiet && git diff --cached --quiet; then
+            if [ "$FORCE_UPDATE" != "true" ]; then
+              echo "No changes detected, skipping PR creation"
+              exit 0
+            fi
+          fi
 
-    #       # Create PR
-    #       gh pr create \
-    #         --title "$PR_TITLE" \
-    #         --body "$PR_BODY" \
-    #         --base main \
-    #         --head "$BRANCH_NAME" \
-    #         --repo skyline69/balatro-mod-index
+          # Commit and push
+          git add .
+          git commit -m "$(echo "$PR_TITLE" | sed 's/riosodu@//')"
+          git push origin "$BRANCH_NAME"
+
+          # Use the target repo variable for PR creation
+          # Create PR against the target repo
+          gh pr create \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --repo "$TARGET_REPO" # <-- Use TARGET_REPO
+

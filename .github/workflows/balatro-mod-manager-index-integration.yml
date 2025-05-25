@@ -158,6 +158,7 @@ jobs:
           # Define the target repository here
           # IMPORTANT: CHANGE THIS BACK TO 'skyline69/balatro-mod-index' FOR PRODUCTION!
           TARGET_REPO: "gfreitash/test-balatro-mod-index" # <-- TEMPORARY CHANGE FOR TESTING
+          TARGET_BRANCH: "master"
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -176,8 +177,8 @@ jobs:
           # Sync with upstream - point to the target repo, not the real one
           git remote add upstream https://github.com/"$TARGET_REPO".git || true # <-- Use TARGET_REPO
           git fetch upstream || true # Fetch might fail if upstream isn't added correctly, tolerate it for now
-          git checkout main
-          git merge upstream/main || true # Merge might fail if no changes, tolerate it
+          git checkout $TARGET_BRANCH
+          git merge upstream/$TARGET_BRANCH || true # Merge might fail if no changes, tolerate it
 
           # Create branch name
           # ... (rest of branch name and title logic remains the same) ...
@@ -224,7 +225,7 @@ jobs:
           gh pr create \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
-            --base main \
+            --base $TARGET_BRANCH \
             --head "$BRANCH_NAME" \
             --repo "$TARGET_REPO" # <-- Use TARGET_REPO
 

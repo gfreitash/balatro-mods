@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-zip:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Allows creating and updating releases
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

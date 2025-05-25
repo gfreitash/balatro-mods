@@ -9,6 +9,6 @@
     "website": "https://www.nexusmods.com/balatro/mods/411",
     "prefix": "blac",
     "main_file": "src/init.lua",
-    "version": "3.2.0",
+    "version": "3.2.2",
     "dependencies": ["riosodu_shared"]
 }

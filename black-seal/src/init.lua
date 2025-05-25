@@ -2,7 +2,6 @@
 
 -- src/init.lua
 
-
 -- mod globals
 --- @class BSM
 --- @field mod_id string The ID of the mod

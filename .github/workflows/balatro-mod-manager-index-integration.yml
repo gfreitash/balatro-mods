@@ -122,11 +122,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload submission files as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mod-index-submission-${{ matrix.mod_name }}
-          path: submission/
+      - name: Prepare submission files
+        run: |
+          MOD_NAME="${{ matrix.mod_name }}"
+          AUTHOR="riosodu"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          mkdir -p "submission/${AUTHOR}@${MOD_NAME}"
+
+          # Process meta.json with dynamic values
+          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_NAME}__latest/${MOD_NAME}.zip" \
+             --arg folder "$MOD_NAME" \
+             --arg version "$VERSION" \
+             '. + {downloadURL: $url, folderName: $folder, version: $version}' \
+             "$MOD_NAME/index.meta.json" > "submission/${AUTHOR}@${MOD_NAME}/meta.json"
+
+          cp "$MOD_NAME/index.description.md" "submission/${AUTHOR}@${MOD_NAME}/description.md"
+          if [ -f "$MOD_NAME/index.thumbnail.jpg" ]; then
+            cp "$MOD_NAME/index.thumbnail.jpg" "submission/${AUTHOR}@${MOD_NAME}/thumbnail.jpg"
+          fi
 
 
       - name: Fork and submit to Balatro Mod Index

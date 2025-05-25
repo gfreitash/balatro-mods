@@ -62,6 +62,10 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_mods != '[]'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # For cloning, committing, and pushing
+      pull-requests: write # For creating PRs
+      metadata: read
     strategy:
       matrix:
         mod_name: ${{ fromJson(needs.detect-changes.outputs.changed_mods) }}
@@ -102,26 +106,6 @@ jobs:
           echo "Latest version for $MOD_NAME: $LATEST_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare submission files
-        run: |
-          MOD_NAME="${{ matrix.mod_name }}"
-          AUTHOR="riosodu"
-          VERSION="${{ steps.version.outputs.version }}"
-
-          mkdir -p "submission/${AUTHOR}@${MOD_NAME}"
-
-          # Process meta.json with dynamic values
-          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_NAME}__latest/${MOD_NAME}.zip" \
-             --arg folder "$MOD_NAME" \
-             --arg version "$VERSION" \
-             '. + {downloadURL: $url, folderName: $folder, version: $version}' \
-             "$MOD_NAME/index.meta.json" > "submission/${AUTHOR}@${MOD_NAME}/meta.json"
-
-          cp "$MOD_NAME/index.description.md" "submission/${AUTHOR}@${MOD_NAME}/description.md"
-          if [ -f "$MOD_NAME/index.thumbnail.jpg" ]; then
-            cp "$MOD_NAME/index.thumbnail.jpg" "submission/${AUTHOR}@${MOD_NAME}/thumbnail.jpg"
-          fi
 
       - name: Check if mod exists in index
         id: check_exists

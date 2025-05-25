@@ -104,9 +104,9 @@ jobs:
           MOD_NAME="${{ matrix.mod_name }}"
           LATEST_TAG="${MOD_NAME}__latest"
 
-          # Get version from the Latest release description using tag
+          # Get version from the Latest release description
           LATEST_VERSION=$(gh release view "$LATEST_TAG" --repo ${{ github.repository }} --json body --jq '.body' | \
-            grep "Latest Version:" | sed 's/.*Latest Version:** v\([0-9.]*\).*/\1/')
+            grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^v//')
 
           if [ -z "$LATEST_VERSION" ]; then
             echo "⚠️ Warning: No latest release found for $MOD_NAME, using 0.0.0"

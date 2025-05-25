@@ -1,5 +1,6 @@
-.lib/
+lib/
 .junie/
 .idea/
 .temp/
+.vscode/
 misc/

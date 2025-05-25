@@ -102,12 +102,14 @@ jobs:
         run: |
           echo "🔍 Getting latest version for: ${{ matrix.mod_name }}"
           MOD_NAME="${{ matrix.mod_name }}"
-          # Get the latest version from releases
-          LATEST_VERSION=$(gh release list --repo ${{ github.repository }} --limit 100 | \
-            grep "^${MOD_NAME}__v" | head -1 | awk '{print $1}' | sed "s/${MOD_NAME}__v//")
+          LATEST_TAG="${MOD_NAME}__latest"
+
+          # Get version from the Latest release description using tag
+          LATEST_VERSION=$(gh release view "$LATEST_TAG" --repo ${{ github.repository }} --json body --jq '.body' | \
+            grep "Latest Version:" | sed 's/.*Latest Version:** v\([0-9.]*\).*/\1/')
 
           if [ -z "$LATEST_VERSION" ]; then
-            echo "⚠️ Warning: No releases found for $MOD_NAME, using 0.0.0"
+            echo "⚠️ Warning: No latest release found for $MOD_NAME, using 0.0.0"
             LATEST_VERSION="0.0.0"
           fi
 
@@ -115,6 +117,7 @@ jobs:
           echo "📋 Latest version for $MOD_NAME: $LATEST_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Check if mod exists in index
         id: check_exists

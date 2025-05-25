@@ -1,0 +1,221 @@
+name: Update Balatro Mod Index
+
+on:
+  workflow_dispatch:
+    inputs:
+      mod_name:
+        description: "Mod name to update (e.g., black-seal)"
+        required: true
+        type: string
+      force_update:
+        description: "Force update even if no changes detected"
+        required: false
+        type: boolean
+        default: false
+
+  # Auto-trigger when index files change
+  push:
+    paths:
+      - "*/index.meta.json"
+      - "*/index.description.md"
+      - "*/index.thumbnail.jpg"
+    branches:
+      - main
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_mods: ${{ steps.changes.outputs.mods }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed mods
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger
+            echo "mods=[\"${{ github.event.inputs.mod_name }}\"]" >> $GITHUB_OUTPUT
+          else
+            # Auto-trigger: detect which mods had index files changed
+            changed_files=$(git diff --name-only HEAD~1 HEAD)
+            mods=()
+
+            for file in $changed_files; do
+              if [[ $file =~ ^([^/]+)/index\.(meta\.json|description\.md|thumbnail\.jpg)$ ]]; then
+                mod_name="${BASH_REMATCH[1]}"
+                if [[ ! " ${mods[@]} " =~ " ${mod_name} " ]]; then
+                  mods+=("$mod_name")
+                fi
+              fi
+            done
+
+            # Convert to JSON array
+            printf -v joined '"%s",' "${mods[@]}"
+            echo "mods=[${joined%,}]" >> $GITHUB_OUTPUT
+          fi
+
+  update-index:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed_mods != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mod_name: ${{ fromJson(needs.detect-changes.outputs.changed_mods) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify mod and index files
+        run: |
+          MOD_NAME="${{ matrix.mod_name }}"
+          if [ ! -d "$MOD_NAME" ]; then
+            echo "Error: Mod folder '$MOD_NAME' does not exist"
+            exit 1
+          fi
+          if [ ! -f "$MOD_NAME/index.meta.json" ]; then
+            echo "Error: index.meta.json not found in $MOD_NAME"
+            exit 1
+          fi
+          if [ ! -f "$MOD_NAME/index.description.md" ]; then
+            echo "Error: index.description.md not found in $MOD_NAME"
+            exit 1
+          fi
+
+      - name: Get latest version for mod
+        id: version
+        run: |
+          MOD_NAME="${{ matrix.mod_name }}"
+          # Get the latest version from releases
+          LATEST_VERSION=$(gh release list --repo ${{ github.repository }} --limit 100 | \
+            grep "^${MOD_NAME}__v" | head -1 | awk '{print $1}' | sed "s/${MOD_NAME}__v//")
+
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Warning: No releases found for $MOD_NAME, using 0.0.0"
+            LATEST_VERSION="0.0.0"
+          fi
+
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest version for $MOD_NAME: $LATEST_VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare submission files
+        run: |
+          MOD_NAME="${{ matrix.mod_name }}"
+          AUTHOR="riosodu"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          mkdir -p "submission/${AUTHOR}@${MOD_NAME}"
+
+          # Process meta.json with dynamic values
+          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_NAME}__latest/${MOD_NAME}.zip" \
+             --arg folder "$MOD_NAME" \
+             --arg version "$VERSION" \
+             '. + {downloadURL: $url, folderName: $folder, version: $version}' \
+             "$MOD_NAME/index.meta.json" > "submission/${AUTHOR}@${MOD_NAME}/meta.json"
+
+          cp "$MOD_NAME/index.description.md" "submission/${AUTHOR}@${MOD_NAME}/description.md"
+          if [ -f "$MOD_NAME/index.thumbnail.jpg" ]; then
+            cp "$MOD_NAME/index.thumbnail.jpg" "submission/${AUTHOR}@${MOD_NAME}/thumbnail.jpg"
+          fi
+
+      - name: Check if mod exists in index
+        id: check_exists
+        run: |
+          MOD_NAME="${{ matrix.mod_name }}"
+          AUTHOR="riosodu"
+
+          # Clone the mod index to check if mod already exists
+          gh repo clone skyline69/balatro-mod-index temp-index || exit 1
+
+          if [ -d "temp-index/mods/${AUTHOR}@${MOD_NAME}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Mod ${AUTHOR}@${MOD_NAME} already exists in index"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Mod ${AUTHOR}@${MOD_NAME} is new to index"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload submission files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mod-index-submission-${{ matrix.mod_name }}
+          path: submission/
+
+
+    #   - name: Fork and submit to Balatro Mod Index
+    #     env:
+    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #       MOD_NAME: ${{ matrix.mod_name }}
+    #       IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
+    #       FORCE_UPDATE: ${{ github.event.inputs.force_update }}
+    #     run: |
+    #       git config --global user.name "github-actions[bot]"
+    #       git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    #       # Fork if not already forked
+    #       gh repo fork skyline69/balatro-mod-index --clone=false || true
+
+    #       # Clone your fork
+    #       gh repo clone gfreitash/balatro-mod-index mod-index-fork
+    #       cd mod-index-fork
+
+    #       # Sync with upstream
+    #       git remote add upstream https://github.com/skyline69/balatro-mod-index.git
+    #       git fetch upstream
+    #       git checkout main
+    #       git merge upstream/main
+    #       git push origin main
+
+    #       # Create branch name
+    #       if [ "$IS_UPDATE" = "true" ]; then
+    #         BRANCH_NAME="update-${MOD_NAME}-mod-$(date +%s)"
+    #         PR_TITLE="Update riosodu@${MOD_NAME} mod"
+    #         PR_BODY="**Automated update** of the ${MOD_NAME} mod from balatro-mods repository.
+
+    #       Changes may include:
+    #       - Updated description or metadata
+    #       - New thumbnail image
+    #       - Version information update
+
+    #       This is an automated update from the mono-repository."
+    #       else
+    #         BRANCH_NAME="add-${MOD_NAME}-mod"
+    #         PR_TITLE="Add riosodu@${MOD_NAME} mod"
+    #         PR_BODY="**New mod submission** of the ${MOD_NAME} mod from balatro-mods repository.
+
+    #       This is an automated submission from the mono-repository."
+    #       fi
+
+    #       # Create and switch to branch
+    #       git checkout -b "$BRANCH_NAME"
+
+    #       # Copy submission files
+    #       cp -r ../submission/* mods/
+
+    #       # Check if there are actually changes to commit
+    #       if git diff --quiet && git diff --cached --quiet; then
+    #         if [ "$FORCE_UPDATE" != "true" ]; then
+    #           echo "No changes detected, skipping PR creation"
+    #           exit 0
+    #         fi
+    #       fi
+
+    #       # Commit and push
+    #       git add .
+    #       git commit -m "$(echo "$PR_TITLE" | sed 's/riosodu@//')"
+    #       git push origin "$BRANCH_NAME"
+
+    #       # Create PR
+    #       gh pr create \
+    #         --title "$PR_TITLE" \
+    #         --body "$PR_BODY" \
+    #         --base main \
+    #         --head "$BRANCH_NAME" \
+    #         --repo skyline69/balatro-mod-index

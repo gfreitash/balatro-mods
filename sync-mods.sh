@@ -22,6 +22,10 @@ for dir in */; do
     mod_name="$(basename "$dir")"
     echo "  · $mod_name"
     rsync -av --delete "$dir" "$DEST/$mod_name"
+    # Copy common library into mod's destination folder
+    rsync -av --delete "_common/" "$DEST/$mod_name/common/"
+    # Rename common.json to manifest.json for consistency
+    mv "$DEST/$mod_name/common/common.json" "$DEST/$mod_name/common/manifest.json"
   fi
 done
 

@@ -157,7 +157,7 @@ jobs:
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
           # Define the target repository here
           # IMPORTANT: CHANGE THIS BACK TO 'skyline69/balatro-mod-index' FOR PRODUCTION!
-          TARGET_REPO: "gfreitash/test-balatro-mod-index" # <-- TEMPORARY CHANGE FOR TESTING
+          TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index" # <-- TEMPORARY CHANGE FOR TESTING
           TARGET_BRANCH: "master"
         run: |
           git config --global user.name "github-actions[bot]"

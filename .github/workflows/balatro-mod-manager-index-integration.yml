@@ -124,18 +124,23 @@ jobs:
             done
           fi
 
-          echo "mods_json=$mods_data_json" >> $GITHUB_OUTPUT
-          echo "✅ Detection complete. Output: $mods_data_json"
+          # Ensure the final JSON for output is compact
+          compact_mods_data_json=$(echo "$mods_data_json" | jq -c '.')
+          echo "mods_json=$compact_mods_data_json" >> $GITHUB_OUTPUT
+
+          echo "✅ Detection complete. Output for GITHUB_OUTPUT: $compact_mods_data_json"
+          echo "Full (potentially pretty-printed) mods_data_json for debugging:"
+          echo "$mods_data_json"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For gh commands if any were needed here
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update-index:
     needs: detect-changes
     if: needs.detect-changes.outputs.mods_json != '[]'
     runs-on: ubuntu-latest
     env:
-      TARGET_REPO: "skyline69/balatro-mod-index"
-      TARGET_BRANCH: "main"
+      TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
+      TARGET_BRANCH: "master"
       FORK_OWNER: "gfreitash"
       AUTHOR: "riosodu" # This is the author for the mod index entry, not necessarily github.actor
     strategy:
@@ -246,8 +251,8 @@ jobs:
               echo "🖼️ New thumbnail added"
               VERSION_ONLY_CHANGE=false
             elif [ ! -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
-              echo "🖼️ Thumbnail removed" # Consider if thumbnail removal is a meaningful change
-              VERSION_ONLY_CHANGE=false # Assuming removal is meaningful
+              echo "🖼️ Thumbnail removed"
+              VERSION_ONLY_CHANGE=false
             fi
 
             if [ "$VERSION_ONLY_CHANGE" = "true" ]; then
@@ -259,7 +264,7 @@ jobs:
             fi
           else
             echo "🆕 New mod ($MOD_DIR_NAME) - will create PR"
-            echo "version_only_change=false" >> $GITHUB_OUTPUT # New mod always has meaningful changes
+            echo "version_only_change=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Prepare submission files
@@ -289,13 +294,12 @@ jobs:
       - name: Fork and submit to Balatro Mod Index
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          MOD_DIR_NAME: ${{ matrix.mod.dirName }} # For use in PR titles/bodies if needed directly
-          MOD_TITLE_NAME: ${{ matrix.mod.titleName }} # For display
+          MOD_DIR_NAME: ${{ matrix.mod.dirName }}
+          MOD_TITLE_NAME: ${{ matrix.mod.titleName }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
           VERSION_ONLY_CHANGE: ${{ steps.check_changes.outputs.version_only_change }}
         run: |
-          # Use MOD_DIR_NAME for operations, MOD_TITLE_NAME for display if desired
           CURRENT_MOD_DIR="${{ env.MOD_DIR_NAME }}"
           CURRENT_MOD_TITLE="${{ env.MOD_TITLE_NAME }}"
 
@@ -328,22 +332,22 @@ jobs:
           cd mod-index-fork
 
           echo "🔄 Setting up upstream remote..."
-          git remote add upstream "https://github.com/${{ env.TARGET_REPO }}.git" 2>/dev/null || true # No token needed for fetch
+          git remote add upstream "https://github.com/${{ env.TARGET_REPO }}.git" 2>/dev/null || true
           git fetch upstream
 
           echo "🔄 Syncing with upstream..."
           git checkout ${{ env.TARGET_BRANCH }} 2>/dev/null || git checkout -b ${{ env.TARGET_BRANCH }} upstream/${{ env.TARGET_BRANCH }}
           git reset --hard upstream/${{ env.TARGET_BRANCH }}
-          git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ env.FORK_OWNER }}/$TARGET_REPO_NAME.git" # For push
+          git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ env.FORK_OWNER }}/$TARGET_REPO_NAME.git"
           echo "📤 Syncing fork with upstream..."
           git push origin ${{ env.TARGET_BRANCH }} --force-with-lease
 
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          PR_MOD_IDENTIFIER="${{ env.AUTHOR }}@${CURRENT_MOD_DIR}" # Use dir name for unique ID in PR title
+          PR_MOD_IDENTIFIER="${{ env.AUTHOR }}@${CURRENT_MOD_DIR}"
 
           if [ "$IS_UPDATE" = "true" ]; then
             BRANCH_NAME="update-${CURRENT_MOD_DIR}-${TIMESTAMP}"
-            PR_TITLE="Update ${PR_MOD_IDENTIFIER} mod" # Title uses dirName for consistency
+            PR_TITLE="Update ${PR_MOD_IDENTIFIER} mod"
             PR_BODY="Automated update of the mod '$CURRENT_MOD_TITLE' (directory: $CURRENT_MOD_DIR)
 
           **Mod:** \`${PR_MOD_IDENTIFIER}\`
@@ -380,16 +384,16 @@ jobs:
 
           echo "🔍 Checking for existing open PRs for $PR_MOD_IDENTIFIER..."
           export TEMP_GITHUB_TOKEN="$GITHUB_TOKEN"
-          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" # Use default token for read-only PR list
+          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
 
           EXISTING_PRS=$(gh pr list \
             --repo "${{ env.TARGET_REPO }}" \
             --state open \
             --search "in:title ${PR_MOD_IDENTIFIER}" \
             --json number,title \
-            --jq '.[] | select(.title | contains("'${PR_MOD_IDENTIFIER}'"))') # Search for exact identifier in title
+            --jq '.[] | select(.title | contains("'${PR_MOD_IDENTIFIER}'"))')
 
-          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN" # Switch back to PAT
+          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN"
 
           if [ -n "$EXISTING_PRS" ] && [ "$FORCE_UPDATE" != "true" ]; then
             echo "⚠️ Found existing open PR(s) for $PR_MOD_IDENTIFIER:"
@@ -400,7 +404,7 @@ jobs:
             echo "**Reason:** Existing open PR found for \`${PR_MOD_IDENTIFIER}\`" >> $GITHUB_STEP_SUMMARY
             echo "$EXISTING_PRS" | jq -r '"- #\(.number): \(.title)"' >> $GITHUB_STEP_SUMMARY
             exit 0
-          elif [ -n "$EXISTING_PRS" ] && [ "$FORCE_UPDATE" = "true" ];
+          elif [ -n "$EXISTING_PRS" ] && [ "$FORCE_UPDATE" = "true" ]; then
             echo "🔧 Found existing open PR(s) but force update is enabled. Proceeding..."
           fi
 

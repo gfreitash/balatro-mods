@@ -124,9 +124,13 @@ jobs:
             done
           fi
 
-          # Ensure the final JSON for output is compact
+          # Ensure the final JSON for output is compact and correctly formatted for GITHUB_OUTPUT
           compact_mods_data_json=$(echo "$mods_data_json" | jq -c '.')
-          echo "mods_json=$compact_mods_data_json" >> $GITHUB_OUTPUT
+          {
+            echo "mods_json<<EOF"
+            echo "$compact_mods_data_json"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
           echo "✅ Detection complete. Output for GITHUB_OUTPUT: $compact_mods_data_json"
           echo "Full (potentially pretty-printed) mods_data_json for debugging:"
@@ -384,7 +388,7 @@ jobs:
 
           echo "🔍 Checking for existing open PRs for $PR_MOD_IDENTIFIER..."
           export TEMP_GITHUB_TOKEN="$GITHUB_TOKEN"
-          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" # Use a token with repo scope for PR listing
 
           EXISTING_PRS=$(gh pr list \
             --repo "${{ env.TARGET_REPO }}" \
@@ -393,7 +397,7 @@ jobs:
             --json number,title \
             --jq '.[] | select(.title | contains("'${PR_MOD_IDENTIFIER}'"))')
 
-          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN"
+          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN" # Revert to PAT_TOKEN for push/PR creation
 
           if [ -n "$EXISTING_PRS" ] && [ "$FORCE_UPDATE" != "true" ]; then
             echo "⚠️ Found existing open PR(s) for $PR_MOD_IDENTIFIER:"

@@ -322,12 +322,12 @@ jobs:
             if [ -n "$DESCRIPTION_FROM_MANIFEST" ] && [ "$DESCRIPTION_FROM_MANIFEST" != "null" ]; then
               # Basic handling for multiline in PR body - ensure it's treated as a single paragraph or handle newlines carefully
               # For simplicity, we'll let it flow as is. GitHub Markdown handles newlines in variables well within multiline strings.
-              MOD_MANIFEST_DESCRIPTION_LINE="**Description (from mod's manifest.json):** $DESCRIPTION_FROM_MANIFEST"
+              MOD_MANIFEST_DESCRIPTION_LINE="**Description:** $DESCRIPTION_FROM_MANIFEST"
             else
-              MOD_MANIFEST_DESCRIPTION_LINE="**Description (from mod's manifest.json):** Not available or empty in ${MANIFEST_PATH}."
+              MOD_MANIFEST_DESCRIPTION_LINE="**Description:** Not available or empty in ${MANIFEST_PATH}."
             fi
           else
-            MOD_MANIFEST_DESCRIPTION_LINE="**Description (from mod's manifest.json):** ${MANIFEST_PATH} not found in source repository."
+            MOD_MANIFEST_DESCRIPTION_LINE="**Description:** ${MANIFEST_PATH} not found in source repository."
           fi
 
           if [ "$VERSION_ONLY_CHANGE" = "true" ] && [ "$FORCE_UPDATE" != "true" ]; then

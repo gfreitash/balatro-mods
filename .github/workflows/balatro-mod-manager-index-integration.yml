@@ -3,8 +3,8 @@ name: Update Balatro Mod Index
 on:
   workflow_dispatch:
     inputs:
-      mod_name:
-        description: "Mod name to update (e.g., black-seal)"
+      mod_name: # This will be treated as the directory name
+        description: "Mod directory name to update (e.g., black-seal)"
         required: true
         type: string
       force_update:
@@ -22,311 +22,405 @@ on:
     branches:
       - main
 
+  # Auto-trigger after Release Mod workflow completes successfully
+  workflow_run:
+    workflows: ["Release Mod"]
+    types:
+      - completed
+    branches:
+      - main
+
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      changed_mods: ${{ steps.changes.outputs.mods }}
+      mods_json: ${{ steps.changes.outputs.mods_json }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 2 # For push trigger diff
 
-      - name: Detect changed mods
+      - name: Detect changed mods and their titles
         id: changes
         run: |
-          echo "🔍 Detecting changed mods..."
+          echo "🔍 Detecting changed mods and their titles..."
+          mods_data_json="[]" # Initialize as empty JSON array
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Manual trigger
-            echo "🎯 Manual trigger detected for mod: ${{ github.event.inputs.mod_name }}"
-            echo "mods=[\"${{ github.event.inputs.mod_name }}\"]" >> $GITHUB_OUTPUT
-          else
-            # Auto-trigger: detect which mods had index files changed
+            dir_name="${{ github.event.inputs.mod_name }}"
+            echo "🎯 Manual trigger detected for mod directory: $dir_name"
+            meta_file_path="${dir_name}/index.meta.json"
+            title_name="$dir_name" # Default title to dir_name
+            if [ -f "$meta_file_path" ]; then
+              title_from_file=$(jq -r '.title' "$meta_file_path" 2>/dev/null)
+              if [ -n "$title_from_file" ] && [ "$title_from_file" != "null" ]; then
+                title_name="$title_from_file"
+              else
+                echo "⚠️ Could not read .title from $meta_file_path, using directory name '$dir_name' as title."
+              fi
+            else
+              echo "⚠️ $meta_file_path not found, using directory name '$dir_name' as title."
+            fi
+            mods_data_json=$(echo "$mods_data_json" | jq --arg dir "$dir_name" --arg title "$title_name" '. + [{dirName: $dir, titleName: $title}]')
+
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "🚀 Triggered by Release Mod workflow completion"
+            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+              echo "⚠️ Release Mod workflow did not complete successfully, skipping."
+            else
+              RELEASE_TAG="${{ github.event.workflow_run.head_branch }}" # This should be the tag like modDirName__v1.2.3
+              echo "🏷️ Release workflow was triggered by tag: $RELEASE_TAG"
+              if [[ "$RELEASE_TAG" =~ ^(.*)__v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                dir_name="${BASH_REMATCH[1]}"
+                echo "📦 Extracted mod directory from release tag: $dir_name"
+                meta_file_path="${dir_name}/index.meta.json"
+                title_name="$dir_name" # Default title to dir_name
+                if [ -f "$meta_file_path" ]; then
+                  title_from_file=$(jq -r '.title' "$meta_file_path" 2>/dev/null)
+                  if [ -n "$title_from_file" ] && [ "$title_from_file" != "null" ]; then
+                    title_name="$title_from_file"
+                  else
+                    echo "⚠️ Could not read .title from $meta_file_path, using directory name '$dir_name' as title."
+                  fi
+                else
+                  echo "⚠️ $meta_file_path not found, using directory name '$dir_name' as title."
+                fi
+                mods_data_json=$(echo "$mods_data_json" | jq --arg dir "$dir_name" --arg title "$title_name" '. + [{dirName: $dir, titleName: $title}]')
+              else
+                echo "ℹ️ Release tag '$RELEASE_TAG' did not match expected format (modDirName__vX.Y.Z). Skipping mod detection for this workflow_run event."
+              fi
+            fi
+          else # push trigger
             echo "🤖 Auto-trigger: analyzing changed files..."
             changed_files=$(git diff --name-only HEAD~1 HEAD)
-            mods=()
+            declare -A unique_mod_dirs # Associative array to store dir_name -> title_name
 
             for file in $changed_files; do
               if [[ $file =~ ^([^/]+)/index\.(meta\.json|description\.md|thumbnail\.jpg)$ ]]; then
-                mod_name="${BASH_REMATCH[1]}"
-                if [[ ! " ${mods[@]} " =~ " ${mod_name} " ]]; then
-                  mods+=("$mod_name")
-                  echo "📦 Found changes in mod: $mod_name"
+                dir_name="${BASH_REMATCH[1]}"
+                if [[ -z "${unique_mod_dirs[$dir_name]}" ]]; then # Process each directory only once
+                  meta_file_path="${dir_name}/index.meta.json"
+                  title_name="$dir_name" # Default title to dir_name
+                  if [ -f "$meta_file_path" ]; then
+                    title_from_file=$(jq -r '.title' "$meta_file_path" 2>/dev/null)
+                    if [ -n "$title_from_file" ] && [ "$title_from_file" != "null" ]; then
+                      title_name="$title_from_file"
+                    else
+                      echo "⚠️ Could not read .title from $meta_file_path for dir $dir_name. Using directory name as title."
+                    fi
+                  else
+                    echo "⚠️ $meta_file_path not found for dir $dir_name. Using directory name as title."
+                  fi
+                  unique_mod_dirs["$dir_name"]="$title_name"
+                  echo "📦 Found changes in mod directory: $dir_name (Title: $title_name)"
                 fi
               fi
             done
 
-            # Convert to JSON array
-            printf -v joined '"%s",' "${mods[@]}"
-            echo "mods=[${joined%,}]" >> $GITHUB_OUTPUT
-            echo "✅ Detection complete. Found ${#mods[@]} mod(s) with changes"
+            for dir in "${!unique_mod_dirs[@]}"; do
+              title="${unique_mod_dirs[$dir]}"
+              mods_data_json=$(echo "$mods_data_json" | jq --arg d "$dir" --arg t "$title" '. + [{dirName: $d, titleName: $t}]')
+            done
           fi
+
+          echo "mods_json=$mods_data_json" >> $GITHUB_OUTPUT
+          echo "✅ Detection complete. Output: $mods_data_json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For gh commands if any were needed here
 
   update-index:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed_mods != '[]'
+    if: needs.detect-changes.outputs.mods_json != '[]'
     runs-on: ubuntu-latest
     env:
-      TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
-      TARGET_BRANCH: "master"
+      TARGET_REPO: "skyline69/balatro-mod-index"
+      TARGET_BRANCH: "main"
       FORK_OWNER: "gfreitash"
-      AUTHOR: "riosodu"
+      AUTHOR: "riosodu" # This is the author for the mod index entry, not necessarily github.actor
     strategy:
       matrix:
-        mod_name: ${{ fromJson(needs.detect-changes.outputs.changed_mods) }}
+        mod: ${{ fromJson(needs.detect-changes.outputs.mods_json) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Verify mod and index files
         run: |
-          echo "🔍 Verifying mod structure for: ${{ matrix.mod_name }}"
-          MOD_NAME="${{ matrix.mod_name }}"
-          if [ ! -d "$MOD_NAME" ]; then
-            echo "❌ Error: Mod folder '$MOD_NAME' does not exist"
+          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          echo "🔍 Verifying mod structure for directory: $MOD_DIR_NAME (Title: ${{ matrix.mod.titleName }})"
+          if [ ! -d "$MOD_DIR_NAME" ]; then
+            echo "❌ Error: Mod folder '$MOD_DIR_NAME' does not exist"
             exit 1
           fi
-          if [ ! -f "$MOD_NAME/index.meta.json" ]; then
-            echo "❌ Error: index.meta.json not found in $MOD_NAME"
+          if [ ! -f "$MOD_DIR_NAME/index.meta.json" ]; then
+            echo "❌ Error: index.meta.json not found in $MOD_DIR_NAME"
             exit 1
           fi
-          if [ ! -f "$MOD_NAME/index.description.md" ]; then
-            echo "❌ Error: index.description.md not found in $MOD_NAME"
+          if [ ! -f "$MOD_DIR_NAME/index.description.md" ]; then
+            echo "❌ Error: index.description.md not found in $MOD_DIR_NAME"
             exit 1
           fi
-          echo "✅ All required files found for $MOD_NAME"
+          echo "✅ All required files found for $MOD_DIR_NAME"
 
       - name: Get latest version for mod
         id: version
         run: |
-          echo "🔍 Getting latest version for: ${{ matrix.mod_name }}"
-          MOD_NAME="${{ matrix.mod_name }}"
-          LATEST_TAG="${MOD_NAME}__latest"
+          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          echo "🔍 Getting latest version for: $MOD_DIR_NAME"
+          LATEST_TAG="${MOD_DIR_NAME}__latest"
 
-          # Get version from the Latest release description (simpler approach)
           LATEST_VERSION=$(gh release view "$LATEST_TAG" --repo ${{ github.repository }} --json body --jq '.body' | \
             grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^v//')
 
           if [ -z "$LATEST_VERSION" ]; then
-            echo "⚠️ Warning: No latest release found for $MOD_NAME, using 0.0.0"
+            echo "⚠️ Warning: No latest release found for $MOD_DIR_NAME (tag $LATEST_TAG), using 0.0.0"
             LATEST_VERSION="0.0.0"
           fi
 
           echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "📋 Latest version for $MOD_NAME: $LATEST_VERSION"
+          echo "📋 Latest version for $MOD_DIR_NAME: $LATEST_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if mod exists in index
         id: check_exists
         run: |
-          echo "🔍 Checking if mod exists in index..."
-          MOD_NAME="${{ matrix.mod_name }}"
-
-          # Clone the mod index to check if mod already exists
+          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          echo "🔍 Checking if mod ${{ env.AUTHOR }}@$MOD_DIR_NAME exists in index..."
           echo "📥 Cloning target repository to check existing mods..."
           gh repo clone "${{ env.TARGET_REPO }}" temp-index || exit 1
 
-          if [ -d "temp-index/mods/${{ env.AUTHOR }}@${MOD_NAME}" ]; then
+          if [ -d "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✅ Mod ${{ env.AUTHOR }}@${MOD_NAME} already exists in index"
+            echo "✅ Mod ${{ env.AUTHOR }}@${MOD_DIR_NAME} already exists in index"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "🆕 Mod ${{ env.AUTHOR }}@${MOD_NAME} is new to index"
+            echo "🆕 Mod ${{ env.AUTHOR }}@${MOD_DIR_NAME} is new to index"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare submission files
+      - name: Check for changes that matter
+        id: check_changes
         run: |
-          echo "📁 Preparing submission files..."
-          MOD_NAME="${{ matrix.mod_name }}"
+          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          echo "🔍 Analyzing changes for $MOD_DIR_NAME to determine if PR is needed..."
           VERSION="${{ steps.version.outputs.version }}"
 
-          mkdir -p "submission/${{ env.AUTHOR }}@${MOD_NAME}"
+          mkdir -p "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
 
-          # Process meta.json with dynamic values
-          echo "🔧 Processing meta.json with dynamic values..."
-          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_NAME}__latest/${MOD_NAME}.zip" \
-             --arg folder "$MOD_NAME" \
+          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+             --arg folder "$MOD_DIR_NAME" \
              --arg version "$VERSION" \
              '. + {downloadURL: $url, folderName: $folder, version: $version}' \
-             "$MOD_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_NAME}/meta.json"
+             "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
 
-          echo "📝 Copying description file..."
-          cp "$MOD_NAME/index.description.md" "submission/${{ env.AUTHOR }}@${MOD_NAME}/description.md"
+          cp "$MOD_DIR_NAME/index.description.md" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
 
-          if [ -f "$MOD_NAME/index.thumbnail.jpg" ]; then
-            echo "🖼️ Copying thumbnail image..."
-            cp "$MOD_NAME/index.thumbnail.jpg" "submission/${{ env.AUTHOR }}@${MOD_NAME}/thumbnail.jpg"
-          else
-            echo "ℹ️ No thumbnail found, skipping..."
+          if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ]; then
+            cp "$MOD_DIR_NAME/index.thumbnail.jpg" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg"
           fi
 
-          echo "✅ Submission files prepared successfully"
+          if [ "${{ steps.check_exists.outputs.exists }}" = "true" ]; then
+            echo "📊 Comparing with existing mod in index..."
+            VERSION_ONLY_CHANGE=true
+
+            if ! jq 'del(.version)' "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json" | \
+                 diff -q - <(jq 'del(.version)' "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json" 2>/dev/null || echo "{}") >/dev/null 2>&1; then
+              echo "📝 Meta.json has non-version changes"
+              VERSION_ONLY_CHANGE=false
+            fi
+
+            if ! diff -q "$MOD_DIR_NAME/index.description.md" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md" >/dev/null 2>&1; then
+              echo "📝 Description has changes"
+              VERSION_ONLY_CHANGE=false
+            fi
+
+            if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
+              if ! diff -q "$MOD_DIR_NAME/index.thumbnail.jpg" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" >/dev/null 2>&1; then
+                echo "🖼️ Thumbnail has changes"
+                VERSION_ONLY_CHANGE=false
+              fi
+            elif [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ ! -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
+              echo "🖼️ New thumbnail added"
+              VERSION_ONLY_CHANGE=false
+            elif [ ! -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
+              echo "🖼️ Thumbnail removed" # Consider if thumbnail removal is a meaningful change
+              VERSION_ONLY_CHANGE=false # Assuming removal is meaningful
+            fi
+
+            if [ "$VERSION_ONLY_CHANGE" = "true" ]; then
+              echo "ℹ️ Only version changed for $MOD_DIR_NAME - mod index will auto-update via automatic-version-check"
+              echo "version_only_change=true" >> $GITHUB_OUTPUT
+            else
+              echo "📝 Meaningful changes detected for $MOD_DIR_NAME beyond version"
+              echo "version_only_change=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "🆕 New mod ($MOD_DIR_NAME) - will create PR"
+            echo "version_only_change=false" >> $GITHUB_OUTPUT # New mod always has meaningful changes
+          fi
+
+      - name: Prepare submission files
+        run: |
+          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          echo "📁 Preparing submission files for $MOD_DIR_NAME..."
+          VERSION="${{ steps.version.outputs.version }}"
+
+          mkdir -p "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
+
+          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+             --arg folder "$MOD_DIR_NAME" \
+             --arg version "$VERSION" \
+             '. + {downloadURL: $url, folderName: $folder, version: $version}' \
+             "$MOD_DIR_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
+
+          cp "$MOD_DIR_NAME/index.description.md" "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
+
+          if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ]; then
+            echo "🖼️ Copying thumbnail image for $MOD_DIR_NAME..."
+            cp "$MOD_DIR_NAME/index.thumbnail.jpg" "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg"
+          else
+            echo "ℹ️ No thumbnail found for $MOD_DIR_NAME, skipping..."
+          fi
+          echo "✅ Submission files prepared successfully for $MOD_DIR_NAME"
 
       - name: Fork and submit to Balatro Mod Index
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          MOD_NAME: ${{ matrix.mod_name }}
+          MOD_DIR_NAME: ${{ matrix.mod.dirName }} # For use in PR titles/bodies if needed directly
+          MOD_TITLE_NAME: ${{ matrix.mod.titleName }} # For display
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
+          VERSION_ONLY_CHANGE: ${{ steps.check_changes.outputs.version_only_change }}
         run: |
-          echo "🚀 Starting fork and submission process..."
-          # Configure git with your details
+          # Use MOD_DIR_NAME for operations, MOD_TITLE_NAME for display if desired
+          CURRENT_MOD_DIR="${{ env.MOD_DIR_NAME }}"
+          CURRENT_MOD_TITLE="${{ env.MOD_TITLE_NAME }}"
+
+          if [ "$VERSION_ONLY_CHANGE" = "true" ] && [ "$FORCE_UPDATE" != "true" ]; then
+            echo "ℹ️ Skipping PR for $CURRENT_MOD_DIR - only version changed and automatic-version-check handles this"
+            echo "## ℹ️ PR Skipped - Auto-Update" >> $GITHUB_STEP_SUMMARY
+            echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** Only version changed - handled automatically by mod index" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          echo "🚀 Starting fork and submission process for $CURRENT_MOD_DIR..."
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-
-          # Configure git to use the PAT for GitHub authentication
           git config --global url."https://$GITHUB_TOKEN@github.com/".insteadOf "https://github.com/"
 
           TARGET_REPO_NAME=$(echo "${{ env.TARGET_REPO }}" | cut -d'/' -f2)
-          TARGET_REPO_OWNER=$(echo "${{ env.TARGET_REPO }}" | cut -d'/' -f1)
 
           echo "🍴 Forking ${{ env.TARGET_REPO }} to ${{ env.FORK_OWNER }}/$TARGET_REPO_NAME"
-
-          # Check if fork already exists
           if gh repo view "${{ env.FORK_OWNER }}/$TARGET_REPO_NAME" >/dev/null 2>&1; then
             echo "✅ Fork already exists"
           else
             echo "🔄 Creating fork..."
-            FORK_URL=$(gh repo fork "${{ env.TARGET_REPO }}" --clone=false)
-            echo "✅ Fork created: $FORK_URL"
-
-            # Wait for fork to be fully available
-            echo "⏳ Waiting for fork to be fully available..."
-            sleep 10
+            gh repo fork "${{ env.TARGET_REPO }}" --clone=false
+            echo "⏳ Waiting for fork..." && sleep 10
           fi
 
-          # Clone the fork
           echo "📥 Cloning fork..."
           gh repo clone "${{ env.FORK_OWNER }}/$TARGET_REPO_NAME" mod-index-fork
           cd mod-index-fork
 
-          # Set up upstream remote with authentication
           echo "🔄 Setting up upstream remote..."
-          git remote add upstream "https://$GITHUB_TOKEN@github.com/${{ env.TARGET_REPO }}.git" 2>/dev/null || true
+          git remote add upstream "https://github.com/${{ env.TARGET_REPO }}.git" 2>/dev/null || true # No token needed for fetch
           git fetch upstream
 
-          # Ensure we're on the target branch and synced
           echo "🔄 Syncing with upstream..."
           git checkout ${{ env.TARGET_BRANCH }} 2>/dev/null || git checkout -b ${{ env.TARGET_BRANCH }} upstream/${{ env.TARGET_BRANCH }}
           git reset --hard upstream/${{ env.TARGET_BRANCH }}
-
-          # Configure the origin remote to use the token (important!)
-          git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ env.FORK_OWNER }}/$TARGET_REPO_NAME.git"
-
-          # Push the synced branch to your fork
+          git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ env.FORK_OWNER }}/$TARGET_REPO_NAME.git" # For push
           echo "📤 Syncing fork with upstream..."
           git push origin ${{ env.TARGET_BRANCH }} --force-with-lease
 
-          # Create unique branch name with timestamp
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          PR_MOD_IDENTIFIER="${{ env.AUTHOR }}@${CURRENT_MOD_DIR}" # Use dir name for unique ID in PR title
+
           if [ "$IS_UPDATE" = "true" ]; then
-            BRANCH_NAME="update-${MOD_NAME}-${TIMESTAMP}"
-            PR_TITLE="Update ${{ env.AUTHOR }}@${MOD_NAME} mod"
-            PR_BODY="Automated update of the ${MOD_NAME} mod
+            BRANCH_NAME="update-${CURRENT_MOD_DIR}-${TIMESTAMP}"
+            PR_TITLE="Update ${PR_MOD_IDENTIFIER} mod" # Title uses dirName for consistency
+            PR_BODY="Automated update of the mod '$CURRENT_MOD_TITLE' (directory: $CURRENT_MOD_DIR)
 
-          **Changes:**
-          - Updated mod metadata and description
-          - Refreshed from source repository
-          - Automated via GitHub Actions
-
-          **Mod:** \`${{ env.AUTHOR }}@${MOD_NAME}\`
+          **Mod:** \`${PR_MOD_IDENTIFIER}\`
           **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
           **Commit:** ${GITHUB_SHA:0:7}
-
           ---
-          **Note:** This PR was created automatically, but I actively monitor all submissions and will respond to any review comments or feedback. Feel free to suggest changes or ask questions!"
-            echo "🔄 Preparing update for existing mod..."
+          **Note:** This PR was created automatically, but I actively monitor all submissions and will respond to any review comments or feedback."
+            echo "🔄 Preparing update for existing mod $CURRENT_MOD_DIR..."
           else
-            BRANCH_NAME="add-${MOD_NAME}-${TIMESTAMP}"
-            PR_TITLE="Add ${{ env.AUTHOR }}@${MOD_NAME} mod"
-            PR_BODY="New mod submission for ${MOD_NAME}
+            BRANCH_NAME="add-${CURRENT_MOD_DIR}-${TIMESTAMP}"
+            PR_TITLE="Add ${PR_MOD_IDENTIFIER} mod"
+            PR_BODY="New mod submission: '$CURRENT_MOD_TITLE' (directory: $CURRENT_MOD_DIR)
 
           **Mod Details:**
           - Author: ${{ env.AUTHOR }}
-          - Name: ${MOD_NAME}
-          - Automated submission from mono-repository
+          - Name: $CURRENT_MOD_TITLE (Directory: $CURRENT_MOD_DIR)
 
+          **Mod:** \`${PR_MOD_IDENTIFIER}\`
           **Source:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
           **Commit:** ${GITHUB_SHA:0:7}
-
           ---
-          **Note:** This PR was created automatically, but I actively monitor all submissions and will respond to any review comments or feedback. Feel free to suggest changes or ask questions!"
-            echo "🆕 Preparing submission for new mod..."
+          **Note:** This PR was created automatically, but I actively monitor all submissions and will respond to any review comments or feedback."
+            echo "🆕 Preparing submission for new mod $CURRENT_MOD_DIR..."
           fi
 
-          # Create and switch to feature branch
           echo "🌿 Creating branch: $BRANCH_NAME"
           git checkout -b "$BRANCH_NAME"
 
-          # Copy submission files
           echo "📁 Copying submission files..."
           mkdir -p mods
           cp -r ../submission/* mods/
 
-          # Show what was copied for debugging
-          echo "📋 Files in submission:"
-          find mods -type f | head -20
+          echo "📋 Files in submission:" && find mods -type f | head -20
 
-          # Check for existing open PRs before proceeding
-          echo "🔍 Checking for existing open PRs for $MOD_NAME..."
-
-          # Switch to default token for checking PRs (read-only operation)
+          echo "🔍 Checking for existing open PRs for $PR_MOD_IDENTIFIER..."
           export TEMP_GITHUB_TOKEN="$GITHUB_TOKEN"
-          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" # Use default token for read-only PR list
 
-          # Search for open PRs that mention this mod in the title
           EXISTING_PRS=$(gh pr list \
             --repo "${{ env.TARGET_REPO }}" \
             --state open \
-            --search "in:title ${{ env.AUTHOR }}@${MOD_NAME}" \
-            --json number,title,headRefName \
-            --jq '.[] | select(.title | contains("${{ env.AUTHOR }}@'${MOD_NAME}'")) | {number, title, branch: .headRefName}')
+            --search "in:title ${PR_MOD_IDENTIFIER}" \
+            --json number,title \
+            --jq '.[] | select(.title | contains("'${PR_MOD_IDENTIFIER}'"))') # Search for exact identifier in title
 
-          if [ -n "$EXISTING_PRS" ]; then
-            echo "⚠️ Found existing open PR(s) for ${{ env.AUTHOR }}@${MOD_NAME}:"
-            echo "$EXISTING_PRS" | jq -r '"#\(.number): \(.title) (\(.branch))"'
-            echo "🚫 Skipping PR creation - existing open PR found for $MOD_NAME"
+          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN" # Switch back to PAT
 
-            # Add to job summary
-            echo "## ⚠️ PR Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
-            echo "**Reason:** Existing open PR found" >> $GITHUB_STEP_SUMMARY
-            echo "**Existing PRs:**" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$EXISTING_PRS" ] && [ "$FORCE_UPDATE" != "true" ]; then
+            echo "⚠️ Found existing open PR(s) for $PR_MOD_IDENTIFIER:"
+            echo "$EXISTING_PRS" | jq -r '"- #\(.number): \(.title)"'
+            echo "🚫 Skipping PR creation."
+            echo "## ⚠️ PR Skipped - Existing PR" >> $GITHUB_STEP_SUMMARY
+            echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** Existing open PR found for \`${PR_MOD_IDENTIFIER}\`" >> $GITHUB_STEP_SUMMARY
             echo "$EXISTING_PRS" | jq -r '"- #\(.number): \(.title)"' >> $GITHUB_STEP_SUMMARY
             exit 0
-          else
-            echo "✅ No existing open PRs found for ${{ env.AUTHOR }}@${MOD_NAME}"
+          elif [ -n "$EXISTING_PRS" ] && [ "$FORCE_UPDATE" = "true" ];
+            echo "🔧 Found existing open PR(s) but force update is enabled. Proceeding..."
           fi
 
-          # Switch back to PAT for PR creation
-          export GITHUB_TOKEN="$TEMP_GITHUB_TOKEN"
-
-          # Stage changes
           git add .
-
-          # Check if there are changes to commit
           if git diff --cached --quiet; then
             if [ "$FORCE_UPDATE" != "true" ]; then
-              echo "ℹ️ No changes detected, skipping PR creation"
+              echo "ℹ️ No changes detected for $CURRENT_MOD_DIR, skipping PR creation"
               exit 0
             else
-              echo "🔧 Force update requested, creating empty commit"
+              echo "🔧 Force update requested for $CURRENT_MOD_DIR, creating empty commit"
               git commit --allow-empty -m "$PR_TITLE (forced update)"
             fi
           else
-            echo "💾 Committing changes..."
+            echo "💾 Committing changes for $CURRENT_MOD_DIR..."
             git commit -m "$PR_TITLE"
           fi
 
-          # Push the feature branch
           echo "📤 Pushing to origin/$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
 
-          # Create PR to the original repository
           echo "🎯 Creating PR to ${{ env.TARGET_REPO }}"
           PR_URL=$(gh pr create \
             --title "$PR_TITLE" \
@@ -335,10 +429,7 @@ jobs:
             --head "${{ env.FORK_OWNER }}:$BRANCH_NAME" \
             --repo "${{ env.TARGET_REPO }}")
 
-          echo "✅ PR created successfully: $PR_URL"
-
-          # Add PR URL to job summary
+          echo "✅ PR created successfully for $CURRENT_MOD_DIR: $PR_URL"
           echo "## 🎉 Pull Request Created" >> $GITHUB_STEP_SUMMARY
-          echo "**Mod:** $MOD_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** [$PR_TITLE]($PR_URL)" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY

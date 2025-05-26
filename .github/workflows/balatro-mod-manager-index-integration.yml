@@ -17,7 +17,7 @@ on:
   push:
     paths:
       - "*/index.meta.json"
-      - "*/index.description.md"
+      - "*/README.md"
       - "*/index.thumbnail.jpg"
     branches:
       - main
@@ -165,8 +165,8 @@ jobs:
             echo "❌ Error: index.meta.json not found in $MOD_DIR_NAME in ${{ github.repository }}"
             exit 1
           fi
-          if [ ! -f "$MOD_DIR_NAME/index.description.md" ]; then
-            echo "❌ Error: index.description.md not found in $MOD_DIR_NAME in ${{ github.repository }}"
+          if [ ! -f "$MOD_DIR_NAME/README.md" ]; then
+            echo "❌ Error: README.md not found in $MOD_DIR_NAME in ${{ github.repository }}"
             exit 1
           fi
           # Check for manifest.json for the description part
@@ -245,7 +245,7 @@ jobs:
               VERSION_ONLY_CHANGE=false
             fi
 
-            if ! diff -q "$MOD_DIR_NAME/index.description.md" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md" >/dev/null 2>&1; then
+            if ! diff -q "$MOD_DIR_NAME/README.md" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md" >/dev/null 2>&1; then
               echo "📝 Description has changes"
               VERSION_ONLY_CHANGE=false
             fi
@@ -290,7 +290,7 @@ jobs:
              '. + {downloadURL: $url, folderName: $folder, version: $version}' \
              "$MOD_DIR_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
 
-          cp "$MOD_DIR_NAME/index.description.md" "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
+          cp "$MOD_DIR_NAME/README.md" "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
 
           if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ]; then
             echo "🖼️ Copying thumbnail image for $MOD_DIR_NAME..."

@@ -229,7 +229,7 @@ jobs:
              '. + {downloadURL: $url, folderName: $folder, version: $version}' \
              "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
 
-          cp "$MOD_DIR_NAME/index.description.md" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
+          cp "$MOD_DIR_NAME/README.md" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
 
           if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ]; then
             cp "$MOD_DIR_NAME/index.thumbnail.jpg" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg"

@@ -142,8 +142,8 @@ jobs:
     if: needs.detect-changes.outputs.mods_json != '[]'
     runs-on: ubuntu-latest
     env:
-      TARGET_REPO: "ghfreitas-oss/test-balatro-mod-index"
-      TARGET_BRANCH: "master"
+      TARGET_REPO: "skyline69/balatro-mod-index"
+      TARGET_BRANCH: "main"
       FORK_OWNER: "gfreitash"
       AUTHOR: "riosodu"
     strategy:
@@ -382,6 +382,7 @@ jobs:
 
           **Source Files (in ${GITHUB_REPOSITORY}):** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/main/${CURRENT_MOD_DIR}
           **Triggering Commit (in ${GITHUB_REPOSITORY}):** [${GITHUB_SHA:0:7}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})
+
           ---
           **Note:** This PR was created automatically. Review comments and feedback are welcome."
             echo "🔄 Preparing update for existing mod $CURRENT_MOD_DIR..."
@@ -399,6 +400,7 @@ jobs:
 
           **Source Files (in ${GITHUB_REPOSITORY}):** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/main/${CURRENT_MOD_DIR}
           **Triggering Commit (in ${GITHUB_REPOSITORY}):** [${GITHUB_SHA:0:7}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})
+
           ---
           **Note:** This PR was created automatically. Review comments and feedback are welcome."
             echo "🆕 Preparing submission for new mod $CURRENT_MOD_DIR..."

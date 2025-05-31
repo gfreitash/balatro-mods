@@ -1,0 +1,42 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]Test change
+
+## [3.2.2] 2025-05-25
+### Added
+- Added files for integration with Balatro Mod Manager
+
+## [3.2.1] 2025-05-25
+### Changed
+- Made small negligible change to test CI workflow
+
+## [3.2.0] 2025-04-26
+### Added
+- Added option to add a black seal to a card when the ectoplasm spectral card is applied, instead of directly applying negative
+- Added an option to disable hand size reduction when the ectoplasm effect is overridden
+
+## [3.1.1] 2025-04-25
+### Fixed
+- Fixed a bug where seals were not being properly cleaned
+
+## [3.1.0] 2025-04-25
+### Added
+- Added a configurable spawn chance related to other seals
+
+### Changed
+- Updated mod file structure. Should have no impact for users
+
+## [2.1.0] 2025-04-24
+### Added
+- Seals in hand are now kept, except played seal. Seals in deck are still removed
+
+### Fixed
+- Fixed bugs related to seals being removed even when the application was not successful
+
+## [2.0.0] 2025-04-24
+### Changed
+- Updated to SMODS >1.0.0

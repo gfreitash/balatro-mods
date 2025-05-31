@@ -59,6 +59,48 @@ jobs:
           zip -r "../$LATEST_ZIP_NAME" "$MOD_NAME"
           cd ..
 
+      - name: Extract Changelog Entry for Release
+        id: extract_changelog
+        run: |
+          MOD_CHANGELOG_FILE="${{ env.MOD_NAME }}/CHANGELOG.md"
+          RELEASE_VERSION="${{ env.VERSION }}"
+          CHANGELOG_BODY=""
+
+          if [ -f "$MOD_CHANGELOG_FILE" ]; then
+            echo "📖 Found changelog file: $MOD_CHANGELOG_FILE"
+            # Find the line with the release version heading
+            START_LINE=$(grep -n "^## \\[${RELEASE_VERSION}\\]" "$MOD_CHANGELOG_FILE" | cut -d: -f1)
+
+            if [ -n "$START_LINE" ]; then
+              # Find the line of the next version heading (or end of file)
+              # This finds any line starting with '## [' after the start line
+              END_LINE=$(tail -n +$((START_LINE + 1)) "$MOD_CHANGELOG_FILE" | grep -n "^## \\[" | head -1 | cut -d: -f1)
+              if [ -n "$END_LINE" ]; then
+                # Extract lines between START_LINE and END_LINE
+                # Add START_LINE + 1 to the original file to start after the version header
+                # Add START_LINE to get the correct end line number in the original file
+                CHANGELOG_BODY=$(sed -n "$((START_LINE + 1)),$((START_LINE + END_LINE -1))p" "$MOD_CHANGELOG_FILE")
+              else
+                # If no next version found, extract from START_LINE to the end
+                CHANGELOG_BODY=$(tail -n +$((START_LINE + 1)) "$MOD_CHANGELOG_FILE")
+              fi
+              echo "✅ Extracted changelog entry for v${RELEASE_VERSION}"
+            else
+              echo "⚠️ Warning: No changelog entry found for version v${RELEASE_VERSION} in $MOD_CHANGELOG_FILE"
+              CHANGELOG_BODY="No changelog entry found for v${RELEASE_VERSION}."
+            fi
+          else
+            echo "⚠️ Warning: Changelog file not found at $MOD_CHANGELOG_FILE"
+            CHANGELOG_BODY="No changelog file found."
+          fi
+
+          # Escape the changelog body for multi-line output
+          # Using tr to replace CR with empty string and then % with %25, \n with %0A, \r with %0D
+          DELIMITER="$(openssl rand -hex 10)"
+          echo "changelog_body<<$DELIMITER" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
+          echo "$DELIMITER" >> $GITHUB_OUTPUT
+
       - name: Check for existing latest release
         id: check_latest
         run: |
@@ -103,6 +145,11 @@ jobs:
 
             This release always contains the most recent version of ${{ env.MOD_NAME }}.
 
+            ---
+            **Changelog for v${{ env.VERSION }}:**
+            ${{ steps.extract_changelog.outputs.changelog_body }}
+
+            ---
             For version-specific releases, see: [${{ env.MOD_NAME }} v${{ env.VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_NAME }})
           prerelease: false
         env:

@@ -2,111 +2,6 @@
 version = "1.1.0" # Incremented version for new changes
 dump_lua = true # Optional: Keep enabled for debugging
 
-# --- Stake 5 / Blue Stake Changes (Keep as before) ---
-
-[[patches]]
-[patches.pattern]
-target = "game.lua"
-pattern = "if self.GAME.stake >= 5 then self.GAME.starting_params.discards = self.GAME.starting_params.discards - 1 end"
-position = "at"
-payload = "if self.GAME.stake >= 5 then self.GAME.modifiers.enable_perishables_in_shop = true end"
-match_indent = true
-times = 1
-
-[[patches]]
-[patches.pattern]
-target = '=[SMODS _ "src/game_object.lua"]'
-pattern = '''
-        modifiers = function()
-             G.GAME.starting_params.discards = G.GAME.starting_params.discards - 1
-        end,
-        colour = G.C.BLUE,
-'''
-position = "at"
-payload = '''
-        modifiers = function()
-            G.GAME.modifiers.enable_perishables_in_shop = true
-        end,
-        colour = G.C.BLUE,
-'''
-match_indent = true
-times = 1
-
-# --- Stake 7 / Orange Stake Changes (Keep as before) ---
-
-[[patches]]
-[patches.pattern]
-target = "game.lua"
-pattern = "if self.GAME.stake >= 7 then self.GAME.modifiers.enable_perishables_in_shop = true end"
-position = "at"
-payload = "if self.GAME.stake >= 7 then self.GAME.modifiers.enable_rentals_in_shop = true end"
-match_indent = true
-times = 1
-
-[[patches]]
-[patches.pattern]
-target = '=[SMODS _ "src/game_object.lua"]'
-pattern = '''
-        modifiers = function()
-            G.GAME.modifiers.enable_perishables_in_shop = true
-        end,
-        colour = G.C.ORANGE,
-'''
-position = "at"
-payload = '''
-        modifiers = function()
-            G.GAME.modifiers.enable_rentals_in_shop = true
-        end,
-        colour = G.C.ORANGE,
-'''
-match_indent = true
-times = 1
-
-# --- Stake 8 / Gold Stake Changes (Modified Payload) ---
-
-# Modify the Stake 8 logic in game.lua
-[[patches]]
-[patches.pattern]
-target = "game.lua"
-# Find the original Stake 8 line (or the first line if it was multi-line)
-pattern = "if self.GAME.stake >= 8 then self.GAME.modifiers.enable_rentals_in_shop = true end"
-# Replace the entire matched line/block
-position = "at"
-payload = '''
-if self.GAME.stake >= 8 then
-        self.GAME.win_ante = 9
-        self.GAME.interest_base = 6
-        self.GAME.interest_cap = 30
-end
-'''
-match_indent = true
-times = 1
-
-# Modify the Gold Stake modifier function in game_object.lua
-[[patches]]
-[patches.pattern]
-target = '=[SMODS _ "src/game_object.lua"]'
-# Find the line within the Gold Stake's modifier function that we previously targeted
-pattern = '''
-        modifiers = function()
-            G.GAME.modifiers.enable_rentals_in_shop = true
-        end,
-        colour = G.C.GOLD,
-'''
-# Replace that line
-position = "at"
-# New payload: Set interest_base to 6
-# Note: We replace only the single line here, within the existing function structure.
-payload = '''
-        modifiers = function()
-            G.GAME.win_ante = 9
-            G.GAME.interest_base = 6
-            G.GAME.interest_cap = 30
-        end,
-        colour = G.C.GOLD,
-'''
-match_indent = true
-times = 1
 
 # --- Interest Calculation Changes ---
 
@@ -120,7 +15,7 @@ pattern = "interest_amount = 1,"
 position = "after"
 # The new line to add, including the comma
 payload = "interest_base = 5,"
-match_indent = true 
+match_indent = true
 times = 1
 
 # Modify Seed Money and Money Tree extra in game.lua
@@ -225,7 +120,7 @@ pattern = '''
         add_round_eval_row({bonus = true, name='interest', pitch = pitch, dollars = G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5)})
         pitch = pitch + 0.06
         if (not G.GAME.seeded and not G.GAME.challenge) or SMODS.config.seeded_unlocks then
-            if G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5) == G.GAME.interest_amount*G.GAME.interest_cap/5 then 
+            if G.GAME.interest_amount*math.min(math.floor(G.GAME.dollars/5), G.GAME.interest_cap/5) == G.GAME.interest_amount*G.GAME.interest_cap/5 then
                 G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak + 1
             else
                 G.PROFILES[G.SETTINGS.profile].career_stats.c_round_interest_cap_streak = 0

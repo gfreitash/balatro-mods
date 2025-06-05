@@ -130,7 +130,9 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           files: ${{ env.ZIP_NAME }}
           name: ${{ env.MOD_NAME }} v${{ env.VERSION }}
-          generate_release_notes: true
+          body: |
+            **Changelog for v${{ env.VERSION }}:**
+            ${{ steps.extract_changelog.outputs.changelog_body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

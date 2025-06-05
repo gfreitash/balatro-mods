@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.2.1] 2025-06-04
+### Fixed
+- Fixed initialization of the mod
+
+### Added
+- Added debug logs for initialization
+
+## [1.2.1] 2025-06-04
 ### Added
 - Added integration for mod-index
 

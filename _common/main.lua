@@ -36,6 +36,15 @@ function riosodu_shared_init()
     include('debug.lua')
     include('ui/tabs.lua')
 
+    ---@param mod_id string The ID of the mod calling this function
+    ---@param filename string The path to the file relative to the mod's directory
+    function RIOSODU_SHARED.include_mod_file(mod_id, filename)
+        local chunk = SMODS.load_file(filename, mod_id)
+        if chunk then
+            chunk()
+        end
+    end
+
     -- Set config tab hook for main mod
     if SMODS.current_mod.id == 'riosodu_shared' then
         SMODS.current_mod.config_tab = function()

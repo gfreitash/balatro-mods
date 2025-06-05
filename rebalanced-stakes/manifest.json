@@ -4,6 +4,6 @@
   "author":  ["Riosodu"],
   "description": "Removes the -1 discard from blue stake, moving joker stickers to earlier stakes while completely reworking the gold stake to still be a challenge without restricting played hands",
   "prefix": "rstakes",
-  "main_file": "main.lua",
-  "version": "1.1.0"
+  "main_file": "src/init.lua",
+  "version": "1.2.2"
 }

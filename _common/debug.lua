@@ -3,9 +3,9 @@ RIOSODU_SHARED.debug = RIOSODU_SHARED.debug or {
   registered_keybinds = {}
 }
 
-function RIOSODU_SHARED.utils.sendDebugMessage(mod_id, msg)
+function RIOSODU_SHARED.utils.sendDebugMessage(msg, mod_id)
   if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_logging_enabled then
-    local full_msg = mod_id .. ": " .. tostring(msg)
+    local full_msg = (mod_id or 'riosodu_shared') .. ": " .. tostring(msg)
     if SMODS and SMODS.log then
       SMODS.log(full_msg)
     elseif G and G.log and G.log.debug then

@@ -1,0 +1,2 @@
+-- QoL Bundle/src/main.lua
+-- This file can be used for any additional main mod logic, but currently it's empty.

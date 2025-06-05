@@ -1,0 +1,13 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+
+
+# Make debuff wildcard harder/impossible
+[[patches]]
+[patches.pattern]
+target = "blind.lua"
+pattern = "if self.debuff.suit and card:is_suit(self.debuff.suit, true) then"
+position = "at"
+payload = "if self.debuff.suit and card:is_suit(self.debuff.suit, true, nil, QOL_BUNDLE.config.wildcard_fix_enabled) then" # Make blinds use the new trying_to_debuff parameter
+match_indent = true

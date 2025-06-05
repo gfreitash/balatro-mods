@@ -52,6 +52,33 @@ function riosodu_shared_init()
         end
     end
 
+    -- Initialize hooks table
+    RIOSODU_SHARED.hooks = {
+        on_game_start = {}
+    }
+
+    -- Function to register hooks
+    function RIOSODU_SHARED.register_hook(event_name, func)
+        if RIOSODU_SHARED.hooks[event_name] then
+            table.insert(RIOSODU_SHARED.hooks[event_name], func)
+        end
+    end
+
+    -- Set up event to run hooks when game reaches main menu
+    G.E_MANAGER:add_event(Event({
+        blocking = false,
+        blockable = false,
+        func = function()
+            if G.STATE == G.STATES.MENU  then
+                for _, hook in ipairs(RIOSODU_SHARED.hooks.on_game_start) do
+                    hook()
+                end
+                return true
+            end
+            return false
+        end
+    }))
+
     RIOSODU_SHARED.initialized = true
     print("[RIOSODU_SHARED] Initialization complete.")
 end

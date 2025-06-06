@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Fetch all history to diff against the 'before' commit
+          # Fetch all history and tags for version comparison
           fetch-depth: 0
 
       - name: Detect Changed Mods to Tag
@@ -22,7 +22,6 @@ jobs:
           echo "🔍 Analyzing commits from ${{ github.event.before }} to ${{ github.event.after }}..."
           declare -A mods_to_tag_map
 
-          # Get all files changed in the push
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
           if [ -z "$CHANGED_FILES" ]; then
             echo "No file changes detected in this push. Nothing to tag."
@@ -34,12 +33,10 @@ jobs:
           echo "$CHANGED_FILES"
           echo "---"
 
-          # Find all potential mod directories (containing a manifest.json)
           for manifest_path in $(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*"); do
             mod_dir=$(dirname "$manifest_path")
             mod_name=$(basename "$mod_dir")
 
-            # Check if any changed file belongs to this mod directory
             if echo "$CHANGED_FILES" | grep -q -E "^${mod_name}/"; then
               version=$(jq -r '.version' "$manifest_path")
               if [ -z "$version" ] || [ "$version" == "null" ]; then
@@ -55,7 +52,6 @@ jobs:
             echo "ℹ️ No changes found within any mod directories."
           fi
 
-          # Convert the bash map to a JSON object for the output
           json_output=$(jq -n 'reduce inputs as $i ({}; . + $i)' <(
             if [ ${#mods_to_tag_map[@]} -eq 0 ]; then
               echo "{}"
@@ -69,42 +65,94 @@ jobs:
           echo "---"
           echo "Final JSON for tagging job: $(echo $json_output | jq -c .)"
 
-      - name: Create and Push Git Tags
+      - name: Create Tags, Push, and Dispatch Release Workflow
         if: steps.mods_to_tag.outputs.mods_json != '{}'
         env:
-          # Use the PAT to ensure the push event triggers other workflows
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           MODS_JSON: ${{ steps.mods_to_tag.outputs.mods_json }}
         run: |
-          echo "Mods to process for tagging: $MODS_JSON"
-          tags_created=false
-
-          # Configure git user for the push
+          echo "Mods to process: $MODS_JSON"
+          tags_pushed=false
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
           for mod_name in $(echo "$MODS_JSON" | jq -r 'keys[]'); do
             version=$(echo "$MODS_JSON" | jq -r ".[\"${mod_name}\"]")
             tag_name="${mod_name}__v${version}"
-
             echo "---"
             echo "Processing: ${mod_name} v${version} (Tag: ${tag_name})"
-
             if gh release view "$tag_name" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
               echo "ℹ️ Release for tag ${tag_name} already exists. Skipping tag creation."
             else
-              echo "✅ Release for ${tag_name} not found. Creating tag on commit ${{ github.sha }}..."
+              echo "✅ Creating local tag ${tag_name} on commit ${{ github.sha }}..."
               git tag "$tag_name" "${{ github.sha }}"
-              tags_created=true
+              tags_pushed=true
             fi
           done
 
-          if [ "$tags_created" = true ]; then
+          if [ "$tags_pushed" = true ]; then
             echo "---"
             echo "📤 Pushing new tags to origin..."
-            # This push will be authenticated with the PAT, triggering the release workflow
             git push origin --tags
           else
             echo "---"
-            echo "✅ No new tags were created in this run."
+            echo "✅ No new tags were created. Nothing to push."
           fi
+
+          echo "---"
+          echo "🚀 Dispatching release workflows..."
+          for mod_name in $(echo "$MODS_JSON" | jq -r 'keys[]'); do
+            version=$(echo "$MODS_JSON" | jq -r ".[\"${mod_name}\"]")
+            tag_name="${mod_name}__v${version}"
+            echo "Dispatching for ${tag_name}..."
+            gh workflow run release-mod.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f mod_name="$mod_name" \
+              -f version="$version" \
+              -f tag_name="$tag_name"
+          done
+
+          echo "✅ All workflows dispatched."
+
+      - name: Check for Missed Releases (Catch-up)
+        if: steps.mods_to_tag.outputs.mods_json == '{}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          echo "ℹ️ No new mod changes detected. Running catch-up check for missed releases..."
+          git fetch --tags
+
+          for manifest_path in $(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*"); do
+            mod_name=$(basename "$(dirname "$manifest_path")")
+            echo "---"
+            echo "🔍 Checking mod: ${mod_name}"
+
+            # Find the latest version tag for this mod using version-aware sorting
+            latest_tag=$(git tag --list "${mod_name}__v*" | sort -V | tail -n 1)
+
+            if [ -z "$latest_tag" ]; then
+              echo "  -> No tags found for this mod. Skipping."
+              continue
+            fi
+
+            echo "  -> Latest tag found: ${latest_tag}"
+
+            # Check if a release exists for this tag. If the command fails, no release exists.
+            if ! gh release view "$latest_tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "  -> 🚨 Release for ${latest_tag} is MISSING! Dispatching release workflow..."
+              version="${latest_tag#*__v}"
+
+              gh workflow run release-mod.yml \
+                --repo "$GITHUB_REPOSITORY" \
+                --ref main \
+                -f mod_name="$mod_name" \
+                -f version="$version" \
+                -f tag_name="$latest_tag"
+            else
+              echo "  -> ✅ Release for ${latest_tag} already exists."
+            fi
+          done
+
+          echo "---"
+          echo "✅ Catch-up check complete."

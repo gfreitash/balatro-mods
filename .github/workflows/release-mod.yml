@@ -1,9 +1,20 @@
 name: Release Mod
 
 on:
-  push:
-    tags:
-      - '*__v*.*.*'
+  workflow_dispatch:
+    inputs:
+      mod_name:
+        description: "The name of the mod directory (e.g., black-seal)"
+        required: true
+        type: string
+      version:
+        description: "The version to release (e.g., 3.2.4)"
+        required: true
+        type: string
+      tag_name:
+        description: "The full git tag being released (e.g., black-seal__v3.2.4)"
+        required: true
+        type: string
 
 jobs:
   build-and-zip:
@@ -14,12 +25,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up variables from tag
+      - name: Set up variables from inputs
         id: vars
         run: |
-          TAG_NAME="${GITHUB_REF##*/}"
-          MOD_NAME="${TAG_NAME%%__v*}"
-          VERSION="${TAG_NAME#*__v}"
+          MOD_NAME="${{ github.event.inputs.mod_name }}"
+          VERSION="${{ github.event.inputs.version }}"
+          TAG_NAME="${{ github.event.inputs.tag_name }}"
           LATEST_TAG="${MOD_NAME}__latest"
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "MOD_NAME=$MOD_NAME" >> $GITHUB_ENV
@@ -68,20 +79,13 @@ jobs:
 
           if [ -f "$MOD_CHANGELOG_FILE" ]; then
             echo "📖 Found changelog file: $MOD_CHANGELOG_FILE"
-            # Find the line with the release version heading
             START_LINE=$(grep -n "^## \\[${RELEASE_VERSION}\\]" "$MOD_CHANGELOG_FILE" | cut -d: -f1)
 
             if [ -n "$START_LINE" ]; then
-              # Find the line of the next version heading (or end of file)
-              # This finds any line starting with '## [' after the start line
               END_LINE=$(tail -n +$((START_LINE + 1)) "$MOD_CHANGELOG_FILE" | grep -n "^## \\[" | head -1 | cut -d: -f1)
               if [ -n "$END_LINE" ]; then
-                # Extract lines between START_LINE and END_LINE
-                # Add START_LINE + 1 to the original file to start after the version header
-                # Add START_LINE to get the correct end line number in the original file
                 CHANGELOG_BODY=$(sed -n "$((START_LINE + 1)),$((START_LINE + END_LINE -1))p" "$MOD_CHANGELOG_FILE")
               else
-                # If no next version found, extract from START_LINE to the end
                 CHANGELOG_BODY=$(tail -n +$((START_LINE + 1)) "$MOD_CHANGELOG_FILE")
               fi
               echo "✅ Extracted changelog entry for v${RELEASE_VERSION}"
@@ -94,8 +98,6 @@ jobs:
             CHANGELOG_BODY="No changelog file found."
           fi
 
-          # Escape the changelog body for multi-line output
-          # Using tr to replace CR with empty string and then % with %25, \n with %0A, \r with %0D
           DELIMITER="$(openssl rand -hex 10)"
           echo "changelog_body<<$DELIMITER" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
@@ -104,7 +106,6 @@ jobs:
       - name: Check for existing latest release
         id: check_latest
         run: |
-          # Check if latest tag exists
           if git ls-remote --tags origin | grep -q "refs/tags/$LATEST_TAG"; then
             echo "latest_exists=true" >> $GITHUB_OUTPUT
             echo "Latest tag $LATEST_TAG exists, will update it"
@@ -115,14 +116,12 @@ jobs:
 
       - name: Delete existing latest release if it exists
         if: steps.check_latest.outputs.latest_exists == 'true'
-        run: |
-          # Delete the release (this also deletes the tag)
-          gh release delete "$LATEST_TAG" --yes || true
-          # Make sure the tag is also deleted locally and remotely
-          git tag -d "$LATEST_TAG" || true
-          git push origin ":refs/tags/$LATEST_TAG" || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "$LATEST_TAG" --yes || true
+          git tag -d "$LATEST_TAG" || true
+          git push origin ":refs/tags/$LATEST_TAG" || true
 
       - name: Create versioned release
         uses: softprops/action-gh-release@v1

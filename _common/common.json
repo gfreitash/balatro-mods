@@ -1,11 +1,13 @@
 {
   "id": "riosodu_shared",
   "name": "Riosodu Commons",
-  "author": ["Riosodu"],
+  "author": [
+    "Riosodu"
+  ],
   "description": "Shared code and resources for Riosodu's Balatro mods",
   "prefix": "riosodu_shared",
   "main_file": "main.lua",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "priority": -1,
   "dependencies": []
 }

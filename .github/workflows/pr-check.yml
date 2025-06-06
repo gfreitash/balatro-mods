@@ -1,0 +1,41 @@
+name: Validate Mod Versions
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch more history to be able to diff against the base branch
+          fetch-depth: 0
+
+      - name: Run Version Sync Script
+        id: sync
+        run: |
+          # We need to determine what changed in this PR
+          # The base of the PR is available in github.base_ref
+          git fetch origin ${{ github.base_ref }}
+
+          # Redefine the script's COMMIT_RANGE to be the PR's changes
+          # This is a temporary modification for the CI environment
+          sed -i 's|COMMIT_RANGE="HEAD~1..HEAD"|COMMIT_RANGE="origin/${{ github.base_ref }}..HEAD"|' ./sync-versions.sh
+
+          echo "Comparing this PR's HEAD against base branch (origin/${{ github.base_ref }})"
+          ./sync-versions.sh
+
+      - name: Check for uncommitted changes
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::The sync-versions.sh script produced changes."
+            echo "This means manifest.json or changelogs are out of sync."
+            echo "Please run './sync-versions.sh' locally, commit the changes, and push again."
+            git diff
+            exit 1
+          else
+            echo "Validation successful. Versions are in sync."
+          fi

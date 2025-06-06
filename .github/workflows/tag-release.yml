@@ -1,0 +1,77 @@
+name: Tag Release on Merge
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # We need the full history to diff the commit range
+          fetch-depth: 0
+
+      - name: Determine Changed Files in Push
+        id: changed_files
+        run: |
+          # For a merge, github.event.before is the commit on main before the merge
+          # and github.event.after is the new merge commit.
+          # This diff gives us all files changed in the PR.
+          echo "Analyzing changes between ${{ github.event.before }} and ${{ github.event.after }}"
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+          echo "$CHANGED_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Find Mods to Tag
+        id: mods_to_tag
+        run: |
+          declare -A mods_to_tag_map
+          # Loop through all mods that have a manifest
+          for mod_dir in $(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;); do
+            mod_name=$(basename "$mod_dir")
+            # Check if this mod's directory was present in the changed files
+            if echo "${{ env.CHANGED_FILES }}" | grep -q "^${mod_name}/"; then
+              version=$(jq -r '.version' "${mod_dir}/manifest.json")
+              mods_to_tag_map[$mod_name]=$version
+            fi
+          done
+
+          # Convert bash associative array to JSON for output
+          json_output=$(jq -n 'reduce inputs as $i (.; . + $i)' <(
+            for mod in "${!mods_to_tag_map[@]}"; do
+              echo "{\"$mod\": \"${mods_to_tag_map[$mod]}\"}"
+            done
+          ))
+          echo "mods_json=$(echo $json_output | jq -c .)" >> $GITHUB_OUTPUT
+
+      - name: Create Tags for New Releases
+        if: steps.mods_to_tag.outputs.mods_json != '{}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODS_JSON: ${{ steps.mods_to_tag.outputs.mods_json }}
+        run: |
+          echo "Mods to process: $MODS_JSON"
+
+          for mod_name in $(echo "$MODS_JSON" | jq -r 'keys[]'); do
+            version=$(echo "$MODS_JSON" | jq -r ".${mod_name}")
+            tag_name="${mod_name}__v${version}"
+
+            echo "--- Processing: ${mod_name} v${version} (Tag: ${tag_name}) ---"
+
+            # IDEMPOTENCY CHECK: See if a release for this tag already exists
+            if gh release view "$tag_name" >/dev/null 2>&1; then
+              echo "Release for tag ${tag_name} already exists. Skipping."
+            else
+              echo "Release for ${tag_name} not found. Creating tag..."
+              git tag "$tag_name" "${{ github.sha }}"
+            fi
+          done
+
+          echo "Pushing all new tags..."
+          git push origin --tags

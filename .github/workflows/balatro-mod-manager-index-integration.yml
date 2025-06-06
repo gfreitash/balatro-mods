@@ -13,15 +13,6 @@ on:
         type: boolean
         default: false
 
-  # Auto-trigger when index files change
-  push:
-    paths:
-      - "*/index.meta.json"
-      - "*/README.md"
-      - "*/index.thumbnail.jpg"
-    branches:
-      - main
-
   # Auto-trigger after Release Mod workflow completes successfully
   workflow_run:
     workflows: ["Release Mod"]

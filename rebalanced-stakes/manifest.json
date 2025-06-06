@@ -1,9 +1,14 @@
 {
   "id": "rebalanced_stakes",
   "name": "Rebalanced Stakes",
-  "author":  ["Riosodu"],
+  "author": [
+    "Riosodu"
+  ],
   "description": "Removes the -1 discard from blue stake, moving joker stickers to earlier stakes while completely reworking the gold stake to still be a challenge without restricting played hands",
   "prefix": "rstakes",
   "main_file": "src/init.lua",
-  "version": "1.2.2"
+  "version": "1.2.4",
+  "dependencies": [
+    "riosodu_shared>=1.0.0"
+  ]
 }

@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-06-06
+
+### Changed
+- Updated Riosodu Commons to v1.0.0.
+
 ## [1.0.0] 2025-06-05
 ### Added
 - Easier Wheel of Fortune functionality

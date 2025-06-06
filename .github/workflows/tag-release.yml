@@ -72,11 +72,16 @@ jobs:
       - name: Create and Push Git Tags
         if: steps.mods_to_tag.outputs.mods_json != '{}'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use the PAT to ensure the push event triggers other workflows
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           MODS_JSON: ${{ steps.mods_to_tag.outputs.mods_json }}
         run: |
           echo "Mods to process for tagging: $MODS_JSON"
           tags_created=false
+
+          # Configure git user for the push
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
           for mod_name in $(echo "$MODS_JSON" | jq -r 'keys[]'); do
             version=$(echo "$MODS_JSON" | jq -r ".[\"${mod_name}\"]")
@@ -97,6 +102,7 @@ jobs:
           if [ "$tags_created" = true ]; then
             echo "---"
             echo "📤 Pushing new tags to origin..."
+            # This push will be authenticated with the PAT, triggering the release workflow
             git push origin --tags
           else
             echo "---"

@@ -20,10 +20,8 @@ jobs:
           echo "PR detected. Comparing this PR's HEAD against base branch (origin/${{ github.base_ref }})"
           git fetch origin ${{ github.base_ref }}
 
-          echo "Temporarily modifying sync-versions.sh to use the correct commit range for the PR..."
-          # The script defaults to comparing HEAD~1..HEAD, which is for pushes.
           # For a PR, we need to compare the PR's HEAD against its base branch.
-          sed -i 's|COMMIT_RANGE="HEAD~1..HEAD"|COMMIT_RANGE="origin/${{ github.base_ref }}..HEAD"|' ./sync-versions.sh
+          export COMMIT_RANGE="origin/${{ github.base_ref }}..HEAD"
 
           echo "🔍 Running sync script to validate versions..."
           ./sync-versions.sh

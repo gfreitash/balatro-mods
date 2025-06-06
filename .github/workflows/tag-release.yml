@@ -79,7 +79,7 @@ jobs:
           tags_created=false
 
           for mod_name in $(echo "$MODS_JSON" | jq -r 'keys[]'); do
-            version=$(echo "$MODS_JSON" | jq -r ".${mod_name}")
+            version=$(echo "$MODS_JSON" | jq -r ".[\"${mod_name}\"]")
             tag_name="${mod_name}__v${version}"
 
             echo "---"

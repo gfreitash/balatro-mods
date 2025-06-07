@@ -339,7 +339,7 @@ if echo "$CHANGED_FILES" | grep -q -E "^_common/"; then
 			fi
 			# Set shared variables for use in Phase 2b
 			SHARED_VERSION=$LATEST_VERSION
-			SHARED_DEP_REQ="riosodu_shared>=${SHARED_VERSION}"
+			SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
 			log_info "Changes detected in _common/ (v${SHARED_VERSION}). Dependent mods will be updated."
 		else
 			log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common."

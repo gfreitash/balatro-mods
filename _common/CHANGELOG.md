@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2025-06-07
+This is a patch release to force update the dependent mods to ensure the correct dependency syntax.
+
 ## [1.0.2] - 2025-06-06
 This is a patch release to force update the dependent mods to ensure the CI is working correctly.
 

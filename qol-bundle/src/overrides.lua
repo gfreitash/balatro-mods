@@ -5,6 +5,7 @@ QOL_BUNDLE.original = QOL_BUNDLE.original or {}
 QOL_BUNDLE.original.Card_is_suit = Card.is_suit
 QOL_BUNDLE.original.Blind_debuff_card = Blind.debuff_card
 QOL_BUNDLE.original.Game_init_game_object = Game.init_game_object
+QOL_BUNDLE.original.poll_edition = poll_edition
 
 -- Override Card:is_suit with wildcard and blurred joker fixes
 function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
@@ -78,4 +79,57 @@ function Game:init_game_object()
     RIOSODU_SHARED.utils.sendDebugMessage("Setting shop.joker_max to: " .. (QOL_BUNDLE.config.joker_max_enabled and QOL_BUNDLE.config.joker_max_value or 2))
     result.shop.joker_max = QOL_BUNDLE.config.joker_max_enabled and QOL_BUNDLE.config.joker_max_value or 2
     return result
+end
+
+-- Override poll_edition to make foil, holo, and poly editions unweighted
+function poll_edition(_key, _mod, _no_neg, _guaranteed)
+    if not QOL_BUNDLE.config.unweighted_editions_enabled then
+        return QOL_BUNDLE.original.poll_edition(_key, _mod, _no_neg, _guaranteed)
+    end
+
+    _mod = _mod or 1
+    local edition_poll = pseudorandom(pseudoseed(_key or 'edition_generic'))
+
+    -- Preserve negative edition probability
+    if _guaranteed then
+        if edition_poll > 1 - 0.003*25 and not _no_neg then
+            return {negative = true}
+        end
+    else
+        if edition_poll > 1 - 0.003*_mod and not _no_neg then
+            return {negative = true}
+        end
+    end
+
+    -- If a non-negative edition would have been generated, distribute equally
+    local total_non_negative_prob = 0.04 * G.GAME.edition_rate * _mod
+    if _guaranteed then
+        total_non_negative_prob = 0.04 * 25 -- Equivalent to 1 - (1 - 0.04*25)
+    end
+
+    -- Check if an edition (foil, holo, poly) would have been rolled by original logic
+    -- This is the crucial part: we check against the *original* threshold for any non-negative edition
+    -- and then redistribute if it falls within that range.
+    local original_foil_threshold = 1 - (0.04 * G.GAME.edition_rate * _mod)
+    local original_holo_threshold = 1 - (0.02 * G.GAME.edition_rate * _mod)
+    local original_polychrome_threshold = 1 - (0.006 * G.GAME.edition_rate * _mod)
+
+    if _guaranteed then
+        original_foil_threshold = 1 - (0.04 * 25)
+        original_holo_threshold = 1 - (0.02 * 25)
+        original_polychrome_threshold = 1 - (0.006 * 25)
+    end
+
+    if edition_poll > original_foil_threshold then
+        local unweighted_roll = pseudorandom(pseudoseed('unweighted_edition_' .. (_key or 'generic')))
+        if unweighted_roll < 1/3 then
+            return {foil = true}
+        elseif unweighted_roll < 2/3 then
+            return {holo = true}
+        else
+            return {polychrome = true}
+        end
+    end
+
+    return nil
 end

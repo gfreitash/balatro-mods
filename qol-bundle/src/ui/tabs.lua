@@ -53,6 +53,15 @@ function QOL_BUNDLE.UI.createConfigTabDefinition()
                         scale = 0.75,
                     }),
                 }),
+                RIOSODU_SHARED.UIDEF.create_option_box({
+                    -- Unweighted Editions Config
+                    RIOSODU_SHARED.UIDEF.create_option_toggle({
+                        ref_table = QOL_BUNDLE.config,
+                        ref_value = 'unweighted_editions_enabled',
+                        label = G.localization.misc.dictionary.qolb_unweighted_editions_label,
+                        info = G.localization.misc.dictionary.qolb_unweighted_editions_info
+                    }),
+                }),
             }
         } }
     }

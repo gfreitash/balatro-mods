@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-06-15
+
+### Added
+- Unweighted Base Editions: Implemented functionality to make Foil, Holo, and Polychrome editions equally likely when rolled, while preserving the original probability of Negative editions.
+
+
 ## [1.0.4] - 2025-06-07
 
 ### Changed

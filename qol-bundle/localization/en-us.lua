@@ -9,6 +9,8 @@ return {
             qolb_wildcard_fix_info = 'Prevents Wildcard/Smeared Joker from being debuffed.',
             qolb_wheel_fortune_label = 'Enable Easier Wheel of Fortune',
             qolb_wheel_fortune_info = 'Adjust ease of Wheel of Fortune (1=100%, 4=25%).',
+            qolb_unweighted_editions_label = 'Enable Unweighted Base Editions',
+            qolb_unweighted_editions_info = 'Makes Foil, Holo, and Polychrome editions equally likely.',
         },
     },
 }

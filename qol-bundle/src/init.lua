@@ -50,10 +50,13 @@ RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/overrides.lua") -- Funct
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/callbacks.lua") -- Callbacks
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/wheel_of_fortune.lua") -- Wheel of Fortune logic
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/ui/tabs.lua") -- UI definitions
+RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/debug.lua") -- Debug functions
 
 -- SMODS Hooks
 SMODS.current_mod.config_tab = function()
   return QOL_BUNDLE.UI.createConfigTabDefinition()
 end
 
+
+QOL_BUNDLE.debug.register_debug_keybinds()
 RIOSODU_SHARED.utils.sendDebugMessage("QoL Bundle initialization complete.")

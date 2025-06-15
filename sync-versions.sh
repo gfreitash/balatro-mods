@@ -249,7 +249,7 @@ create_new_version_entry() {
 update_manifest() {
 	local manifest_file="$1"
 	local version="$2"
-	local dependency="$3"
+	local dependency="${3:-}"
 	local tmp_file="${manifest_file}.$$"
 
 	log_debug "Updating manifest: ${manifest_file} to version ${version}, dependency: ${dependency:-None}"

@@ -68,7 +68,7 @@ jobs:
           zip -r "../$ZIP_NAME" "$MOD_NAME"
           # Create latest zip (same content, different name)
           zip -r "../$LATEST_ZIP_NAME" "$MOD_NAME"
-          cd ao
+          cd ..
 
       - name: Extract Changelog Entry for Release
         id: extract_changelog

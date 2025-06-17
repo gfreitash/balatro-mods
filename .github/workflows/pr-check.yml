@@ -1,4 +1,4 @@
-name: Validate Mod Versions
+name: PR Checks - Version Consistency
 
 on:
   pull_request:
@@ -10,23 +10,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          # Fetch all history to diff against the PR's base branch
-          fetch-depth: 0
 
-      - name: Run Version Sync Script
+      - name: Run Version Sync Script in Validation Mode
         id: sync
         run: |
-          echo "PR detected. Comparing this PR's HEAD against base branch (origin/${{ github.base_ref }})"
-          git fetch origin ${{ github.base_ref }}
-
-          # For a PR, we need to compare the PR's HEAD against its base branch.
-          export COMMIT_RANGE="origin/${{ github.base_ref }}..HEAD"
-
-          echo "🔍 Running sync script to validate versions..."
+          echo "🔍 Running full repository sync validation..."
           ./sync-versions.sh
 
-      - name: Check for Uncommitted Changes
+      - name: Check for Uncommitted Changes After Validation
         run: |
           echo "Checking for uncommitted changes after running the sync script..."
           if ! git diff --quiet; then

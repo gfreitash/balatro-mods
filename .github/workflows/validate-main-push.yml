@@ -1,0 +1,41 @@
+name: Validate & Auto-Fix Main Branch
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  validate-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push auto-generated commits
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Version Sync Script and Auto-Fix
+        id: sync
+        run: |
+          echo "Push to main detected. Running sync script to auto-fix versions..."
+          ./sync-versions.sh
+
+      - name: Check for Auto-Generated Changes and Commit
+        id: auto_commit
+        run: |
+          if ! git diff --quiet; then
+            echo "Changes detected by sync-versions.sh. Committing auto-fixes..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "chore(versions): Auto-sync mod versions [skip ci]"
+            echo "Auto-commit successful. Pushing to main..."
+            git push
+
+            # Set output to indicate changes were pushed, for workflow_run trigger
+            echo "auto_fixed_and_pushed=true" >> $GITHUB_OUTPUT
+            echo "✅ Auto-fixes applied and pushed."
+          else
+            echo "No changes detected by sync-versions.sh. Main branch is already in sync."
+            echo "auto_fixed_and_pushed=false" >> $GITHUB_OUTPUT
+            echo "✅ Main branch is already in sync."
+          fi

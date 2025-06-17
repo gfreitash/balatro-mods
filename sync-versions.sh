@@ -313,42 +313,60 @@ done
 if [ "$VALIDATION_FAILED" = true ]; then
 	exit 1
 fi
-log_success "Validation passed. All changed mods have versioned changelogs."
+log_success "Validation passed. All mods have versioned changelogs."
 
 # --- Phase 2: Synchronization ---
 
 # --- Phase 2a: Sync Shared Library ---
 log_info "Synchronizing shared library (_common)..."
 COMMON_WAS_CHANGED=false
-if echo "$CHANGED_FILES" | grep -q -E "^_common/"; then
-	COMMON_WAS_CHANGED=true
-	common_changelog="_common/CHANGELOG.md"
-	common_manifest="_common/common.json"
+common_changelog="_common/CHANGELOG.md"
+common_manifest="_common/common.json"
 
-	if [ -f "$common_changelog" ]; then
-		get_latest_version_info "$common_changelog"
-		if [ -n "$LATEST_VERSION" ]; then
-			current_common_version=$(jq -r '.version' "$common_manifest")
-			if [ "$current_common_version" != "$LATEST_VERSION" ]; then
-				log_info "Syncing _common: changelog version is '$LATEST_VERSION', manifest is '$current_common_version'."
-				jq --arg ver "$LATEST_VERSION" '.version = $ver' "$common_manifest" >"${common_manifest}.$$" &&
-					mv "${common_manifest}.$$" "$common_manifest"
-				log_success "Updated $common_manifest to version $LATEST_VERSION."
-			else
-				log_info "_common manifest version is already up to date ($LATEST_VERSION)."
-			fi
-			# Set shared variables for use in Phase 2b
-			SHARED_VERSION=$LATEST_VERSION
-			SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
-			log_info "Changes detected in _common/ (v${SHARED_VERSION}). Dependent mods will be updated."
+if [ -f "$common_changelog" ]; then
+	get_latest_version_info "$common_changelog"
+	if [ -n "$LATEST_VERSION" ]; then
+		current_common_version=$(jq -r '.version' "$common_manifest")
+		if [ "$current_common_version" != "$LATEST_VERSION" ]; then
+			log_info "Syncing _common: changelog version is '$LATEST_VERSION', manifest is '$current_common_version'."
+			jq --arg ver "$LATEST_VERSION" '.version = $ver' "$common_manifest" >"${common_manifest}.$$" &&
+				mv "${common_manifest}.$$" "$common_manifest"
+			log_success "Updated $common_manifest to version $LATEST_VERSION."
+			COMMON_WAS_CHANGED=true
 		else
-			log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common."
-			COMMON_WAS_CHANGED=false # Prevent dependent mods from updating
+			log_info "_common manifest version is already up to date ($LATEST_VERSION)."
 		fi
+
+		# Set shared variables for use in Phase 2b
+		SHARED_VERSION=$LATEST_VERSION
+		SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
+
+		# Check if any individual mods need the shared library update note
+		# We'll determine this by checking if their latest changelog version already has the note
+		for mod_dir in $MOD_DIRS; do
+			mod_name=$(basename "$mod_dir")
+			changelog_file="$mod_dir/CHANGELOG.md"
+
+			if [ ! -f "$changelog_file" ]; then continue; fi
+
+			get_latest_version_info "$changelog_file"
+			if [ -n "$LATEST_VERSION" ] && [ -n "$LATEST_VERSION_LINE_NUM" ]; then
+				BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
+				update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
+				note_exists=$(content_exists_in_range "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note")
+
+				if [ "$note_exists" = "false" ]; then
+					log_info "Mod '$mod_name' needs shared library update note."
+					COMMON_WAS_CHANGED=true
+					break
+				fi
+			fi
+		done
 	else
-		log_warn "No changelog found for _common. Cannot sync."
-		COMMON_WAS_CHANGED=false # Prevent dependent mods from updating
+		log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common."
 	fi
+else
+	log_info "No _common changelog found."
 fi
 
 # --- Phase 2b: Sync Individual Mods ---
@@ -358,6 +376,7 @@ for mod_dir in $MOD_DIRS; do
 	mod_name=$(basename "$mod_dir")
 	manifest_file="$mod_dir/manifest.json"
 	changelog_file="$mod_dir/CHANGELOG.md"
+	index_meta_file="$mod_dir/index.meta.json" # Ensure this is defined for all mods
 
 	if [ ! -f "$changelog_file" ]; then continue; fi
 
@@ -370,45 +389,29 @@ for mod_dir in $MOD_DIRS; do
 	fi
 
 	# Get version block boundaries
-	# BLOCK_END_LINE will be the line number of the *next* header, or EOF+1
 	BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
-
-	# Check if this mod was changed
-	MOD_WAS_CHANGED=false
-	if echo "$CHANGED_FILES" | grep -q -E "^${mod_name}/"; then
-		MOD_WAS_CHANGED=true
-	fi
 
 	# Process shared library changes
 	if [ "$COMMON_WAS_CHANGED" = true ]; then
 		update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
 
 		# Check if update note already exists in the latest version block
-		note_exists=$(
-			content_exists_in_range "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note"
-		)
-		log_info "Checking for shared lib update note in v${LATEST_VERSION} (range ${LATEST_VERSION_LINE_NUM}-${BLOCK_END_LINE} exclusive): ${note_exists}"
+		note_exists=$(content_exists_in_range "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note")
 
-		if [ "$MOD_WAS_CHANGED" = true ]; then
-			# SCENARIO 1: Mod was changed AND _common was changed
-			echo -e "\n--- Processing Mod: ${C_YELLOW}${mod_name}${C_NC} (Mod + Shared Lib Changed) ---"
-			if [ "$note_exists" = "true" ]; then
-				log_info "Shared lib update note already exists in v${LATEST_VERSION}, skipping injection."
-			else
+		if [ "$note_exists" = "false" ]; then
+			echo -e "\n--- Processing Mod: ${C_YELLOW}${mod_name}${C_NC} (Adding Shared Lib Update) ---"
+
+			# Determine if this mod has other recent changes by checking if its manifest is already at LATEST_VERSION
+			current_manifest_version=$(jq -r '.version' "$manifest_file")
+
+			if [ "$current_manifest_version" = "$LATEST_VERSION" ]; then
+				# Mod was recently changed, add note to existing version
 				add_note_to_existing_version "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note"
-			fi
-		else
-			# SCENARIO 2: Only _common was changed
-			echo -e "\n--- Processing Mod: ${C_YELLOW}${mod_name}${C_NC} (Shared Lib Only Changed) ---"
-			if [ "$note_exists" = "true" ]; then
-				log_info "Version ${LATEST_VERSION} with shared lib update already exists, skipping version bump."
 			else
+				# Mod wasn't recently changed, create new version
 				new_version=$(bump_patch_version "$LATEST_VERSION")
 				log_info "Bumping version from ${LATEST_VERSION} -> ${new_version}"
-
 				create_new_version_entry "$changelog_file" "$new_version" "$update_note"
-
-				# Update latest version for manifest sync
 				LATEST_VERSION=$new_version
 			fi
 		fi
@@ -434,7 +437,6 @@ for mod_dir in $MOD_DIRS; do
 	fi
 
 	# --- Sync index.meta.json ---
-	index_meta_file="$mod_dir/index.meta.json"
 	if [ -f "$index_meta_file" ]; then
 		log_info "Processing index.meta.json for '${mod_name}'..."
 		tmp_index_meta_file="${index_meta_file}.$$"
@@ -446,16 +448,15 @@ for mod_dir in $MOD_DIRS; do
 			VALIDATION_FAILED=true
 			continue
 		fi
-		log_debug "Determined repo_path: ${repo_path}"
 
-		# Strict XOR check: 'version' OR 'automatic-version-check', but not both, and one must be present.
+		# Strict XOR check: 'version' OR 'automatic-version-check'
 		if ! jq -e '(has("version") and (has("automatic-version-check") | not)) or ((has("version") | not) and has("automatic-version-check"))' <<< "$index_meta_content" >/dev/null; then
 			log_error "Error: ${index_meta_file} must have exactly one of 'version' or 'automatic-version-check' fields."
 			VALIDATION_FAILED=true
 			continue
 		fi
 
-		# If 'version' field exists (and 'automatic-version-check' does not, due to XOR)
+		# Update based on field type
 		if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
 			log_info "Updating 'version' and 'downloadURL' in ${index_meta_file}."
 			jq --arg ver "$LATEST_VERSION" \
@@ -464,14 +465,11 @@ for mod_dir in $MOD_DIRS; do
 				'.version = $ver | .downloadURL = ("https://github.com/" + $repo_path + "/releases/download/" + $mod_name + "__v" + $ver + "/" + $mod_name + ".zip")' \
 				"$index_meta_file" >"$tmp_index_meta_file" && mv "$tmp_index_meta_file" "$index_meta_file"
 			log_success "Updated ${index_meta_file} with version ${LATEST_VERSION} and new downloadURL."
-		# If 'automatic-version-check' field exists (and 'version' does not, due to XOR)
 		elif echo "$index_meta_content" | jq -e 'has("automatic-version-check")' >/dev/null; then
-			current_download_url=$(jq -r '.downloadURL' "$index_meta_file")
+			current_download_url=$(jq -r '.downloadURL' "$index_meta_content")
 
 			# Construct expected_latest_url using the pre-calculated repo_path
 			expected_latest_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
-			log_debug "Current downloadURL: ${current_download_url}"
-			log_debug "Expected latest downloadURL: ${expected_latest_url}"
 
 			if [[ "$current_download_url" != "$expected_latest_url" ]]; then
 				log_error "Error: Download url is not in the proper format for automatic version updates. It should be '${expected_latest_url}' for ${index_meta_file}."

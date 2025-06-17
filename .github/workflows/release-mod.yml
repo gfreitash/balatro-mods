@@ -1,43 +1,132 @@
-name: Release Mod
+name: Release Mod (Orchestrator)
 
 on:
-  workflow_dispatch:
-    inputs:
-      mod_name:
-        description: "The name of the mod directory (e.g., black-seal)"
-        required: true
-        type: string
-      version:
-        description: "The version to release (e.g., 3.2.4)"
-        required: true
-        type: string
-      tag_name:
-        description: "The full git tag being released (e.g., black-seal__v3.2.4)"
-        required: true
-        type: string
+  workflow_run:
+    workflows: ["Validate & Auto-Fix Main Branch"] # Trigger after main branch is validated/fixed
+    types:
+      - completed
+    branches: [main] # Only run if the triggering workflow was on main
 
 jobs:
-  build-and-zip:
+  prepare-releases:
+    # This job MUST run in the production-main environment to access PAT_TOKEN
+    environment: production-main
+    runs-on: ubuntu-latest
+    # Permissions required for Git operations (fetch tags, create tags, push tags)
+    # and for creating GitHub Releases, and dispatching other workflows.
+    permissions:
+      contents: write # For git tag and release creation
+      actions: write # For gh workflow run
+    if: github.event.workflow_run.conclusion == 'success' # Only run if prior validation succeeded
+    outputs:
+      # Output a JSON array of mods that need a release
+      mods_to_release_json: ${{ steps.detect_unreleased.outputs.mods_to_release_json }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history and tags to accurately check for existing releases
+          fetch-depth: 0
+
+      - name: Configure Git for tagging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Detect Unreleased Mod Versions and Create Tags
+        id: detect_unreleased
+        run: |
+          echo "🔍 Detecting unreleased mod versions..."
+          declare -A mods_for_release_map
+          git fetch --tags --force # Ensure all remote tags are fetched
+
+          # Find all manifest.json files in top-level mod directories
+          MOD_DIRS=$(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;)
+
+          for manifest_path in $MOD_DIRS; do
+            mod_dir=$(basename "$manifest_path")
+            version=$(jq -r '.version' "$manifest_path")
+
+            if [ -z "$version" ] || [ "$version" == "null" ]; then
+              echo "⚠️ Could not read version for ${mod_dir}, from ${manifest_path}. Skipping."
+              continue
+            fi
+
+            tag_name="${mod_dir}__v${version}"
+            echo "Processing mod: ${mod_dir}, version: ${version}, expected tag: ${tag_name}"
+
+            # Check if this specific version tag already exists locally or remotely
+            if git tag --list "$tag_name" | grep -q "$tag_name"; then
+              echo "✅ Tag ${tag_name} already exists. No new release needed for this version."
+              # Optionally, you could add logic here to re-release if a "force" input was given
+            else
+              echo "🆕 Tag ${tag_name} does not exist. This mod needs a new release."
+              # Create the local tag on the current HEAD
+              git tag "$tag_name"
+              # Add to map for later JSON output
+              mods_for_release_map["$mod_dir"]="$version"
+            fi
+          done
+
+          # Push all new tags at once
+          if [ ${#mods_for_release_map[@]} -gt 0 ]; then
+            echo "---"
+            echo "📤 Pushing newly created tags..."
+            git push origin --tags
+            echo "✅ Tags pushed successfully."
+          else
+            echo "---"
+            echo "ℹ️ No new tags created or pushed."
+          fi
+
+          # Prepare JSON output for subsequent jobs
+          json_output=$(jq -n 'reduce inputs as $i ({}; . + $i)' <(
+            if [ ${#mods_for_release_map[@]} -eq 0 ]; then
+              echo "{}"
+            else
+              for mod in "${!mods_for_release_map[@]}"; do
+                echo "{\"mod_name\": \"$mod\", \"version\": \"${mods_for_release_map[$mod]}\", \"tag_name\": \"${mod}__v${mods_for_release_map[$mod]}\"}"
+              done
+            fi
+          ) | jq -s '.') # Use jq -s '.' to turn multiple JSON objects into a single array
+          echo "mods_to_release_json=$json_output" >> $GITHUB_OUTPUT
+          echo "Final JSON output for releases: $json_output"
+
+  create-and-dispatch-release:
+    needs: prepare-releases
+    # This job also needs to run in the production-main environment for release creation
+    # and workflow dispatch.
+    environment: production-main
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # For softprops/action-gh-release
+      actions: write # For gh workflow run
+    # Only run if there are mods to release
+    if: needs.prepare-releases.outputs.mods_to_release_json != '[]'
+    strategy:
+      matrix:
+        # Parse the JSON output from the previous job
+        mod_release: ${{ fromJson(needs.prepare-releases.outputs.mods_to_release_json) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up variables from inputs
+      - name: Set up variables for current mod in matrix
         id: vars
         run: |
-          MOD_NAME="${{ github.event.inputs.mod_name }}"
-          VERSION="${{ github.event.inputs.version }}"
-          TAG_NAME="${{ github.event.inputs.tag_name }}"
-          LATEST_TAG="${MOD_NAME}__latest-v${VERSION}"
+          MOD_NAME="${{ matrix.mod_release.mod_name }}"
+          VERSION="${{ matrix.mod_release.version }}"
+          TAG_NAME="${{ matrix.mod_release.tag_name }}" # This is the versioned tag, e.g., qol-bundle__v1.1.1
+
+          # CRITICAL CHANGE: LATEST_TAG is now a simple mod name + __latest
+          LATEST_TAG="${MOD_NAME}__latest" # This will be e.g., qol-bundle__latest
+
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "MOD_NAME=$MOD_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV
-          echo "LATEST_ZIP_NAME=${MOD_NAME}.zip" >> $GITHUB_ENV
+          echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV # Versioned zip
+          echo "LATEST_ZIP_NAME=${MOD_NAME}.zip" >> $GITHUB_ENV # Generic latest zip name
 
       - name: Check if mod folder exists
         run: |
@@ -53,7 +142,7 @@ jobs:
             mkdir -p _common
           fi
 
-      - name: Create temporary directory structure
+      - name: Create temporary directory structure for zipping
         run: |
           mkdir -p temp/$MOD_NAME/common
           cp -r $MOD_NAME/* temp/$MOD_NAME/
@@ -64,13 +153,13 @@ jobs:
       - name: Create release zips
         run: |
           cd temp
-          # Create versioned zip
+          # Create versioned zip (e.g., qol-bundle__v1.1.1.zip)
           zip -r "../$ZIP_NAME" "$MOD_NAME"
-          # Create latest zip (same content, different name)
+          # Create generic latest zip (e.g., qol-bundle.zip)
           zip -r "../$LATEST_ZIP_NAME" "$MOD_NAME"
           cd ..
 
-      - name: Extract Changelog Entry for Release
+      - name: Extract Changelog Entry for Release Notes
         id: extract_changelog
         run: |
           MOD_CHANGELOG_FILE="${{ env.MOD_NAME }}/CHANGELOG.md"
@@ -79,18 +168,19 @@ jobs:
 
           if [ -f "$MOD_CHANGELOG_FILE" ]; then
             echo "📖 Found changelog file: $MOD_CHANGELOG_FILE"
-            START_LINE=$(grep -n "^## \\[${RELEASE_VERSION}\\]" "$MOD_CHANGELOG_FILE" | cut -d: -f1)
+            # Extract content between ## [VERSION] and the next ## [
+            # Handle potential Windows-style line endings (\r) by piping through tr -d '\r'
+            CHANGELOG_BODY=$(
+              sed -n "/^## \\[${RELEASE_VERSION}\\]/,/^## \\[/p" "$MOD_CHANGELOG_FILE" |
+                grep -v "^## \\[" | # Remove version headers themselves
+                sed '$d' | # Remove the last line if it's the next header
+                tr -d '\r' || true # Remove carriage returns
+            )
 
-            if [ -n "$START_LINE" ]; then
-              END_LINE=$(tail -n +$((START_LINE + 1)) "$MOD_CHANGELOG_FILE" | grep -n "^## \\[" | head -1 | cut -d: -f1)
-              if [ -n "$END_LINE" ]; then
-                CHANGELOG_BODY=$(sed -n "$((START_LINE + 1)),$((START_LINE + END_LINE -1))p" "$MOD_CHANGELOG_FILE")
-              else
-                CHANGELOG_BODY=$(tail -n +$((START_LINE + 1)) "$MOD_CHANGELOG_FILE")
-              fi
+            if [ -n "$CHANGELOG_BODY" ]; then
               echo "✅ Extracted changelog entry for v${RELEASE_VERSION}"
             else
-              echo "⚠️ Warning: No changelog entry found for version v${RELEASE_VERSION} in $MOD_CHANGELOG_FILE"
+              echo "⚠️ Warning: No changelog entry found or extracted for version v${RELEASE_VERSION} in $MOD_CHANGELOG_FILE"
               CHANGELOG_BODY="No changelog entry found for v${RELEASE_VERSION}."
             fi
           else
@@ -98,31 +188,13 @@ jobs:
             CHANGELOG_BODY="No changelog file found."
           fi
 
+          # Use a unique delimiter for multiline output
           DELIMITER="$(openssl rand -hex 10)"
           echo "changelog_body<<$DELIMITER" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
           echo "$DELIMITER" >> $GITHUB_OUTPUT
 
-      - name: Delete existing latest release if it exists
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MOD_NAME: ${{ env.MOD_NAME }}
-        run: |
-          # Check for any existing __latest tags and delete them
-          EXISTING_LATEST_TAGS=$(git ls-remote --tags origin | grep "refs/tags/${MOD_NAME}__latest" | awk '{print $2}' | sed 's/refs\/tags\///g')
-          if [ -n "$EXISTING_LATEST_TAGS" ]; then
-            echo "Found existing latest tags: $EXISTING_LATEST_TAGS"
-            for tag in $EXISTING_LATEST_TAGS; do
-              echo "Deleting release and tag for $tag..."
-              gh release delete "$tag" --yes || true
-              git tag -d "$tag" || true
-              git push origin ":refs/tags/$tag" || true
-            done
-          else
-            echo "No existing latest tags found for ${MOD_NAME}__latest."
-          fi
-
-      - name: Create versioned release
+      - name: Create versioned GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.TAG_NAME }}
@@ -131,19 +203,18 @@ jobs:
           body: |
             **Changelog for v${{ env.VERSION }}:**
             ${{ steps.extract_changelog.outputs.changelog_body }}
+          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use PAT_TOKEN for release creation via environment
 
-      - name: Create/Update latest release
+      - name: Create/Update (Generic) Latest GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.LATEST_TAG }}
+          tag_name: ${{ env.LATEST_TAG }} # CRITICAL CHANGE: This is now e.g. qol-bundle__latest
           files: ${{ env.LATEST_ZIP_NAME }}
           name: ${{ env.MOD_NAME }} (Latest)
           body: |
             **Latest Version:** v${{ env.VERSION }}
-
-            This release always contains the most recent version of ${{ env.MOD_NAME }}.
 
             ---
             **Changelog for v${{ env.VERSION }}:**
@@ -155,7 +226,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifacts
+      - name: Upload artifacts (for debugging/manual download)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.MOD_NAME }}-releases
@@ -163,15 +234,15 @@ jobs:
             ${{ env.ZIP_NAME }}
             ${{ env.LATEST_ZIP_NAME }}
 
-      - name: Dispatch Update Balatro Mod Index Workflow
+      - name: Dispatch Publish Mod to Mod Index Workflow
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN}}
-          TAG_NAME: ${{ env.TAG_NAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This needs to be PAT_TOKEN for cross-repo dispatch
+          TAG_NAME: ${{ env.TAG_NAME }} # Pass the specific version tag
         run: |
-          echo "🚀 Dispatching 'Update Balatro Mod Index' workflow..."
-          gh workflow run balatro-mod-manager-index-integration.yml \
+          echo "🚀 Dispatching 'Publish Mod' workflow for ${{ env.TAG_NAME }}..."
+          gh workflow run publish-mod.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
             -f tag_name="$TAG_NAME"
 
-          echo "✅ 'Update Balatro Mod Index' workflow dispatched."
+          echo "✅ 'Publish Mod' workflow dispatched for ${{ env.TAG_NAME }}."

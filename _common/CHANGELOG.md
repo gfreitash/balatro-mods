@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2025-06-17
+This is a patch release to force update the dependent mods to ensure the use of the new `latest` syntax after CI fix.
+
 ## [1.0.4] - 2025-06-17
 This is a patch release to force update the dependent mods to ensure the use of the new `latest` syntax.
 

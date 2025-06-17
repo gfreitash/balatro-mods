@@ -31,7 +31,7 @@ jobs:
           MOD_NAME="${{ github.event.inputs.mod_name }}"
           VERSION="${{ github.event.inputs.version }}"
           TAG_NAME="${{ github.event.inputs.tag_name }}"
-          LATEST_TAG="${MOD_NAME}__latest"
+          LATEST_TAG="${MOD_NAME}__latest-v${VERSION}"
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "MOD_NAME=$MOD_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -103,25 +103,24 @@ jobs:
           echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
           echo "$DELIMITER" >> $GITHUB_OUTPUT
 
-      - name: Check for existing latest release
-        id: check_latest
-        run: |
-          if git ls-remote --tags origin | grep -q "refs/tags/$LATEST_TAG"; then
-            echo "latest_exists=true" >> $GITHUB_OUTPUT
-            echo "Latest tag $LATEST_TAG exists, will update it"
-          else
-            echo "latest_exists=false" >> $GITHUB_OUTPUT
-            echo "Latest tag $LATEST_TAG does not exist, will create it"
-          fi
-
       - name: Delete existing latest release if it exists
-        if: steps.check_latest.outputs.latest_exists == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MOD_NAME: ${{ env.MOD_NAME }}
         run: |
-          gh release delete "$LATEST_TAG" --yes || true
-          git tag -d "$LATEST_TAG" || true
-          git push origin ":refs/tags/$LATEST_TAG" || true
+          # Check for any existing __latest tags and delete them
+          EXISTING_LATEST_TAGS=$(git ls-remote --tags origin | grep "refs/tags/${MOD_NAME}__latest" | awk '{print $2}' | sed 's/refs\/tags\///g')
+          if [ -n "$EXISTING_LATEST_TAGS" ]; then
+            echo "Found existing latest tags: $EXISTING_LATEST_TAGS"
+            for tag in $EXISTING_LATEST_TAGS; do
+              echo "Deleting release and tag for $tag..."
+              gh release delete "$tag" --yes || true
+              git tag -d "$tag" || true
+              git push origin ":refs/tags/$tag" || true
+            done
+          else
+            echo "No existing latest tags found for ${MOD_NAME}__latest."
+          fi
 
       - name: Create versioned release
         uses: softprops/action-gh-release@v1
@@ -163,3 +162,20 @@ jobs:
           path: |
             ${{ env.ZIP_NAME }}
             ${{ env.LATEST_ZIP_NAME }}
+
+      - name: Dispatch Update Balatro Mod Index Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'balatro-mod-manager-index-integration.yml', # The file name of the target workflow
+              ref: 'main', # The branch where the target workflow resides
+              inputs: {
+                tag_name: process.env.TAG_NAME # Pass the full tag name
+              }
+            });
+        env:
+          TAG_NAME: ${{ env.TAG_NAME }} # Ensure this ENV var is available from previous steps
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use a token with `workflow_dispatch` permissions

@@ -3,23 +3,15 @@ name: Update Balatro Mod Index
 on:
   workflow_dispatch:
     inputs:
-      mod_name: # This will be treated as the directory name
-        description: "Mod directory name to update (e.g., black-seal)"
-        required: true
-        type: string
       force_update:
         description: "Force update even if no changes detected"
         required: false
         type: boolean
         default: false
-
-  # Auto-trigger after Release Mod workflow completes successfully
-  workflow_run:
-    workflows: ["Release Mod"]
-    types:
-      - completed
-    branches:
-      - main
+      tag_name: # New input for direct dispatch from Release Mod workflow
+        description: "The full tag name (e.g., qol-bundle__v1.1.1) from Release Mod"
+        required: true # Now required
+        type: string
 
 jobs:
   detect-changes:
@@ -38,11 +30,15 @@ jobs:
           echo "🔍 Detecting changed mods and their titles..."
           mods_data_json="[]" # Initialize as empty JSON array
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            dir_name="${{ github.event.inputs.mod_name }}"
-            echo "🎯 Manual trigger detected for mod directory: $dir_name"
-            meta_file_path="${dir_name}/index.meta.json" # This is index.meta.json in the current repo
-            title_name="$dir_name" # Default title to dir_name
+          # If tag_name is provided (from Release Mod dispatch or manual trigger with tag)
+          RELEASE_TAG="${{ github.event.inputs.tag_name }}"
+          echo "🎯 Triggered by workflow dispatch with tag: $RELEASE_TAG"
+          if [[ "$RELEASE_TAG" =~ ^(.*)__v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            dir_name="${BASH_REMATCH[1]}"
+            version="${BASH_REMATCH[2]}"
+            echo "📦 Extracted mod directory: $dir_name and version: $version from tag: $RELEASE_TAG"
+            meta_file_path="${dir_name}/index.meta.json"
+            title_name="$dir_name"
             if [ -f "$meta_file_path" ]; then
               title_from_file=$(jq -r '.title' "$meta_file_path" 2>/dev/null)
               if [ -n "$title_from_file" ] && [ "$title_from_file" != "null" ]; then
@@ -53,66 +49,10 @@ jobs:
             else
               echo "⚠️ $meta_file_path not found, using directory name '$dir_name' as title."
             fi
-            mods_data_json=$(echo "$mods_data_json" | jq --arg dir "$dir_name" --arg title "$title_name" '. + [{dirName: $dir, titleName: $title}]')
-
-          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-            echo "🚀 Triggered by Release Mod workflow completion"
-            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-              echo "⚠️ Release Mod workflow did not complete successfully, skipping."
-            else
-              RELEASE_TAG=$(jq -r '.inputs.tag_name' <<< '${{ toJson(github.event.workflow_run.inputs) }}')
-              echo "🏷️ Release workflow was triggered by tag: $RELEASE_TAG"
-              if [[ "$RELEASE_TAG" =~ ^(.*)__v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                dir_name="${BASH_REMATCH[1]}"
-                echo "📦 Extracted mod directory from release tag: $dir_name"
-                meta_file_path="${dir_name}/index.meta.json" # This is index.meta.json in the current repo
-                title_name="$dir_name"
-                if [ -f "$meta_file_path" ]; then
-                  title_from_file=$(jq -r '.title' "$meta_file_path" 2>/dev/null)
-                  if [ -n "$title_from_file" ] && [ "$title_from_file" != "null" ]; then
-                    title_name="$title_from_file"
-                  else
-                    echo "⚠️ Could not read .title from $meta_file_path, using directory name '$dir_name' as title."
-                  fi
-                else
-                  echo "⚠️ $meta_file_path not found, using directory name '$dir_name' as title."
-                fi
-                mods_data_json=$(echo "$mods_data_json" | jq --arg dir "$dir_name" --arg title "$title_name" '. + [{dirName: $dir, titleName: $title}]')
-              else
-                echo "ℹ️ Release tag '$RELEASE_TAG' did not match expected format (modDirName__vX.Y.Z). Skipping mod detection for this workflow_run event."
-              fi
-            fi
-          else # push trigger
-            echo "🤖 Auto-trigger: analyzing changed files..."
-            changed_files=$(git diff --name-only HEAD~1 HEAD)
-            declare -A unique_mod_dirs
-
-            for file in $changed_files; do
-              if [[ $file =~ ^([^/]+)/(index\.meta\.json|README\.md|index\.thumbnail\.jpg)$ ]]; then
-                dir_name="${BASH_REMATCH[1]}"
-                if [[ -z "${unique_mod_dirs[$dir_name]}" ]]; then
-                  meta_file_path="${dir_name}/index.meta.json" # This is index.meta.json in the current repo
-                  title_name="$dir_name"
-                  if [ -f "$meta_file_path" ]; then
-                    title_from_file=$(jq -r '.title' "$meta_file_path" 2>/dev/null)
-                    if [ -n "$title_from_file" ] && [ "$title_from_file" != "null" ]; then
-                      title_name="$title_from_file"
-                    else
-                      echo "⚠️ Could not read .title from $meta_file_path for dir $dir_name. Using directory name as title."
-                    fi
-                  else
-                    echo "⚠️ $meta_file_path not found for dir $dir_name. Using directory name as title."
-                  fi
-                  unique_mod_dirs["$dir_name"]="$title_name"
-                  echo "📦 Found changes in mod directory: $dir_name (Title: $title_name)"
-                fi
-              fi
-            done
-
-            for dir in "${!unique_mod_dirs[@]}"; do
-              title="${unique_mod_dirs[$dir]}"
-              mods_data_json=$(echo "$mods_data_json" | jq --arg d "$dir" --arg t "$title" '. + [{dirName: $d, titleName: $t}]')
-            done
+            mods_data_json=$(echo "$mods_data_json" | jq --arg dir "$dir_name" --arg title "$title_name" --arg ver "$version" '. + [{dirName: $dir, titleName: $title, version: $ver}]')
+          else
+            echo "ℹ️ Dispatched tag '$RELEASE_TAG' did not match expected format (modDirName__vX.Y.Z). Skipping mod detection."
+            exit 1
           fi
 
           compact_mods_data_json=$(echo "$mods_data_json" | jq -c '.')
@@ -145,9 +85,12 @@ jobs:
         uses: actions/checkout@v4 # This checks out gfreitash/balatro-mods
 
       - name: Verify mod and index files
+        id: verify_files
         run: |
           MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          MOD_VERSION="${{ matrix.mod.version }}"
           echo "🔍 Verifying mod structure for directory: $MOD_DIR_NAME (Title: ${{ matrix.mod.titleName }})"
+
           if [ ! -d "$MOD_DIR_NAME" ]; then
             echo "❌ Error: Mod folder '$MOD_DIR_NAME' does not exist in ${{ github.repository }}"
             exit 1
@@ -166,25 +109,56 @@ jobs:
           fi
           echo "✅ All required files found for $MOD_DIR_NAME"
 
-      - name: Get latest version for mod
-        id: version
-        run: |
-          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
-          echo "🔍 Getting latest version for: $MOD_DIR_NAME"
-          LATEST_TAG="${MOD_DIR_NAME}__latest"
+          # --- index.meta.json Validation ---
+          INDEX_META_PATH="$MOD_DIR_NAME/index.meta.json"
+          INDEX_META_CONTENT=$(cat "$INDEX_META_PATH")
 
-          LATEST_VERSION=$(gh release view "$LATEST_TAG" --repo ${{ github.repository }} --json body --jq '.body' | \
-            grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^v//')
-
-          if [ -z "$LATEST_VERSION" ]; then
-            echo "⚠️ Warning: No latest release found for $MOD_DIR_NAME (tag $LATEST_TAG), using 0.0.0"
-            LATEST_VERSION="0.0.0"
+          # Strict XOR check: 'version' OR 'automatic-version-check', but not both, and one must be present.
+          if ! echo "$INDEX_META_CONTENT" | jq -e '(has("version") and (has("automatic-version-check") | not)) or ((has("version") | not) and has("automatic-version-check"))' >/dev/null; then
+            echo "❌ Error: ${INDEX_META_PATH} must have exactly one of 'version' or 'automatic-version-check' fields."
+            exit 1
           fi
 
-          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "📋 Latest version for $MOD_DIR_NAME: $LATEST_VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IS_AUTO_VERSION_CHECK="false"
+          # If 'version' field exists (and 'automatic-version-check' does not, due to XOR)
+          if echo "$INDEX_META_CONTENT" | jq -e 'has("version")' >/dev/null; then
+            IS_AUTO_VERSION_CHECK="false"
+            echo "IS_AUTO_VERSION_CHECK=false" >> $GITHUB_OUTPUT
+          # If 'automatic-version-check' field exists (and 'version' does not, due to XOR)
+          elif echo "$INDEX_META_CONTENT" | jq -e 'has("automatic-version-check")' >/dev/null; then
+            IS_AUTO_VERSION_CHECK="true"
+            echo "IS_AUTO_VERSION_CHECK=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Validate version consistency if 'version' field is present
+          if [ "$IS_AUTO_VERSION_CHECK" = "false" ]; then
+            META_VERSION=$(echo "$INDEX_META_CONTENT" | jq -r '.version')
+            if [ "$META_VERSION" != "$MOD_VERSION" ]; then
+              echo "❌ Error: Version mismatch in ${INDEX_META_PATH}. Expected '$MOD_VERSION' but found '$META_VERSION'. Did you forget to run sync-versions.sh?"
+              exit 1
+            fi
+          fi
+
+          # Validate downloadURL format
+          DOWNLOAD_URL=$(echo "$INDEX_META_CONTENT" | jq -r '.downloadURL')
+          EXPECTED_REPO_PATH="https://github.com/${{ github.repository }}/releases/download"
+
+          if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
+            # Expect latest URL format
+            EXPECTED_DOWNLOAD_URL_PATTERN="${EXPECTED_REPO_PATH}/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip"
+            if [[ "$DOWNLOAD_URL" != "$EXPECTED_DOWNLOAD_URL_PATTERN" ]]; then
+              echo "❌ Error: Download URL in ${INDEX_META_PATH} is not in the proper format for automatic version updates. It should be '${EXPECTED_DOWNLOAD_URL_PATTERN}'."
+              exit 1
+            fi
+          else
+            # Expect versioned URL format
+            EXPECTED_DOWNLOAD_URL_PATTERN="${EXPECTED_REPO_PATH}/${MOD_DIR_NAME}__v${MOD_VERSION}/${MOD_DIR_NAME}.zip"
+            if [[ "$DOWNLOAD_URL" != "$EXPECTED_DOWNLOAD_URL_PATTERN" ]]; then
+              echo "❌ Error: Download URL in ${INDEX_META_PATH} is not in the proper format for versioned updates. It should be '${EXPECTED_DOWNLOAD_URL_PATTERN}'."
+              exit 1
+            fi
+          fi
+          echo "✅ index.meta.json validated successfully."
 
       - name: Check if mod exists in index
         id: check_exists
@@ -208,15 +182,15 @@ jobs:
         id: check_changes
         run: |
           MOD_DIR_NAME="${{ matrix.mod.dirName }}"
-          echo "🔍 Analyzing changes for $MOD_DIR_NAME to determine if PR is needed..."
-          VERSION="${{ steps.version.outputs.version }}"
+          MOD_VERSION="${{ matrix.mod.version }}" # Get version from matrix.mod
+          echo "🔍 Analyzing changes for $MOD_DIR_NAME (v$MOD_VERSION) to determine if PR is needed..."
 
           mkdir -p "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
 
           # This index.meta.json is from the current repo (gfreitash/balatro-mods)
-          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${{ matrix.mod.tag_name }}/${MOD_DIR_NAME}.zip" \
              --arg folder "$MOD_DIR_NAME" \
-             --arg version "$VERSION" \
+             --arg version "$MOD_VERSION" \
              '. + {downloadURL: $url, folderName: $folder, version: $version}' \
              "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
 
@@ -269,15 +243,16 @@ jobs:
       - name: Prepare submission files
         run: |
           MOD_DIR_NAME="${{ matrix.mod.dirName }}"
-          echo "📁 Preparing submission files for $MOD_DIR_NAME..."
-          VERSION="${{ steps.version.outputs.version }}"
+          MOD_VERSION="${{ matrix.mod.version }}" # Get version from matrix.mod
+          MOD_TAG_NAME="${{ matrix.mod.tag_name }}" # Get tag_name from matrix.mod
+          echo "📁 Preparing submission files for $MOD_DIR_NAME (v$MOD_VERSION)..."
 
           mkdir -p "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
 
           # This index.meta.json is from the current repo (gfreitash/balatro-mods)
-          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+          jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_TAG_NAME}/${MOD_DIR_NAME}.zip" \
              --arg folder "$MOD_DIR_NAME" \
-             --arg version "$VERSION" \
+             --arg version "$MOD_VERSION" \
              '. + {downloadURL: $url, folderName: $folder, version: $version}' \
              "$MOD_DIR_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
 
@@ -296,12 +271,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           MOD_DIR_NAME: ${{ matrix.mod.dirName }}
           MOD_TITLE_NAME: ${{ matrix.mod.titleName }}
+          MOD_VERSION: ${{ matrix.mod.version }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
           VERSION_ONLY_CHANGE: ${{ steps.check_changes.outputs.version_only_change }}
+          OPEN_PR_ON_VERSION_CHANGE_ONLY: ${{ steps.verify_files.outputs.IS_AUTO_VERSION_CHECK }}
         run: |
           CURRENT_MOD_DIR="${{ env.MOD_DIR_NAME }}"
           CURRENT_MOD_TITLE="${{ env.MOD_TITLE_NAME }}" # Title from index.meta.json
+          CURRENT_MOD_VERSION="${{ env.MOD_VERSION }}" # Version from matrix.mod
 
           # Attempt to read description from the mod's manifest.json in the source repo (gfreitash/balatro-mods)
           # The workflow is running in a checkout of gfreitash/balatro-mods
@@ -321,7 +299,12 @@ jobs:
             MOD_MANIFEST_DESCRIPTION_LINE="**Description:** ${MANIFEST_PATH} not found in source repository."
           fi
 
-          if [ "$VERSION_ONLY_CHANGE" = "true" ] && [ "$FORCE_UPDATE" != "true" ]; then
+          # Check if we should skip PR creation
+          # Skip if:
+          # 1. Only version changed AND
+          # 2. FORCE_UPDATE is not true AND
+          # 3. OPEN_PR_ON_VERSION_CHANGE_ONLY is false (meaning version field IS present in index.meta.json)
+          if [ "$VERSION_ONLY_CHANGE" = "true" ] && [ "$FORCE_UPDATE" != "true" ] && [ "$OPEN_PR_ON_VERSION_CHANGE_ONLY" = "false" ]; then
             echo "ℹ️ Skipping PR for $CURRENT_MOD_DIR - only version changed and automatic-version-check handles this"
             echo "## ℹ️ PR Skipped - Auto-Update" >> $GITHUB_STEP_SUMMARY
             echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> $GITHUB_STEP_SUMMARY

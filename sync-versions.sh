@@ -414,11 +414,11 @@ for mod_dir in $MOD_DIRS; do
 		fi
 	fi
 
-	# Sync manifest version with changelog
+	# Sync manifest.json version with changelog
 	current_manifest_version=$(jq -r '.version' "$manifest_file")
 
 	if [ "$current_manifest_version" != "$LATEST_VERSION" ]; then
-		log_info "Syncing manifest for '${mod_name}': changelog version is '$LATEST_VERSION', manifest is '$current_manifest_version'."
+		log_info "Syncing manifest.json for '${mod_name}': changelog version is '$LATEST_VERSION', manifest is '$current_manifest_version'."
 
 		if [ "$COMMON_WAS_CHANGED" = true ]; then
 			update_manifest "$manifest_file" "$LATEST_VERSION" "$SHARED_DEP_REQ"
@@ -427,12 +427,65 @@ for mod_dir in $MOD_DIRS; do
 		fi
 		log_success "Updated $manifest_file to version $LATEST_VERSION."
 	elif [ "$COMMON_WAS_CHANGED" = true ]; then
-		log_info "Updating dependency info in manifest for '${mod_name}'."
+		log_info "Updating dependency info in manifest.json for '${mod_name}'."
 		jq --arg dep "$SHARED_DEP_REQ" '.dependencies = [$dep]' "$manifest_file" >"${manifest_file}.$$" &&
 			mv "${manifest_file}.$$" "$manifest_file"
 		log_success "Updated dependencies in $manifest_file."
 	fi
+
+	# --- Sync index.meta.json ---
+	index_meta_file="$mod_dir/index.meta.json"
+	if [ -f "$index_meta_file" ]; then
+		log_info "Processing index.meta.json for '${mod_name}'..."
+		tmp_index_meta_file="${index_meta_file}.$$"
+		index_meta_content=$(cat "$index_meta_file")
+
+		repo_path=$(git config --get remote.origin.url | sed -E 's/.*github.com[\/:](.*)\.git$/\1/' || true)
+		if [ -z "$repo_path" ]; then
+			log_error "Could not determine GitHub repository path. Please ensure git remote.origin.url is a GitHub URL."
+			VALIDATION_FAILED=true
+			continue
+		fi
+		log_debug "Determined repo_path: ${repo_path}"
+
+		# Strict XOR check: 'version' OR 'automatic-version-check', but not both, and one must be present.
+		if ! jq -e '(has("version") and (has("automatic-version-check") | not)) or ((has("version") | not) and has("automatic-version-check"))' <<< "$index_meta_content" >/dev/null; then
+			log_error "Error: ${index_meta_file} must have exactly one of 'version' or 'automatic-version-check' fields."
+			VALIDATION_FAILED=true
+			continue
+		fi
+
+		# If 'version' field exists (and 'automatic-version-check' does not, due to XOR)
+		if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
+			log_info "Updating 'version' and 'downloadURL' in ${index_meta_file}."
+			jq --arg ver "$LATEST_VERSION" \
+				--arg mod_name "$mod_name" \
+				--arg repo_path "$repo_path" \
+				'.version = $ver | .downloadURL = ("https://github.com/" + $repo_path + "/releases/download/" + $mod_name + "__v" + $ver + "/" + $mod_name + ".zip")' \
+				"$index_meta_file" >"$tmp_index_meta_file" && mv "$tmp_index_meta_file" "$index_meta_file"
+			log_success "Updated ${index_meta_file} with version ${LATEST_VERSION} and new downloadURL."
+		# If 'automatic-version-check' field exists (and 'version' does not, due to XOR)
+		elif echo "$index_meta_content" | jq -e 'has("automatic-version-check")' >/dev/null; then
+			current_download_url=$(jq -r '.downloadURL' "$index_meta_file")
+
+			# Construct expected_latest_url using the pre-calculated repo_path
+			expected_latest_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
+			log_debug "Current downloadURL: ${current_download_url}"
+			log_debug "Expected latest downloadURL: ${expected_latest_url}"
+
+			if [[ "$current_download_url" != "$expected_latest_url" ]]; then
+				log_error "Error: Download url is not in the proper format for automatic version updates. It should be '${expected_latest_url}' for ${index_meta_file}."
+				VALIDATION_FAILED=true
+				continue
+			fi
+		fi
+	fi
 done
+
+if [ "$VALIDATION_FAILED" = true ]; then
+	log_error "One or more index.meta.json files failed validation. Please fix the errors above."
+	exit 1
+fi
 
 echo -e "\n--------------------------------------------------"
 log_success "Version sync complete."

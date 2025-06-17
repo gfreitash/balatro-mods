@@ -88,7 +88,7 @@ jobs:
             declare -A unique_mod_dirs
 
             for file in $changed_files; do
-              if [[ $file =~ ^([^/]+)/index\.(meta\.json|description\.md|thumbnail\.jpg)$ ]]; then
+              if [[ $file =~ ^([^/]+)/(index\.meta\.json|README\.md|index\.thumbnail\.jpg)$ ]]; then
                 dir_name="${BASH_REMATCH[1]}"
                 if [[ -z "${unique_mod_dirs[$dir_name]}" ]]; then
                   meta_file_path="${dir_name}/index.meta.json" # This is index.meta.json in the current repo

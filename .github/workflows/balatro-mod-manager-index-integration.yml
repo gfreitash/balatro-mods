@@ -60,7 +60,7 @@ jobs:
             if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
               echo "⚠️ Release Mod workflow did not complete successfully, skipping."
             else
-              RELEASE_TAG="${{ github.event.workflow_run.head_branch }}"
+              RELEASE_TAG=$(jq -r '.inputs.tag_name' <<< '${{ toJson(github.event.workflow_run.inputs) }}')
               echo "🏷️ Release workflow was triggered by tag: $RELEASE_TAG"
               if [[ "$RELEASE_TAG" =~ ^(.*)__v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                 dir_name="${BASH_REMATCH[1]}"

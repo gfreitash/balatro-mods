@@ -165,7 +165,7 @@ jobs:
 
       - name: Dispatch Update Balatro Mod Index Workflow
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN}}
           TAG_NAME: ${{ env.TAG_NAME }}
         run: |
           echo "🚀 Dispatching 'Update Balatro Mod Index' workflow..."

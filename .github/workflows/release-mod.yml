@@ -68,7 +68,7 @@ jobs:
           zip -r "../$ZIP_NAME" "$MOD_NAME"
           # Create latest zip (same content, different name)
           zip -r "../$LATEST_ZIP_NAME" "$MOD_NAME"
-          cd ..
+          cd ao
 
       - name: Extract Changelog Entry for Release
         id: extract_changelog
@@ -164,18 +164,14 @@ jobs:
             ${{ env.LATEST_ZIP_NAME }}
 
       - name: Dispatch Update Balatro Mod Index Workflow
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'balatro-mod-manager-index-integration.yml', # The file name of the target workflow
-              ref: 'main', # The branch where the target workflow resides
-              inputs: {
-                tag_name: process.env.TAG_NAME # Pass the full tag name
-              }
-            });
         env:
-          TAG_NAME: ${{ env.TAG_NAME }} # Ensure this ENV var is available from previous steps
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use a token with `workflow_dispatch` permissions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ env.TAG_NAME }}
+        run: |
+          echo "🚀 Dispatching 'Update Balatro Mod Index' workflow..."
+          gh workflow run balatro-mod-manager-index-integration.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f tag_name="$TAG_NAME"
+
+          echo "✅ 'Update Balatro Mod Index' workflow dispatched."

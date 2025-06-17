@@ -22,4 +22,3 @@ This mod provides several small adjustments to gameplay mechanics to enhance the
 ## Support
 
 For issues, suggestions, or contributions, please visit the [GitHub repository](https://github.com/gfreitash/balatro-mods).
-

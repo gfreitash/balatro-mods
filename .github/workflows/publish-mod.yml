@@ -14,24 +14,22 @@ on:
         type: string
 
 jobs:
-  detect-changes:
+  process-mod-metadata:
     runs-on: ubuntu-latest
     outputs:
-      mods_json: ${{ steps.changes.outputs.mods_json }}
+      mod_json: ${{ steps.extract_metadata.outputs.mod_json }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2 # For push trigger diff
 
-      - name: Detect changed mods and their titles from tag
-        id: changes
+      - name: Extract mod metadata from tag
+        id: extract_metadata
         run: |
-          echo "🔍 Detecting changed mods and their titles..."
-          mods_data_json="[]" # Initialize as empty JSON array
+          echo "🔍 Extracting mod metadata from tag..."
+          mod_data_json="{}" # Initialize as empty JSON object
 
           RELEASE_TAG="${{ github.event.inputs.tag_name }}"
-          echo "🎯 Triggered by workflow dispatch with tag: $RELEASE_TAG"
+          echo "🎯 Processing tag: $RELEASE_TAG"
           if [[ "$RELEASE_TAG" =~ ^(.*)__v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             dir_name="${BASH_REMATCH[1]}"
             version="${BASH_REMATCH[2]}"
@@ -48,50 +46,57 @@ jobs:
             else
               echo "⚠️ $meta_file_path not found, using directory name '$dir_name' as title."
             fi
-            # IMPORTANT: Add 'tagName' to the JSON output to be used in subsequent steps
-            mods_data_json=$(echo "$mods_data_json" | jq --arg dir "$dir_name" --arg title "$title_name" --arg ver "$version" --arg tag "$RELEASE_TAG" '. + [{dirName: $dir, titleName: $title, version: $ver, tagName: $tag}]')
+            
+            # Create JSON with mod metadata
+            mod_data_json=$(jq -n \
+              --arg dir "$dir_name" \
+              --arg title "$title_name" \
+              --arg ver "$version" \
+              --arg tag "$RELEASE_TAG" \
+              '{dirName: $dir, titleName: $title, version: $ver, tagName: $tag}')
           else
-            echo "ℹ️ Dispatched tag '$RELEASE_TAG' did not match expected format (modDirName__vX.Y.Z). Skipping mod detection."
+            echo "ℹ️ Dispatched tag '$RELEASE_TAG' did not match expected format (modDirName__vX.Y.Z). Skipping mod processing."
             exit 1 # Fail fast if tag format is wrong
           fi
 
-          compact_mods_data_json=$(echo "$mods_data_json" | jq -c '.')
-          {
-            echo "mods_json<<EOF"
-            echo "$compact_mods_data_json"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          # Output the mod metadata
+          echo "mod_json<<EOF" >> $GITHUB_OUTPUT
+          echo "$mod_data_json" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          echo "✅ Detection complete. Output for GITHUB_OUTPUT: $compact_mods_data_json"
-          echo "Full (potentially pretty-printed) mods_data_json for debugging:"
-          echo "$mods_data_json"
+          echo "✅ Metadata extraction complete: $mod_data_json"
         env:
-          # This step doesn't require PAT_TOKEN, GITHUB_TOKEN is sufficient for repo checkout
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update-index:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.mods_json != '[]'
+    needs: process-mod-metadata
+    if: needs.process-mod-metadata.outputs.mod_json != '{}'
     runs-on: ubuntu-latest
     environment: production-main # CRITICAL: Enforce PAT_TOKEN usage via environment
     env:
-      TARGET_REPO: "skyline69/balatro-mod-index"
+      TARGET_REPO: "ghfreitas-oss/balatro-mod-index" # Temporary to test CI
       TARGET_BRANCH: "main"
       FORK_OWNER: "gfreitash"
       AUTHOR: "riosodu"
-    strategy:
-      matrix:
-        mod: ${{ fromJson(needs.detect-changes.outputs.mods_json) }}
     steps:
       - name: Checkout repository (gfreitash/balatro-mods)
         uses: actions/checkout@v4
 
+      - name: Set mod variables
+        id: mod_vars
+        run: |
+          MOD_DATA='${{ needs.process-mod-metadata.outputs.mod_json }}'
+          echo "MOD_DIR_NAME=$(echo "$MOD_DATA" | jq -r '.dirName')" >> $GITHUB_OUTPUT
+          echo "MOD_TITLE_NAME=$(echo "$MOD_DATA" | jq -r '.titleName')" >> $GITHUB_OUTPUT
+          echo "MOD_VERSION=$(echo "$MOD_DATA" | jq -r '.version')" >> $GITHUB_OUTPUT
+          echo "MOD_TAG_NAME=$(echo "$MOD_DATA" | jq -r '.tagName')" >> $GITHUB_OUTPUT
+
       - name: Verify mod and index files
         id: verify_files
         run: |
-          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
-          MOD_VERSION="${{ matrix.mod.version }}"
-          echo "🔍 Verifying mod structure for directory: $MOD_DIR_NAME (Title: ${{ matrix.mod.titleName }})"
+          MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
+          MOD_VERSION="${{ steps.mod_vars.outputs.MOD_VERSION }}"
+          echo "🔍 Verifying mod structure for directory: $MOD_DIR_NAME (Title: ${{ steps.mod_vars.outputs.MOD_TITLE_NAME }})"
 
           if [ ! -d "$MOD_DIR_NAME" ]; then
             echo "❌ Error: Mod folder '$MOD_DIR_NAME' does not exist in ${{ github.repository }}"
@@ -145,7 +150,7 @@ jobs:
           DOWNLOAD_URL=$(echo "$INDEX_META_CONTENT" | jq -r '.downloadURL')
           EXPECTED_REPO_PATH="https://github.com/${{ github.repository }}/releases/download"
 
-          # Download URL validation depends on IS_AUTO_VERSION_CHECK
+          # Validate downloadURL based on mod type
           if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
             # If automatic-version-check is true, expect downloadURL to use the MOD_NAME__latest tag
             EXPECTED_DOWNLOAD_URL_PATTERN="${EXPECTED_REPO_PATH}/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip"
@@ -155,7 +160,7 @@ jobs:
             fi
           else
             # If automatic-version-check is false, expect downloadURL to use the specific versioned tag
-            EXPECTED_DOWNLOAD_URL_PATTERN="${EXPECTED_REPO_PATH}/${{ matrix.mod.tagName }}/${MOD_DIR_NAME}.zip"
+            EXPECTED_DOWNLOAD_URL_PATTERN="${EXPECTED_REPO_PATH}/${{ steps.mod_vars.outputs.MOD_TAG_NAME }}/${MOD_DIR_NAME}.zip"
             if [[ "$DOWNLOAD_URL" != "$EXPECTED_DOWNLOAD_URL_PATTERN" ]]; then
               echo "❌ Error: Download URL in ${INDEX_META_PATH} is not in the proper format for explicit versioning. It should be '${EXPECTED_DOWNLOAD_URL_PATTERN}'."
               exit 1
@@ -166,7 +171,7 @@ jobs:
       - name: Check if mod exists in index
         id: check_exists
         run: |
-          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
+          MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
           echo "🔍 Checking if mod ${{ env.AUTHOR }}@$MOD_DIR_NAME exists in index..."
           echo "📥 Cloning target repository to check existing mods..."
           # Clone with limited depth for efficiency if only checking for directory existence
@@ -186,27 +191,45 @@ jobs:
       - name: Check for changes that matter
         id: check_changes
         run: |
-          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
-          MOD_VERSION="${{ matrix.mod.version }}"
-          MOD_TAG_NAME="${{ matrix.mod.tagName }}"
+          set -x # Enable debug mode to trace commands
+          MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
+          MOD_VERSION="${{ steps.mod_vars.outputs.MOD_VERSION }}"
+          MOD_TAG_NAME="${{ steps.mod_vars.outputs.MOD_TAG_NAME }}"
           IS_AUTO_VERSION_CHECK="${{ steps.verify_files.outputs.IS_AUTO_VERSION_CHECK }}"
 
           echo "🔍 Analyzing changes for $MOD_DIR_NAME (v$MOD_VERSION) to determine if PR is needed..."
 
           mkdir -p "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
 
-          if [ "$IS_AUTO_VERSION_CHECK" = "false" ]; then
-            # If not auto-version-check, include version field and specific versioned downloadURL
+          # Prepare normalized files for comparison and submission
+          if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
+            # For auto-version mods:
+            # 1. For comparison: Remove version field (if any) and standardize format
+            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+               --arg folder "$MOD_DIR_NAME" \
+               '. + {downloadURL: $url, folderName: $folder} | del(.version)' \
+               "$MOD_DIR_NAME/index.meta.json" | jq -c '.' > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json.normalized"
+            
+            # 2. For submission: Keep original state WITHOUT adding version field
+            # IMPORTANT: For auto-version mods, do NOT add version field in submission file
+            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+               --arg folder "$MOD_DIR_NAME" \
+               '. + {downloadURL: $url, folderName: $folder}' \
+               "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
+          else
+            # For explicit version mods:
+            # 1. For comparison: Include version field and standardize format
             jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_TAG_NAME}/${MOD_DIR_NAME}.zip" \
                --arg folder "$MOD_DIR_NAME" \
                --arg version "$MOD_VERSION" \
                '. + {downloadURL: $url, folderName: $folder, version: $version}' \
-               "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
-          else
-            # If auto-version-check, remove version field and use 'latest' downloadURL
-            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+               "$MOD_DIR_NAME/index.meta.json" | jq -c '.' > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json.normalized"
+               
+            # 2. For submission: Same as normalized but with pretty formatting
+            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_TAG_NAME}/${MOD_DIR_NAME}.zip" \
                --arg folder "$MOD_DIR_NAME" \
-               'del(.version) | . + {downloadURL: $url, folderName: $folder}' \
+               --arg version "$MOD_VERSION" \
+               '. + {downloadURL: $url, folderName: $folder, version: $version}' \
                "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
           fi
 
@@ -216,85 +239,77 @@ jobs:
             cp "$MOD_DIR_NAME/index.thumbnail.jpg" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg"
           fi
 
+          # If mod already exists in index, check for non-version changes
           if [ "${{ steps.check_exists.outputs.exists }}" = "true" ]; then
             echo "📊 Comparing with existing mod in index..."
-            VERSION_ONLY_CHANGE=true
+            METADATA_CHANGED=false
 
             EXISTING_META_JSON_PATH="temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
-            EXISTING_META_TRANSFORMED=""
+            
+            # Normalize the existing meta.json for comparison
+            if [ -f "$EXISTING_META_JSON_PATH" ]; then
+              if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
+                # For auto-version mods: Normalize by removing version and standardizing format
+                jq 'del(.version)' "$EXISTING_META_JSON_PATH" | jq -c '.' > "temp-index/normalized_existing_meta.json"
+              else
+                # For explicit version mods: Just standardize format
+                jq '.' "$EXISTING_META_JSON_PATH" | jq -c '.' > "temp-index/normalized_existing_meta.json"
+              fi
 
-            # Transform existing meta for comparison, removing 'version' if IS_AUTO_VERSION_CHECK is true
-            if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
-              EXISTING_META_TRANSFORMED=$(jq 'del(.version)' "$EXISTING_META_JSON_PATH" 2>/dev/null || echo "{}")
+              # Compare the normalized files to detect meaningful changes (excluding version)
+              if ! diff -q "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json.normalized" "temp-index/normalized_existing_meta.json" >/dev/null 2>&1; then
+                echo "📝 Meta.json has metadata changes beyond version"
+                METADATA_CHANGED=true
+              fi
             else
-              EXISTING_META_TRANSFORMED=$(cat "$EXISTING_META_JSON_PATH" 2>/dev/null || echo "{}")
-            fi
-
-            # Now compare the current prepared meta.json with the transformed existing one (excluding version field from both for comparison)
-            if ! jq 'del(.version)' "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json" | \
-                 diff -q - <(echo "$EXISTING_META_TRANSFORMED") >/dev/null 2>&1; then
-              echo "📝 Meta.json has non-version changes"
-              VERSION_ONLY_CHANGE=false
+              echo "⚠️ Existing meta.json not found, treating as new mod"
+              METADATA_CHANGED=true
             fi
 
             if ! diff -q "$MOD_DIR_NAME/README.md" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md" >/dev/null 2>&1; then
               echo "📝 Description has changes"
-              VERSION_ONLY_CHANGE=false
+              METADATA_CHANGED=true
             fi
 
             if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
               if ! diff -q "$MOD_DIR_NAME/index.thumbnail.jpg" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" >/dev/null 2>&1; then
                 echo "🖼️ Thumbnail has changes"
-                VERSION_ONLY_CHANGE=false
+                METADATA_CHANGED=true
               fi
             elif [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ ! -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
               echo "🖼️ New thumbnail added"
-              VERSION_ONLY_CHANGE=false
+              METADATA_CHANGED=true
             elif [ ! -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
               echo "🖼️ Thumbnail removed"
-              VERSION_ONLY_CHANGE=false
+              METADATA_CHANGED=true
             fi
 
-            if [ "$VERSION_ONLY_CHANGE" = "true" ]; then
-              echo "ℹ️ Only version changed for $MOD_DIR_NAME - mod index will auto-update via automatic-version-check or skip PR"
-              echo "version_only_change=true" >> "$GITHUB_OUTPUT"
+            echo "metadata_changed=$METADATA_CHANGED" >> "$GITHUB_OUTPUT"
+            
+            # Log the result
+            if [ "$METADATA_CHANGED" = "true" ]; then
+              echo "📝 Metadata changes detected beyond version - PR will be created"
             else
-              echo "📝 Meaningful changes detected for $MOD_DIR_NAME beyond version"
-              echo "version_only_change=false" >> "$GITHUB_OUTPUT"
+              echo "ℹ️ Only version changed for $MOD_DIR_NAME"
             fi
           else
             echo "🆕 New mod ($MOD_DIR_NAME) - will create PR"
-            echo "version_only_change=false" >> "$GITHUB_OUTPUT"
+            echo "metadata_changed=true" >> "$GITHUB_OUTPUT" # New mods always need a PR
           fi
 
       - name: Prepare submission files
         run: |
-          MOD_DIR_NAME="${{ matrix.mod.dirName }}"
-          MOD_VERSION="${{ matrix.mod.version }}"
-          MOD_TAG_NAME="${{ matrix.mod.tagName }}"
+          MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
+          MOD_VERSION="${{ steps.mod_vars.outputs.MOD_VERSION }}"
+          MOD_TAG_NAME="${{ steps.mod_vars.outputs.MOD_TAG_NAME }}"
           IS_AUTO_VERSION_CHECK="${{ steps.verify_files.outputs.IS_AUTO_VERSION_CHECK }}"
 
           echo "📁 Preparing submission files for $MOD_DIR_NAME (v$MOD_VERSION)..."
 
           mkdir -p "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
-
-          # CRITICAL CHANGE: Conditionally add 'version' field and set 'downloadURL' based on IS_AUTO_VERSION_CHECK
-          if [ "$IS_AUTO_VERSION_CHECK" = "false" ]; then
-            # Add version field and the specific downloadURL based on the release tag
-            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_TAG_NAME}/${MOD_DIR_NAME}.zip" \
-               --arg folder "$MOD_DIR_NAME" \
-               --arg version "$MOD_VERSION" \
-               '. + {downloadURL: $url, folderName: $folder, version: $version}' \
-               "$MOD_DIR_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
-          else
-            # If automatic-version-check is true, DO NOT add the 'version' field.
-            # The downloadURL should point to the generic 'latest' asset.
-            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
-               --arg folder "$MOD_DIR_NAME" \
-               'del(.version) | . + {downloadURL: $url, folderName: $folder}' \
-               "$MOD_DIR_NAME/index.meta.json" > "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
-          fi
-
+          
+          # Copy the already prepared meta.json from the previous step
+          cp "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json" "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
           cp "$MOD_DIR_NAME/README.md" "submission/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
 
           if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ]; then
@@ -308,28 +323,25 @@ jobs:
       - name: Fork and submit to Balatro Mod Index
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          MOD_DIR_NAME: ${{ matrix.mod.dirName }}
-          MOD_TITLE_NAME: ${{ matrix.mod.titleName }}
-          MOD_VERSION: ${{ matrix.mod.version }}
+          MOD_DIR_NAME: ${{ steps.mod_vars.outputs.MOD_DIR_NAME }}
+          MOD_TITLE_NAME: ${{ steps.mod_vars.outputs.MOD_TITLE_NAME }}
+          MOD_VERSION: ${{ steps.mod_vars.outputs.MOD_VERSION }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
-          VERSION_ONLY_CHANGE: ${{ steps.check_changes.outputs.version_only_change }}
-          OPEN_PR_ON_VERSION_CHANGE_ONLY: ${{ steps.verify_files.outputs.IS_AUTO_VERSION_CHECK }} # This is the boolean output from verify_files for automatic-version-check
+          METADATA_CHANGED: ${{ steps.check_changes.outputs.metadata_changed }}
+          IS_AUTO_VERSION_CHECK: ${{ steps.verify_files.outputs.IS_AUTO_VERSION_CHECK }}
         run: |
           CURRENT_MOD_DIR="${{ env.MOD_DIR_NAME }}"
           CURRENT_MOD_TITLE="${{ env.MOD_TITLE_NAME }}" # Title from index.meta.json
-          CURRENT_MOD_VERSION="${{ env.MOD_VERSION }}" # Version from matrix.mod
+          CURRENT_MOD_VERSION="${{ env.MOD_VERSION }}" # Version from tag
 
-          # Attempt to read description from the mod's manifest.json in the source repo (gfreitash/balatro-mods)
-          # The workflow is running in a checkout of gfreitash/balatro-mods
+          # Attempt to read description from the mod's manifest.json in the source repo
           MANIFEST_PATH="${CURRENT_MOD_DIR}/manifest.json"
           MOD_MANIFEST_DESCRIPTION_LINE=""
 
           if [ -f "$MANIFEST_PATH" ]; then
             DESCRIPTION_FROM_MANIFEST=$(jq -r '.description' "$MANIFEST_PATH" 2>/dev/null)
             if [ -n "$DESCRIPTION_FROM_MANIFEST" ] && [ "$DESCRIPTION_FROM_MANIFEST" != "null" ]; then
-              # Basic handling for multiline in PR body - ensure it's treated as a single paragraph or handle newlines carefully
-              # For simplicity, we'll let it flow as is. GitHub Markdown handles newlines in variables well within multiline strings.
               MOD_MANIFEST_DESCRIPTION_LINE="**Description:** $DESCRIPTION_FROM_MANIFEST"
             else
               MOD_MANIFEST_DESCRIPTION_LINE="**Description:** Not available or empty in ${MANIFEST_PATH}."
@@ -338,26 +350,26 @@ jobs:
             MOD_MANIFEST_DESCRIPTION_LINE="**Description:** ${MANIFEST_PATH} not found in source repository."
           fi
 
-          # Check if we should skip PR creation
-          # Skip if:
-          # 1. Only version changed AND
-          # 2. FORCE_UPDATE is not true AND
-          # 3. OPEN_PR_ON_VERSION_CHANGE_ONLY is false (meaning version field IS present in index.meta.json)
-          #
-          # If OPEN_PR_ON_VERSION_CHANGE_ONLY is TRUE, it means the mod uses `automatic-version-check`
-          # In this case, we SHOULD always create a PR if `VERSION_ONLY_CHANGE` is true
-          # (as the index relies on the PR for version bumps for `automatic-version-check` mods).
-          # The logic `OPEN_PR_ON_VERSION_CHANGE_ONLY = false` was originally for mods with `version` field
-          # that the index auto-updates. Now, we want to create a PR if it's an update, regardless
-          # if it's an automatic-version-check type, *unless* force_update is explicitly off and
-          # no meaningful changes beyond what the auto-updater would handle were detected.
-          # The fix here means: if it's a version-only change for a non-auto-version-checked mod AND no force update, skip.
-          # For auto-version-checked mods, we ALWAYS create a PR on update, as the version bump *is* a meaningful change for the index.
-          if [ "$VERSION_ONLY_CHANGE" = "true" ] && [ "$FORCE_UPDATE" != "true" ] && [ "$OPEN_PR_ON_VERSION_CHANGE_ONLY" = "false" ]; then
-            echo "ℹ️ Skipping PR for $CURRENT_MOD_DIR - only version changed and this mod type does NOT require PR for version updates."
-            echo "## ℹ️ PR Skipped - Auto-Update (Implicit)" >> "$GITHUB_STEP_SUMMARY"
+          # CORRECTED LOGIC: Determine if PR is needed based on mod type and changes
+          # For explicit version mods (IS_AUTO_VERSION_CHECK=false): ALWAYS create a PR
+          # For auto-version mods (IS_AUTO_VERSION_CHECK=true): Only create PR if metadata changed or forced
+          SHOULD_CREATE_PR=true
+          
+          if [ "$IS_AUTO_VERSION_CHECK" = "true" ] && [ "$METADATA_CHANGED" = "false" ] && [ "$FORCE_UPDATE" != "true" ]; then
+            echo "ℹ️ Skipping PR for $CURRENT_MOD_DIR - this is an auto-version-check mod with no metadata changes"
+            echo "## ℹ️ PR Skipped - Auto-Update Will Handle Version Change" >> "$GITHUB_STEP_SUMMARY"
             echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> "$GITHUB_STEP_SUMMARY"
-            echo "**Reason:** Only version changed - typically handled automatically by mod index for this type" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Reason:** This mod uses automatic-version-check and has no metadata changes" >> "$GITHUB_STEP_SUMMARY"
+            SHOULD_CREATE_PR=false
+          elif [ "$IS_AUTO_VERSION_CHECK" = "false" ]; then
+            echo "ℹ️ Creating PR for $CURRENT_MOD_DIR - this mod has explicit version field and requires a PR"
+          elif [ "$METADATA_CHANGED" = "true" ]; then
+            echo "ℹ️ Creating PR for $CURRENT_MOD_DIR - metadata changes detected beyond version"
+          elif [ "$FORCE_UPDATE" = "true" ]; then
+            echo "ℹ️ Creating PR for $CURRENT_MOD_DIR - force update requested"
+          fi
+          
+          if [ "$SHOULD_CREATE_PR" = "false" ]; then
             exit 0
           fi
 
@@ -384,13 +396,6 @@ jobs:
           echo "🔄 Setting up upstream remote..."
           git remote add upstream "https://github.com/${{ env.TARGET_REPO }}.git" 2>/dev/null || true
           git fetch upstream
-
-          echo "🔄 Syncing with upstream..."
-          git checkout ${{ env.TARGET_BRANCH }} 2>/dev/null || git checkout -b ${{ env.TARGET_BRANCH }} upstream/${{ env.TARGET_BRANCH }}
-          git reset --hard upstream/${{ env.TARGET_BRANCH }}
-          git remote set-url origin "https://$GITHUB_TOKEN@github.com/${{ env.FORK_OWNER }}/$TARGET_REPO_NAME.git"
-          echo "📤 Syncing fork with upstream..."
-          git push origin ${{ env.TARGET_BRANCH }} --force-with-lease
 
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           PR_MOD_IDENTIFIER="${{ env.AUTHOR }}@${CURRENT_MOD_DIR}"
@@ -429,8 +434,10 @@ jobs:
             echo "🆕 Preparing submission for new mod $CURRENT_MOD_DIR..."
           fi
 
-          echo "🌿 Creating branch: $BRANCH_NAME"
-          git checkout -b "$BRANCH_NAME"
+          # Create a new branch directly from upstream's target branch
+          echo "🌿 Creating branch: $BRANCH_NAME from upstream/${{ env.TARGET_BRANCH }}"
+          git fetch upstream ${{ env.TARGET_BRANCH }}
+          git checkout -b "$BRANCH_NAME" upstream/${{ env.TARGET_BRANCH }}
 
           echo "📁 Copying submission files..."
           # Ensure the mods directory exists within the cloned index repo
@@ -481,13 +488,14 @@ jobs:
           fi
 
           echo "📤 Pushing to origin/$BRANCH_NAME"
-          git push origin "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME" -u
 
           echo "🎯 Creating PR to ${{ env.TARGET_REPO }}"
+          # Use full repo references in PR creation to be explicit
           PR_URL=$(gh pr create \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
-            --base ${{ env.TARGET_BRANCH }} \
+            --base "${{ env.TARGET_REPO }}:${{ env.TARGET_BRANCH }}" \
             --head "${{ env.FORK_OWNER }}:$BRANCH_NAME" \
             --repo "${{ env.TARGET_REPO }}")
 

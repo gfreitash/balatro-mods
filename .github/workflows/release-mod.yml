@@ -49,7 +49,7 @@ jobs:
             echo "DEBUG: Processing manifest_path: $manifest_path" # Added debug echo
             mod_dir=$(basename "$manifest_path")
             echo "DEBUG: Extracted mod_dir: $mod_dir" # Added debug echo
-            version=$(jq -r '.version' "$manifest_path")
+            version=$(jq -r '.version' "$manifest_path/manifest.json") # Corrected path here
             echo "DEBUG: Extracted version: $version" # Added debug echo
 
             if [ -z "$version" ] || [ "$version" == "null" ]; then

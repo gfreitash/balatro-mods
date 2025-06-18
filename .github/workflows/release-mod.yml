@@ -85,15 +85,15 @@ jobs:
           fi
 
           # Prepare JSON output for subsequent jobs
-          json_output=$(jq -n 'reduce inputs as $i ({}; . + $i)' <(
-            if [ ${#mods_for_release_map[@]} -eq 0 ]; then
-              echo "[]" # Changed from "{}" to "[]"
-            else
+          if [ ${#mods_for_release_map[@]} -eq 0 ]; then
+            json_output="[]"
+          else
+            json_output=$(
               for mod in "${!mods_for_release_map[@]}"; do
                 echo "{\"mod_name\": \"$mod\", \"version\": \"${mods_for_release_map[$mod]}\", \"tag_name\": \"${mod}__v${mods_for_release_map[$mod]}\"}"
-              done
-            fi
-          ) | jq -s '.') # Use jq -s '.' to turn multiple JSON objects into a single array
+              done | jq -s '.'
+            )
+          fi
           echo "mods_to_release_json=$json_output" >> $GITHUB_OUTPUT
           echo "Final JSON output for releases: $json_output"
 

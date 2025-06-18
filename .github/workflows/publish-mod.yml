@@ -186,6 +186,7 @@ jobs:
       - name: Check for changes that matter
         id: check_changes
         run: |
+          set -x # Enable debug mode to trace commands
           MOD_DIR_NAME="${{ matrix.mod.dirName }}"
           MOD_VERSION="${{ matrix.mod.version }}"
           MOD_TAG_NAME="${{ matrix.mod.tagName }}"

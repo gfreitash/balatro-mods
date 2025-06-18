@@ -87,7 +87,7 @@ jobs:
           # Prepare JSON output for subsequent jobs
           json_output=$(jq -n 'reduce inputs as $i ({}; . + $i)' <(
             if [ ${#mods_for_release_map[@]} -eq 0 ]; then
-              echo "{}"
+              echo "[]" # Changed from "{}" to "[]"
             else
               for mod in "${!mods_for_release_map[@]}"; do
                 echo "{\"mod_name\": \"$mod\", \"version\": \"${mods_for_release_map[$mod]}\", \"tag_name\": \"${mod}__v${mods_for_release_map[$mod]}\"}"

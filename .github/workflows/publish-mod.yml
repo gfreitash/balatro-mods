@@ -145,7 +145,7 @@ jobs:
           DOWNLOAD_URL=$(echo "$INDEX_META_CONTENT" | jq -r '.downloadURL')
           EXPECTED_REPO_PATH="https://github.com/${{ github.repository }}/releases/download"
 
-          # CRITICAL CHANGE: Download URL validation depends on IS_AUTO_VERSION_CHECK
+          # Download URL validation depends on IS_AUTO_VERSION_CHECK
           if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
             # If automatic-version-check is true, expect downloadURL to use the MOD_NAME__latest tag
             EXPECTED_DOWNLOAD_URL_PATTERN="${EXPECTED_REPO_PATH}/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip"
@@ -186,7 +186,6 @@ jobs:
       - name: Check for changes that matter
         id: check_changes
         run: |
-          set -x # Enable debug mode to trace commands
           MOD_DIR_NAME="${{ matrix.mod.dirName }}"
           MOD_VERSION="${{ matrix.mod.version }}"
           MOD_TAG_NAME="${{ matrix.mod.tagName }}"
@@ -196,18 +195,20 @@ jobs:
 
           mkdir -p "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}"
 
-          # CRITICAL CHANGE: Conditionally add 'version' to the meta.json being prepared for comparison
-          PREPARE_META_COMMAND=""
           if [ "$IS_AUTO_VERSION_CHECK" = "false" ]; then
-            # If not auto-version-check, we need the version field and the specific versioned downloadURL
-            PREPARE_META_COMMAND="jq --arg url \"https://github.com/${{ github.repository }}/releases/download/${MOD_TAG_NAME}/${MOD_DIR_NAME}.zip\" --arg folder \"$MOD_DIR_NAME\" --arg version \"$MOD_VERSION\" '. + {downloadURL: $url, folderName: $folder, version: $version}'"
+            # If not auto-version-check, include version field and specific versioned downloadURL
+            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_TAG_NAME}/${MOD_DIR_NAME}.zip" \
+               --arg folder "$MOD_DIR_NAME" \
+               --arg version "$MOD_VERSION" \
+               '. + {downloadURL: $url, folderName: $folder, version: $version}' \
+               "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
           else
-            # If auto-version-check, we specifically want to REMOVE the version field from the generated meta.
-            # The downloadURL for auto-version-check mods in the index *should* point to the permanent 'latest' asset.
-            PREPARE_META_COMMAND="jq --arg url \"https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip\" --arg folder \"$MOD_DIR_NAME\" 'del(.version) | . + {downloadURL: $url, folderName: $folder}'"
+            # If auto-version-check, remove version field and use 'latest' downloadURL
+            jq --arg url "https://github.com/${{ github.repository }}/releases/download/${MOD_DIR_NAME}__latest/${MOD_DIR_NAME}.zip" \
+               --arg folder "$MOD_DIR_NAME" \
+               'del(.version) | . + {downloadURL: $url, folderName: $folder}' \
+               "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
           fi
-
-          eval "$PREPARE_META_COMMAND" "$MOD_DIR_NAME/index.meta.json" > "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json"
 
           cp "$MOD_DIR_NAME/README.md" "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md"
 

@@ -37,7 +37,6 @@ jobs:
         id: detect_unreleased
         shell: bash # Use bash for associative arrays
         run: |
-          set -x # Enable shell debugging
           echo "🔍 Detecting unreleased mod versions..."
           declare -A mods_for_release_map
           git fetch --tags --force # Ensure all remote tags are fetched
@@ -46,11 +45,8 @@ jobs:
           MOD_DIRS=$(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;)
 
           for manifest_path in $MOD_DIRS; do
-            echo "DEBUG: Processing manifest_path: $manifest_path" # Added debug echo
             mod_dir=$(basename "$manifest_path")
-            echo "DEBUG: Extracted mod_dir: $mod_dir" # Added debug echo
             version=$(jq -r '.version' "$manifest_path/manifest.json") # Corrected path here
-            echo "DEBUG: Extracted version: $version" # Added debug echo
 
             if [ -z "$version" ] || [ "$version" == "null" ]; then
               echo "⚠️ Could not read version for ${mod_dir}, from ${manifest_path}. Skipping."

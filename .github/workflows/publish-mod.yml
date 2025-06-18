@@ -171,7 +171,7 @@ jobs:
           echo "📥 Cloning target repository to check existing mods..."
           # Clone with limited depth for efficiency if only checking for directory existence
           # Use the default GITHUB_TOKEN for cloning public repo
-          gh repo clone "${{ env.TARGET_REPO }}" temp-index -- --depth 1 || exit 1
+          git clone --depth 1 "https://github.com/${{ env.TARGET_REPO }}.git" temp-index || exit 1
 
           if [ -d "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}" ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"

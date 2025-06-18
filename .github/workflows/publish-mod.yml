@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production-main # CRITICAL: Enforce PAT_TOKEN usage via environment
     env:
-      TARGET_REPO: "ghfreitas-oss/balatro-mod-index" # Temporary to test CI
+      TARGET_REPO: "skyline69/balatro-mod-index"
       TARGET_BRANCH: "main"
       FORK_OWNER: "gfreitash"
       AUTHOR: "riosodu"
@@ -503,3 +503,4 @@ jobs:
           echo "## 🎉 Pull Request Created" >> "$GITHUB_STEP_SUMMARY"
           echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> "$GITHUB_STEP_SUMMARY"
           echo "**PR:** [$PR_TITLE]($PR_URL)" >> "$GITHUB_STEP_SUMMARY"
+          

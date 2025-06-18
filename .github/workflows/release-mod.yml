@@ -1,4 +1,4 @@
-name: Release Mod (Orchestrator)
+name: Release Mod
 
 on:
   workflow_run:
@@ -35,6 +35,7 @@ jobs:
 
       - name: Detect Unreleased Mod Versions and Create Tags
         id: detect_unreleased
+        shell: bash # Use bash for associative arrays
         run: |
           echo "🔍 Detecting unreleased mod versions..."
           declare -A mods_for_release_map

@@ -90,7 +90,7 @@ jobs:
               done | jq -s '.'
             )
           fi
-          echo "mods_to_release_json=$json_output" >> $GITHUB_OUTPUT
+          echo "mods_to_release_json=$json_output" | tr -d '\n' >> $GITHUB_OUTPUT
           echo "Final JSON output for releases: $json_output"
 
   create-and-dispatch-release:

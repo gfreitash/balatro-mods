@@ -56,11 +56,11 @@ sync_all_mods() {
         echo -e "  · Syncing ${C_YELLOW}${mod_name}${C_NC}"
 
         # Sync the mod directory itself
-        rsync -av --delete --exclude='*.tmp' "$dir/" "$dest_path/$mod_name/"
+        rsync -a --delete --exclude='*.tmp' "$dir/" "$dest_path/$mod_name/"
 
         # Sync the common library into the mod's destination folder
         if [ -d "_common" ]; then
-            rsync -av --delete "_common/" "$dest_path/$mod_name/common/"
+            rsync -a --delete "_common/" "$dest_path/$mod_name/common/"
             # Rename common.json to manifest.json for consistency
             if [ -f "$dest_path/$mod_name/common/common.json" ]; then
                 mv "$dest_path/$mod_name/common/common.json" "$dest_path/$mod_name/common/manifest.json"

@@ -52,25 +52,6 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
     return self.base.suit == suit
 end
 
--- -- Override Blind:debuff_card to use trying_to_debuff parameter
--- function Blind:debuff_card(card, from_blind)
---     if not QOL_BUNDLE.config.wildcard_fix_enabled then
---         RIOSODU_SHARED.utils.sendDebugMessage("Blind:debuff_card called without wildcard fix enabled, using original implementation.")
---         return QOL_BUNDLE.original.Blind_debuff_card(self, card, from_blind)
---     end
-
---     if self.debuff and not self.disabled and card.area ~= G.jokers then
---         RIOSODU_SHARED.utils.sendDebugMessage("Blind:debuff_card called with debuff active, checking card suitability.")
---         if self.debuff.suit and card:is_suit(self.debuff.suit, true, nil, true) then
---             RIOSODU_SHARED.utils.sendDebugMessage("Blind:debuff_card card is suitable for debuff, setting debuff.")
---             card:set_debuff(true)
---             return
---         end
---     end
-
---     RIOSODU_SHARED.utils.sendDebugMessage("Blind:debuff_card called without debuff or card not suitable, using original implementation.")
---     return QOL_BUNDLE.original.Blind_debuff_card(self, card, from_blind)
--- end
 
 -- Override Game:init_game_object to handle Joker Max
 -- Calls the original function first and replace shop.joker_max with the mod's config value
@@ -101,23 +82,14 @@ function poll_edition(_key, _mod, _no_neg, _guaranteed)
         end
     end
 
-    -- If a non-negative edition would have been generated, distribute equally
-    local total_non_negative_prob = 0.04 * G.GAME.edition_rate * _mod
-    if _guaranteed then
-        total_non_negative_prob = 0.04 * 25 -- Equivalent to 1 - (1 - 0.04*25)
-    end
 
     -- Check if an edition (foil, holo, poly) would have been rolled by original logic
     -- This is the crucial part: we check against the *original* threshold for any non-negative edition
     -- and then redistribute if it falls within that range.
     local original_foil_threshold = 1 - (0.04 * G.GAME.edition_rate * _mod)
-    local original_holo_threshold = 1 - (0.02 * G.GAME.edition_rate * _mod)
-    local original_polychrome_threshold = 1 - (0.006 * G.GAME.edition_rate * _mod)
 
     if _guaranteed then
         original_foil_threshold = 1 - (0.04 * 25)
-        original_holo_threshold = 1 - (0.02 * 25)
-        original_polychrome_threshold = 1 - (0.006 * 25)
     end
 
     if edition_poll > original_foil_threshold then

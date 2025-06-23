@@ -1,7 +1,5 @@
 -- QoL Bundle/src/callbacks.lua
 
-QOL_BUNDLE.callbacks = {}
-
 -- Callback for Wheel of Fortune cycle option
 QOL_BUNDLE.callbacks.wheel_callback_handler = function(e)
     if not e then return end
@@ -16,6 +14,7 @@ QOL_BUNDLE.callbacks.wheel_callback_handler = function(e)
     -- Save the config
     SMODS.save_mod_config(QOL_BUNDLE.mod)
 
+    QOL_BUNDLE.state.wheel_of_fortune.config.extra = e.to_val
 
     RIOSODU_SHARED.utils.sendDebugMessage("Wheel of Fortune value set to: " .. e.to_val)
 end

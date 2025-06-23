@@ -6,10 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-06-23
+### Added
+- Wheel of Fortune no longer requires a restart to apply configuration changes
+
+### Fixed
+- Cleaned up the codebase to remove unused statements
+- Moved code around to improve maintainability
+
 ## [1.1.3] - 2025-06-17
 
 ### Changed
-- Updated Riosodu Commons to v1.0.5.
+- Test change (removed update note)
 
 ## [1.1.2] - 2025-06-17
 

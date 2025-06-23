@@ -9,6 +9,7 @@
 --- @field config QOL_BUNDLE.Config The mod's configuration loaded from config.lua
 --- @field state table A table to hold the mod's runtime state
 --- @field utils table A table for utility functions
+--- @field callbacks table A table for callback functions
 --- @field original table A table for storing original functions or values before overrides
 --- @field debug table A table for debug-specific functions/data
 --- @field UI table A table for UI related functions/definitions
@@ -21,6 +22,7 @@ QOL_BUNDLE.init = function(self)
   -- initialize globals/subtables
   self.state = {}
   self.utils = {}
+  self.callbacks = {} -- Table to store callback functions
   self.original = {} -- Table to store original functions or values before overrides
   self.debug = {}    -- Namespace for debug functions
   self.UI = {}       -- Namespace for UI related functions/definitions
@@ -48,7 +50,6 @@ QOL_BUNDLE.mod.config = QOL_BUNDLE.config -- Re-link config to mod object to mai
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/main.lua") -- Main mod logic
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/overrides.lua") -- Function overrides
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/callbacks.lua") -- Callbacks
-RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/wheel_of_fortune.lua") -- Wheel of Fortune logic
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/ui/tabs.lua") -- UI definitions
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/debug.lua") -- Debug functions
 

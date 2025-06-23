@@ -211,7 +211,7 @@ add_note_to_existing_version() {
 	else
 		# '### Changed' doesn't exist, create it with the note
 		local new_changed_section
-		new_changed_section=$(printf '\n### Changed\n%s' "$update_note") # awk's print will add the final newline
+		new_changed_section=$(printf '\n### Changed\n%s\n' "$update_note") # Extra newline for proper spacing
 		log_debug "No '### Changed' section found. Inserting new section after version header (line ${version_line_num})."
 		insert_content_after_line "$changelog_file" "$version_line_num" "$new_changed_section"
 		log_success "Created new '### Changed' section with shared lib note."
@@ -244,47 +244,173 @@ create_new_version_entry() {
 	log_success "Created new v${new_version} entry in $changelog_file."
 }
 
-# Update manifest file with version and optionally dependency
-# Usage: update_manifest <manifest_file> <version> [dependency]
-update_manifest() {
+# Update manifest dependency only
+# Usage: update_manifest_dependency <manifest_file> <dependency>
+update_manifest_dependency() {
 	local manifest_file="$1"
-	local version="$2"
-	local dependency="${3:-}"
+	local dependency="$2"
 	local tmp_file="${manifest_file}.$$"
 
-	log_debug "Updating manifest: ${manifest_file} to version ${version}, dependency: ${dependency:-None}"
+	log_debug "Updating manifest dependency: ${manifest_file} to ${dependency}"
 
-	if [ -n "$dependency" ]; then
-		jq --arg ver "$version" --arg dep "$dependency" '.version = $ver | .dependencies = [$dep]' "$manifest_file" >"$tmp_file"
-	else
-		jq --arg ver "$version" '.version = $ver' "$manifest_file" >"$tmp_file"
-	fi
-
-	mv "$tmp_file" "$manifest_file"
+	jq --arg dep "$dependency" '
+		if has("dependencies") and (.dependencies | type == "array") then
+			.dependencies = (.dependencies | map(select(startswith("riosodu_shared") | not)) + [$dep] | sort)
+		else
+			.dependencies = [$dep]
+		end
+	' "$manifest_file" >"$tmp_file" && mv "$tmp_file" "$manifest_file"
 }
 
-# --- Phase 1: Validation ---
-log_info "Validating repository state..."
+# Update manifest version only
+# Usage: update_manifest_version <manifest_file> <version>
+update_manifest_version() {
+	local manifest_file="$1"
+	local version="$2"
+	local tmp_file="${manifest_file}.$$"
 
-COMMIT_RANGE=${COMMIT_RANGE:-""}
-CHANGED_FILES=""
+	log_debug "Updating manifest version: ${manifest_file} to ${version}"
 
-# Detect changed files based on whether COMMIT_RANGE is set.
-if [ -z "$COMMIT_RANGE" ]; then
-	log_info "Local mode detected. Analyzing staged and unstaged files."
-	CHANGED_FILES=$( (git diff --name-only --staged; git diff --name-only) | sort -u)
-else
-	log_info "CI mode detected. Analyzing commit range: $COMMIT_RANGE"
-	CHANGED_FILES=$(git diff --name-only "$COMMIT_RANGE")
-fi
+	jq --arg ver "$version" '.version = $ver' "$manifest_file" >"$tmp_file" &&
+		mv "$tmp_file" "$manifest_file"
+}
+
+# Get dependency version from manifest
+# Usage: get_dependency_version <manifest_file>
+# Returns: version string (e.g., "1.0.0") or empty string if not found/parsed
+get_dependency_version() {
+	local manifest_file="$1"
+	local dep_version=""
+
+	if [ ! -f "$manifest_file" ]; then
+		log_debug "Manifest file not found: ${manifest_file}"
+		echo ""
+		return 0
+	fi
+
+	# Extract version from "riosodu_shared (>=X.Y.Z)" or "riosodu_shared (X.Y.Z)" etc.
+	# jq -r '.dependencies[] | select(startswith("riosodu_shared"))'
+	# This extracts the full string, then we parse the version using grep -oP
+	dep_string=$(jq -r '.dependencies[]? | select(startswith("riosodu_shared"))' "$manifest_file" || true)
+
+	if [ -n "$dep_string" ]; then
+		dep_version=$(echo "$dep_string" | grep -oP '\(\W*\K[0-9]+\.[0-9]+\.[0-9]+(?=\))' || true)
+	fi
+
+	if [ -z "$dep_version" ]; then
+		log_debug "Could not find or parse riosodu_shared dependency version in ${manifest_file}. Dependency string: '${dep_string}'"
+	else
+		log_debug "Found riosodu_shared dependency version: ${dep_version} in ${manifest_file}"
+	fi
+	echo "$dep_version"
+}
+
+# Check if version entry exists in changelog
+# Usage: version_entry_exists <changelog_file> <version>
+# Returns: 0 if exists, 1 if not found
+version_entry_exists() {
+	local changelog_file="$1"
+	local version="$2"
+	grep -q "## \[$version\]" "$changelog_file" 2>/dev/null
+}
+
+# Check if specific note exists in version block
+# Usage: note_exists_in_version <changelog_file> <version> <note>
+# Returns: 0 if exists, 1 if not found
+note_exists_in_version() {
+	local changelog_file="$1"
+	local version="$2"
+	local note="$3"
+
+	get_latest_version_info "$changelog_file"
+	if [ "$LATEST_VERSION" = "$version" ]; then
+		local block_end
+		block_end=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
+		local result
+		result=$(content_exists_in_range "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$block_end" "$note")
+		[ "$result" = "true" ]
+	else
+		return 1
+	fi
+}
+
+# Check if index.meta.json needs updating
+# Usage: needs_index_meta_update <index_meta_file> <target_version> <mod_name>
+# Returns: 0 if needs update, 1 if up to date
+needs_index_meta_update() {
+	local index_meta_file="$1"
+	local target_version="$2"
+	local mod_name="$3"
+
+	if [ ! -f "$index_meta_file" ]; then
+		return 0 # Needs update (file missing)
+	fi
+
+	local index_meta_content
+	index_meta_content=$(cat "$index_meta_file")
+
+	# Check version field or downloadURL depending on type
+	if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
+		local current_version
+		current_version=$(echo "$index_meta_content" | jq -r '.version')
+		[ "$current_version" != "$target_version" ]
+	else
+		# For automatic-version-check, validate URL format
+		local current_url expected_url repo_path
+		current_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
+		repo_path=$(git config --get remote.origin.url | sed -E 's/.*github.com[\/:](.*)\.git$/\1/' || true)
+		expected_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
+		[ "$current_url" != "$expected_url" ]
+	fi
+}
+
+# Update index.meta.json with version and download URL
+# Usage: update_index_meta_json <index_meta_file> <version> <mod_name>
+update_index_meta_json() {
+	local index_meta_file="$1"
+	local version="$2"
+	local mod_name="$3"
+	local tmp_file="${index_meta_file}.$$"
+
+	log_debug "Updating index.meta.json: ${index_meta_file} for version ${version}"
+
+	local repo_path
+	repo_path=$(git config --get remote.origin.url | sed -E 's/.*github.com[\/:](.*)\.git$/\1/' || true)
+	if [ -z "$repo_path" ]; then
+		log_error "Could not determine GitHub repository path. Please ensure git remote.origin.url is a GitHub URL."
+		return 1
+	fi
+
+	local index_meta_content
+	index_meta_content=$(cat "$index_meta_file")
+
+	# Update based on field type
+	if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
+		log_debug "Updating 'version' and 'downloadURL' in ${index_meta_file}."
+		jq --arg ver "$version" \
+			--arg mod_name "$mod_name" \
+			--arg repo_path "$repo_path" \
+			'.version = $ver | .downloadURL = ("https://github.com/" + $repo_path + "/releases/download/" + $mod_name + "__v" + $ver + "/" + $mod_name + ".zip")' \
+			"$index_meta_file" >"$tmp_file" && mv "$tmp_file" "$index_meta_file"
+	elif echo "$index_meta_content" | jq -e 'has("automatic-version-check")' >/dev/null; then
+		local current_download_url expected_latest_url
+		current_download_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
+		expected_latest_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
+
+		if [[ "$current_download_url" != "$expected_latest_url" ]]; then
+			log_error "Error: Download url is not in the proper format for automatic version updates. It should be '${expected_latest_url}' for ${index_meta_file}."
+			return 1
+		fi
+		# No update needed for automatic-version-check if URL is correct
+	fi
+}
+
+# --- Phase 1: Pre-flight Validation ---
+log_info "Phase 1: Validating repository state..."
 
 VALIDATION_FAILED=false
 
-if [ -z "$CHANGED_FILES" ]; then
-	log_info "No relevant changes detected. Nothing to do."
-	exit 0
-fi
-
+# MOD_DIRS should contain all mod directories to validate all of them.
 MOD_DIRS=$(
 	find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;
 )
@@ -292,195 +418,275 @@ MOD_DIRS=$(
 for mod_dir in $MOD_DIRS; do
 	mod_name=$(basename "$mod_dir")
 	changelog_file="$mod_dir/CHANGELOG.md"
+	manifest_file="$mod_dir/manifest.json"
+	index_meta_file="$mod_dir/index.meta.json"
 
-	# Check only mods that have been changed
-	if echo "$CHANGED_FILES" | grep -q -E "^${mod_name}/"; then
-		if [ ! -f "$changelog_file" ]; then continue; fi
+	# If manifest doesn't exist fail validation
+	if [ ! -f "$manifest_file" ]; then
+		log_error "Manifest file not found for mod '${mod_name}'."
+		VALIDATION_FAILED=true
+	fi
 
-		# Check if the [Unreleased] section has content
-		unreleased_content=$(
-			sed -n '/## \[Unreleased\]/,/^## \[/p' "$changelog_file" |
-				grep -v -e '##' -e '^[[:space:]]*$' || true
-		)
-		if [ -n "$unreleased_content" ]; then
-			log_error "Mod '${mod_name}' has unversioned changes in its changelog."
-			log_error "Please create a new version block (e.g., '## [1.2.3] - YYYY-MM-DD') and move the notes before running this script."
-			VALIDATION_FAILED=true
-		fi
+	# If index.meta.json doesn't exist fail validation
+	if [ ! -f "$index_meta_file" ]; then
+		log_error "index.meta.json file not found for mod '${mod_name}'."
+		VALIDATION_FAILED=true
+	fi
+
+	# Skip if changelog doesn't exist
+	if [ ! -f "$changelog_file" ]; then continue; fi
+
+	# Check if the [Unreleased] section has content
+	# Use sed to extract lines between "## [Unreleased]" and the next "## [" header.
+	# -n suppresses auto-print, '/regex/,/regex/p' prints lines in range.
+	unreleased_content=$(
+		sed -n '/## \[Unreleased\]/,/^## \[/p' "$changelog_file" |
+			grep -v -e '##' -e '^[[:space:]]*$' || true # Remove headers and empty lines
+	)
+
+	if [ -n "$unreleased_content" ]; then
+		log_error "Mod '${mod_name}' has unversioned changes in its changelog."
+		log_error "Please create a new version block (e.g., '## [1.2.3] - YYYY-MM-DD') and move the notes before running this script."
+		VALIDATION_FAILED=true
 	fi
 done
 
 if [ "$VALIDATION_FAILED" = true ]; then
 	exit 1
 fi
-log_success "Validation passed. All mods have versioned changelogs."
+log_success "Phase 1: Validation passed. All mods have versioned changelogs."
 
-# --- Phase 2: Synchronization ---
+# --- Phase 2: Common Library Sync ---
+log_info "Phase 2: Synchronizing shared library (_common)..."
 
-# --- Phase 2a: Sync Shared Library ---
-log_info "Synchronizing shared library (_common)..."
-COMMON_WAS_CHANGED=false
 common_changelog="_common/CHANGELOG.md"
 common_manifest="_common/common.json"
+SHARED_VERSION=""
+SHARED_DEP_REQ=""
 
 if [ -f "$common_changelog" ]; then
 	get_latest_version_info "$common_changelog"
-	if [ -n "$LATEST_VERSION" ]; then
-		current_common_version=$(jq -r '.version' "$common_manifest")
-		if [ "$current_common_version" != "$LATEST_VERSION" ]; then
-			log_info "Syncing _common: changelog version is '$LATEST_VERSION', manifest is '$current_common_version'."
-			jq --arg ver "$LATEST_VERSION" '.version = $ver' "$common_manifest" >"${common_manifest}.$$" &&
-				mv "${common_manifest}.$$" "$common_manifest"
-			log_success "Updated $common_manifest to version $LATEST_VERSION."
-			COMMON_WAS_CHANGED=true
-		else
-			log_info "_common manifest version is already up to date ($LATEST_VERSION)."
-		fi
+	if [ -z "$LATEST_VERSION" ]; then
+		log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common and dependencies."
+		exit 1
+	fi
 
-		# Set shared variables for use in Phase 2b
-		SHARED_VERSION=$LATEST_VERSION
-		SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
+	SHARED_VERSION=$LATEST_VERSION
+	SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
 
-		# Check if any individual mods need the shared library update note
-		# We'll determine this by checking if the changelog already has the note anywhere in the file
-		for mod_dir in $MOD_DIRS; do
-			mod_name=$(basename "$mod_dir")
-			changelog_file="$mod_dir/CHANGELOG.md"
-
-			if [ ! -f "$changelog_file" ]; then continue; fi
-
-			update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
-			# Check the entire file for the update note
-			if ! grep -q -F -- "$update_note" "$changelog_file" 2>/dev/null; then
-				log_info "Mod '$mod_name' needs shared library update note."
-				COMMON_WAS_CHANGED=true
-				break
-			fi
-		done
+	current_common_version=$(jq -r '.version' "$common_manifest")
+	if [ "$current_common_version" != "$LATEST_VERSION" ]; then
+		log_info "Syncing _common: changelog version is '$LATEST_VERSION', manifest is '$current_common_version'."
+		jq --arg ver "$LATEST_VERSION" '.version = $ver' "$common_manifest" >"${common_manifest}.$$" &&
+			mv "${common_manifest}.$$" "$common_manifest"
+		log_success "Updated $common_manifest to version $LATEST_VERSION."
 	else
-		log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common."
+		log_info "_common manifest version is already up to date ($LATEST_VERSION)."
 	fi
 else
-	log_info "No _common changelog found."
+	log_info "No _common changelog found. Skipping _common synchronization."
 fi
 
-# --- Phase 2b: Sync Individual Mods ---
-log_info "Synchronizing individual mod manifests with changelogs..."
+log_success "Phase 2: Common library sync complete. Canonical version: ${SHARED_VERSION}"
+
+# --- Phase 3: Mod Discovery & Planning ---
+log_info "Phase 3: Analyzing mod dependencies and generating update plan..."
+
+UPDATE_PLAN_FILE="/tmp/sync_plan_$$.json"
+UPDATE_PLAN='{"shared_version":"'$SHARED_VERSION'","mods":[]}'
 
 for mod_dir in $MOD_DIRS; do
 	mod_name=$(basename "$mod_dir")
 	manifest_file="$mod_dir/manifest.json"
 	changelog_file="$mod_dir/CHANGELOG.md"
-	index_meta_file="$mod_dir/index.meta.json" # Ensure this is defined for all mods
 
 	if [ ! -f "$changelog_file" ]; then continue; fi
 
-	# Get latest version info
-	get_latest_version_info "$changelog_file"
+	log_debug "Analyzing mod: ${mod_name}"
 
+	get_latest_version_info "$changelog_file"
 	if [ -z "$LATEST_VERSION" ] || [ -z "$LATEST_VERSION_LINE_NUM" ]; then
-		log_warn "Could not find a valid versioned entry in '$changelog_file'. Skipping sync for '$mod_name'."
+		log_warn "Could not find a valid versioned entry in '$changelog_file'. Skipping '$mod_name'."
 		continue
 	fi
 
-	# Get version block boundaries
-	BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
+	# Read current state
+	mod_manifest_version=$(jq -r '.version' "$manifest_file")
+	current_mod_common_dep_version=$(get_dependency_version "$manifest_file")
 
-	# Process shared library changes
-	if [ "$COMMON_WAS_CHANGED" = true ]; then
+	# Determine what needs to be done
+	needs_changelog=false
+	needs_manifest=false
+	action="sync_only"
+	target_version="$LATEST_VERSION"
+
+	# Check if dependency needs updating
+	dependency_needs_update=false
+	if [ -z "$current_mod_common_dep_version" ] || \
+		{ [ "$(printf '%s\n%s\n' "$current_mod_common_dep_version" "$SHARED_VERSION" | sort -V | head -n 1)" = "$current_mod_common_dep_version" ] && \
+		[ "$current_mod_common_dep_version" != "$SHARED_VERSION" ]; }; then
+		dependency_needs_update=true
+	fi
+
+	# Determine action based on current state
+	if [ "$dependency_needs_update" = "true" ]; then
+		needs_manifest=true
+
+		# Get version block boundaries for note checking
+		BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
 		update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
-
-		# Check if update note already exists in the latest version block
-		note_exists=$(content_exists_in_range "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note")
-
-		if [ "$note_exists" = "false" ]; then
-			echo -e "\n--- Processing Mod: ${C_YELLOW}${mod_name}${C_NC} (Adding Shared Lib Update) ---"
-
-			# Determine if this mod has other recent changes by checking if its manifest is already at LATEST_VERSION
-			current_manifest_version=$(jq -r '.version' "$manifest_file")
-
-			if [ "$current_manifest_version" = "$LATEST_VERSION" ]; then
-				# Mod was recently changed, add note to existing version
-				add_note_to_existing_version "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note"
-			else
-				# Mod wasn't recently changed, create new version
-				new_version=$(bump_patch_version "$LATEST_VERSION")
-				log_info "Bumping version from ${LATEST_VERSION} -> ${new_version}"
-				create_new_version_entry "$changelog_file" "$new_version" "$update_note"
-				LATEST_VERSION=$new_version
-			fi
+		note_exists="false"
+		if note_exists_in_version "$changelog_file" "$LATEST_VERSION" "$update_note"; then
+			note_exists="true"
 		fi
-	fi
 
-	# Sync manifest.json version with changelog
-	current_manifest_version=$(jq -r '.version' "$manifest_file")
-
-	if [ "$current_manifest_version" != "$LATEST_VERSION" ]; then
-		log_info "Syncing manifest.json for '${mod_name}': changelog version is '$LATEST_VERSION', manifest is '$current_manifest_version'."
-
-		if [ "$COMMON_WAS_CHANGED" = true ]; then
-			update_manifest "$manifest_file" "$LATEST_VERSION" "$SHARED_DEP_REQ"
+		if [ "$mod_manifest_version" != "$LATEST_VERSION" ]; then
+			# Mod was manually updated, add note to existing version
+			if [ "$note_exists" = "false" ]; then
+				action="add_note"
+				needs_changelog=true
+			fi
 		else
-			update_manifest "$manifest_file" "$LATEST_VERSION"
-		fi
-		log_success "Updated $manifest_file to version $LATEST_VERSION."
-	elif [ "$COMMON_WAS_CHANGED" = true ]; then
-		log_info "Updating dependency info in manifest.json for '${mod_name}'."
-		jq --arg dep "$SHARED_DEP_REQ" '.dependencies = [$dep]' "$manifest_file" >"${manifest_file}.$$" &&
-			mv "${manifest_file}.$$" "$manifest_file"
-		log_success "Updated dependencies in $manifest_file."
-	fi
-
-	# --- Sync index.meta.json ---
-	if [ -f "$index_meta_file" ]; then
-		log_info "Processing index.meta.json for '${mod_name}'..."
-		tmp_index_meta_file="${index_meta_file}.$$"
-		index_meta_content=$(cat "$index_meta_file")
-
-		repo_path=$(git config --get remote.origin.url | sed -E 's/.*github.com[\/:](.*)\.git$/\1/' || true)
-		if [ -z "$repo_path" ]; then
-			log_error "Could not determine GitHub repository path. Please ensure git remote.origin.url is a GitHub URL."
-			VALIDATION_FAILED=true
-			continue
-		fi
-
-		# Strict XOR check: 'version' OR 'automatic-version-check'
-		if ! jq -e '(has("version") and (has("automatic-version-check") | not)) or ((has("version") | not) and has("automatic-version-check"))' <<< "$index_meta_content" >/dev/null; then
-			log_error "Error: ${index_meta_file} must have exactly one of 'version' or 'automatic-version-check' fields."
-			VALIDATION_FAILED=true
-			continue
-		fi
-
-		# Update based on field type
-		if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
-			log_info "Updating 'version' and 'downloadURL' in ${index_meta_file}."
-			jq --arg ver "$LATEST_VERSION" \
-				--arg mod_name "$mod_name" \
-				--arg repo_path "$repo_path" \
-				'.version = $ver | .downloadURL = ("https://github.com/" + $repo_path + "/releases/download/" + $mod_name + "__v" + $ver + "/" + $mod_name + ".zip")' \
-				"$index_meta_file" >"$tmp_index_meta_file" && mv "$tmp_index_meta_file" "$index_meta_file"
-			log_success "Updated ${index_meta_file} with version ${LATEST_VERSION} and new downloadURL."
-		elif echo "$index_meta_content" | jq -e 'has("automatic-version-check")' >/dev/null; then
-			current_download_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
-
-			# Construct expected_latest_url using the pre-calculated repo_path
-			expected_latest_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
-
-			if [[ "$current_download_url" != "$expected_latest_url" ]]; then
-				log_error "Error: Download url is not in the proper format for automatic version updates. It should be '${expected_latest_url}' for ${index_meta_file}."
-				VALIDATION_FAILED=true
-				continue
+			# Mod is in sync, need to bump version and create new entry
+			if [ "$note_exists" = "false" ]; then
+				target_version=$(bump_patch_version "$LATEST_VERSION")
+				action="new_entry"
+				needs_changelog=true
 			fi
 		fi
+	else
+		# Check if manifest version needs syncing (without dependency changes)
+		if [ "$mod_manifest_version" != "$LATEST_VERSION" ]; then
+			needs_manifest=true
+		fi
 	fi
+
+	# Add to plan
+	mod_entry=$(jq -n \
+		--arg name "$mod_name" \
+		--arg current_version "$mod_manifest_version" \
+		--arg target_version "$target_version" \
+		--arg action "$action" \
+		--argjson needs_changelog "$needs_changelog" \
+		--argjson needs_manifest "$needs_manifest" \
+		'{
+			name: $name,
+			current_version: $current_version,
+			target_version: $target_version,
+			action: $action,
+			needs_changelog: $needs_changelog,
+			needs_manifest: $needs_manifest
+		}')
+
+	UPDATE_PLAN=$(echo "$UPDATE_PLAN" | jq --argjson mod "$mod_entry" '.mods += [$mod]')
+
+	log_debug "Mod ${mod_name}: action=${action}, target=${target_version}, changelog=${needs_changelog}, manifest=${needs_manifest}"
 done
 
-if [ "$VALIDATION_FAILED" = true ]; then
-	log_error "One or more index.meta.json files failed validation. Please fix the errors above."
-	exit 1
+# Save plan to temp file
+echo "$UPDATE_PLAN" >"$UPDATE_PLAN_FILE"
+
+# Display plan summary
+mods_needing_updates=$(echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs_manifest == true) | .name' | wc -l)
+log_success "Phase 3: Discovery complete. ${mods_needing_updates} mods need updates."
+
+if [ "$mods_needing_updates" -eq 0 ]; then
+	log_success "All mods are up to date. Nothing to do."
+	rm -f "$UPDATE_PLAN_FILE"
+	exit 0
 fi
 
+log_info "Update plan generated. Use DEBUG_MODE=true to see detailed plan."
+if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
+	echo "$UPDATE_PLAN" | jq .
+fi
+
+# --- Phase 4: Mod Updates ---
+log_info "Phase 4: Executing mod updates..."
+
+# Process each mod that needs updates
+echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs_manifest == true) | .name' | while read -r mod_name; do
+	echo -e "\n--- Processing Mod: ${C_YELLOW}${mod_name}${C_NC} ---"
+
+	# Extract mod info from plan
+	mod_info=$(echo "$UPDATE_PLAN" | jq --arg mod "$mod_name" '.mods[] | select(.name == $mod)')
+	target_version=$(echo "$mod_info" | jq -r '.target_version')
+	action=$(echo "$mod_info" | jq -r '.action')
+	needs_changelog=$(echo "$mod_info" | jq -r '.needs_changelog')
+	needs_manifest=$(echo "$mod_info" | jq -r '.needs_manifest')
+
+	manifest_file="$mod_name/manifest.json"
+	changelog_file="$mod_name/CHANGELOG.md"
+	index_meta_file="$mod_name/index.meta.json"
+
+	# Generate update note dynamically when needed
+	update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
+
+	# Step 1: Update manifest dependency if needed (idempotent)
+	if [ "$needs_manifest" = "true" ]; then
+		current_dep_version=$(get_dependency_version "$manifest_file")
+		if [ "$current_dep_version" != "$SHARED_VERSION" ]; then
+			log_info "Updating dependency: $current_dep_version → $SHARED_VERSION"
+			update_manifest_dependency "$manifest_file" "$SHARED_DEP_REQ"
+			log_success "Updated dependency in $manifest_file"
+		else
+			log_info "Dependency already correct: $SHARED_VERSION ✓"
+		fi
+	fi
+
+	# Step 2: Update changelog if needed (idempotent)
+	if [ "$needs_changelog" = "true" ]; then
+		case "$action" in
+		"new_entry")
+			if ! version_entry_exists "$changelog_file" "$target_version"; then
+				log_info "Creating new changelog entry for $target_version"
+				create_new_version_entry "$changelog_file" "$target_version" "$update_note"
+			else
+				log_info "Changelog entry for $target_version already exists ✓"
+			fi
+			;;
+		"add_note")
+			get_latest_version_info "$changelog_file"
+			if ! note_exists_in_version "$changelog_file" "$LATEST_VERSION" "$update_note"; then
+				log_info "Adding note to existing version $LATEST_VERSION"
+				BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
+				add_note_to_existing_version "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note"
+			else
+				log_info "Note already exists in version $LATEST_VERSION ✓"
+			fi
+			;;
+		esac
+	fi
+
+	# Step 3: Update manifest version (idempotent)
+	if [ "$needs_manifest" = "true" ]; then
+		current_manifest_version=$(jq -r '.version' "$manifest_file")
+		if [ "$current_manifest_version" != "$target_version" ]; then
+			log_info "Updating manifest version: $current_manifest_version → $target_version"
+			update_manifest_version "$manifest_file" "$target_version"
+			log_success "Updated version in $manifest_file"
+		else
+			log_info "Manifest version already correct: $target_version ✓"
+		fi
+	fi
+
+	# Step 4: Update index.meta.json (idempotent)
+	if needs_index_meta_update "$index_meta_file" "$target_version" "$mod_name"; then
+		log_info "Updating index.meta.json for version $target_version"
+		update_index_meta_json "$index_meta_file" "$target_version" "$mod_name"
+		log_success "Updated $index_meta_file"
+	else
+		log_info "index.meta.json already up to date ✓"
+	fi
+
+	log_success "Completed processing for mod '$mod_name'"
+done
+
+# Cleanup
+rm -f "$UPDATE_PLAN_FILE"
+
 echo -e "\n--------------------------------------------------"
+log_success "Phase 4: All mod updates complete."
 log_success "Version sync complete."
-log_info "Review the new changes with 'git status' and 'git diff'."
+log_info "Review the changes with 'git status' and 'git diff'."
 log_info "When ready, stage and commit all changes: 'git add .' -> 'git commit'"

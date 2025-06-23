@@ -236,7 +236,7 @@ create_new_version_entry() {
 	today=$(date +%Y-%m-%d)
 	# Ensure all newlines are embedded correctly for the full block
 	new_entry_content=$(
-		printf '\n## [%s] - %s\n\n### Changed\n%s' "$new_version" "$today" "$update_note"
+		printf '\n## [%s] - %s\n### Changed\n%s' "$new_version" "$today" "$update_note"
 	)
 
 	log_debug "Creating new version entry for ${new_version} and inserting after '## [Unreleased]' (line ${unreleased_line_num})."
@@ -342,24 +342,19 @@ if [ -f "$common_changelog" ]; then
 		SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
 
 		# Check if any individual mods need the shared library update note
-		# We'll determine this by checking if their latest changelog version already has the note
+		# We'll determine this by checking if the changelog already has the note anywhere in the file
 		for mod_dir in $MOD_DIRS; do
 			mod_name=$(basename "$mod_dir")
 			changelog_file="$mod_dir/CHANGELOG.md"
 
 			if [ ! -f "$changelog_file" ]; then continue; fi
 
-			get_latest_version_info "$changelog_file"
-			if [ -n "$LATEST_VERSION" ] && [ -n "$LATEST_VERSION_LINE_NUM" ]; then
-				BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
-				update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
-				note_exists=$(content_exists_in_range "$changelog_file" "$LATEST_VERSION_LINE_NUM" "$BLOCK_END_LINE" "$update_note")
-
-				if [ "$note_exists" = "false" ]; then
-					log_info "Mod '$mod_name' needs shared library update note."
-					COMMON_WAS_CHANGED=true
-					break
-				fi
+			update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
+			# Check the entire file for the update note
+			if ! grep -q -F -- "$update_note" "$changelog_file" 2>/dev/null; then
+				log_info "Mod '$mod_name' needs shared library update note."
+				COMMON_WAS_CHANGED=true
+				break
 			fi
 		done
 	else
@@ -466,7 +461,7 @@ for mod_dir in $MOD_DIRS; do
 				"$index_meta_file" >"$tmp_index_meta_file" && mv "$tmp_index_meta_file" "$index_meta_file"
 			log_success "Updated ${index_meta_file} with version ${LATEST_VERSION} and new downloadURL."
 		elif echo "$index_meta_content" | jq -e 'has("automatic-version-check")' >/dev/null; then
-			current_download_url=$(jq -r '.downloadURL' "$index_meta_content")
+			current_download_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
 
 			# Construct expected_latest_url using the pre-calculated repo_path
 			expected_latest_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"

@@ -94,7 +94,7 @@ SMODS.Seal({
   key = BSM.black_seal_id,
   atlas = BSM.state.seal_atlas_key,
   pos = { x = 0, y = 0 },
-  weight = BSM.utils.calculate_and_set_seal_weights(), -- Initial weight
+  weight = nil, -- Initial weight will be set by the callback
   discovered = false,
   badge_colour = G.C.BLACK,
   calculate = function(self, card, context)
@@ -148,5 +148,7 @@ SMODS.Seal({
   end,
 })
 RIOSODU_SHARED.utils.sendDebugMessage("Black Seal registered.")
+
+RIOSODU_SHARED.register_hook('on_game_start', BSM.utils.calculate_and_set_seal_weights)
 
 RIOSODU_SHARED.utils.sendDebugMessage("Main logic module loaded.")

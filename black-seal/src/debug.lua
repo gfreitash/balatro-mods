@@ -24,6 +24,11 @@ if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_features_enabled then
         .. "' to hand cards..."
       )
 
+      if not G.hand then
+        RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id, "Cannot apply seal: Hand not available.")
+        return
+      end
+
       -- Iterate through the cards currently in the hand area
       for i, card_in_hand in ipairs(G.hand.cards) do
         -- Check if it's a valid card object with the set_seal method

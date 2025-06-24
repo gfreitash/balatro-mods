@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-06-23
+### Added
+- 8 Ball Joker Configuration: Introduced options to enable/disable and adjust the chance of the 8 Ball Joker spawning Tarot cards.
+- Hit the Road Joker Rework: Implemented a rework for the Hit the Road Joker, allowing discarded Jacks to be returned to the deck alongside the current effect.
+
+### Changed
+- `Card:is_suit`: Commented out debug messages in the `Card:is_suit` function for cleaner output.
+
 ## [1.2.0] - 2025-06-23
 ### Added
 - Wheel of Fortune no longer requires a restart to apply configuration changes

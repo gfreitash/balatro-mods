@@ -9,9 +9,9 @@ QOL_BUNDLE.original.poll_edition = poll_edition
 
 -- Override Card:is_suit with wildcard and blurred joker fixes
 function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
-    RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit called with suit: " .. tostring(suit) .. ", bypass_debuff: " .. tostring(bypass_debuff) .. ", flush_calc: " .. tostring(flush_calc) .. ", trying_to_debuff: " .. tostring(trying_to_debuff))
+    -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit called with suit: " .. tostring(suit) .. ", bypass_debuff: " .. tostring(bypass_debuff) .. ", flush_calc: " .. tostring(flush_calc) .. ", trying_to_debuff: " .. tostring(trying_to_debuff))
     if not QOL_BUNDLE.config.wildcard_fix_enabled then
-        RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit called without wildcard fix enabled, using original implementation.")
+        -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit called without wildcard fix enabled, using original implementation.")
         return QOL_BUNDLE.original.Card_is_suit(self, suit, bypass_debuff, flush_calc)
     end
 
@@ -32,23 +32,23 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
     end
 
     local has_smeared_joker = next(find_joker('Smeared Joker'))
-    RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit has_smeared_joker: " .. tostring(has_smeared_joker))
+    -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit has_smeared_joker: " .. tostring(has_smeared_joker))
     if has_smeared_joker then
         if trying_to_debuff then
-            RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit trying to debuff with Smeared Joker, returning false.")
+            -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit trying to debuff with Smeared Joker, returning false.")
             return false
         end
 
         local is_base_red = self.base.suit == 'Hearts' or self.base.suit == 'Diamonds'
         local is_target_red = suit == 'Hearts' or suit == 'Diamonds'
-        RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit is_base_red: " .. tostring(is_base_red) .. ", is_target_red: " .. tostring(is_target_red))
+        -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit is_base_red: " .. tostring(is_base_red) .. ", is_target_red: " .. tostring(is_target_red))
 
         if is_base_red == is_target_red then
             return true
         end
     end
 
-    RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit returning base suit match: " .. tostring(self.base.suit == suit))
+    -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit returning base suit match: " .. tostring(self.base.suit == suit))
     return self.base.suit == suit
 end
 

@@ -54,12 +54,39 @@ function QOL_BUNDLE.UI.createConfigTabDefinition()
                     }),
                 }),
                 RIOSODU_SHARED.UIDEF.create_option_box({
+                    -- 8 Ball Joker Config
+                    RIOSODU_SHARED.UIDEF.create_option_toggle({
+                        ref_table = QOL_BUNDLE.config,
+                        ref_value = 'eight_ball_joker_enabled',
+                        label = G.localization.misc.dictionary.qolb_eight_ball_joker_label,
+                        info = G.localization.misc.dictionary.qolb_eight_ball_joker_info
+                    }),
+                    create_option_cycle({
+                        colour = G.C.RED,
+                        options = {1, 2, 3, 4},
+                        opt_callback = 'qol_bundle_eight_ball_joker_callback',
+                        current_option = QOL_BUNDLE.eight_ball_joker_current_option,
+                        current_option_val = QOL_BUNDLE.eight_ball_joker_current_option_val,
+                        scale = 0.75,
+                    }),
+                }),
+                RIOSODU_SHARED.UIDEF.create_option_box({
                     -- Unweighted Editions Config
                     RIOSODU_SHARED.UIDEF.create_option_toggle({
                         ref_table = QOL_BUNDLE.config,
                         ref_value = 'unweighted_editions_enabled',
                         label = G.localization.misc.dictionary.qolb_unweighted_editions_label,
                         info = G.localization.misc.dictionary.qolb_unweighted_editions_info
+                    }),
+                }),
+                RIOSODU_SHARED.UIDEF.create_option_box({
+                    -- Hit the Road Joker Config
+                    RIOSODU_SHARED.UIDEF.create_option_toggle({
+                        ref_table = QOL_BUNDLE.config,
+                        ref_value = 'hit_the_road_joker_enabled',
+                        label = G.localization.misc.dictionary.qolb_hit_the_road_joker_label,
+                        info = G.localization.misc.dictionary.qolb_hit_the_road_joker_info,
+                        callback = 'qol_bundle_update_hit_the_road_joker_localization'
                     }),
                 }),
             }

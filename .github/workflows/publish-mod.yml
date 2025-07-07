@@ -495,7 +495,7 @@ jobs:
           PR_URL=$(gh pr create \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
-            --base "${{ env.TARGET_REPO }}:${{ env.TARGET_BRANCH }}" \
+            --base "${{ env.TARGET_BRANCH }}" \
             --head "${{ env.FORK_OWNER }}:$BRANCH_NAME" \
             --repo "${{ env.TARGET_REPO }}")
 
@@ -503,4 +503,3 @@ jobs:
           echo "## 🎉 Pull Request Created" >> "$GITHUB_STEP_SUMMARY"
           echo "**Mod Directory:** $CURRENT_MOD_DIR (Title: $CURRENT_MOD_TITLE)" >> "$GITHUB_STEP_SUMMARY"
           echo "**PR:** [$PR_TITLE]($PR_URL)" >> "$GITHUB_STEP_SUMMARY"
-          

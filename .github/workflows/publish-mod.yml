@@ -281,33 +281,33 @@ jobs:
               if ! diff -q "temp-current/${{ env.AUTHOR }}@${MOD_DIR_NAME}/meta.json.normalized" "temp-index/normalized_existing_meta.json" >/dev/null 2>&1; then
                 echo "📝 Meta.json has metadata changes"
                 METADATA_CHANGED=true
-                CHANGES=$(echo "$CHANGES" | jq -c '. + {metadata: changed}')
+                CHANGES=$(echo "$CHANGES" | jq -c '. + {metadata: "changed"}')
               fi
             else
               echo "⚠️ Existing meta.json not found, treating as new mod"
               METADATA_CHANGED=true
-              CHANGES=$(echo "$CHANGES" | jq -c '. + {metadata: changed}')
+              CHANGES=$(echo "$CHANGES" | jq -c '. + {metadata: "changed"}')
             fi
 
             if ! diff -q "$MOD_DIR_NAME/README.md" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/description.md" >/dev/null 2>&1; then
               echo "📝 Description has changes"
               METADATA_CHANGED=true
-              CHANGES=$(echo "$CHANGES" | jq -c '. + {description: changed}')
+              CHANGES=$(echo "$CHANGES" | jq -c '. + {description: "changed"}')
             fi
 
             if [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
               if ! diff -q "$MOD_DIR_NAME/index.thumbnail.jpg" "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" >/dev/null 2>&1; then
                 echo "🖼️ Thumbnail has changes"
-                CHANGES=$(echo "$CHANGES" | jq -c '. + {thumbnail: changed}')
+                CHANGES=$(echo "$CHANGES" | jq -c '. + {thumbnail: "changed"}')
                 METADATA_CHANGED=true
               fi
             elif [ -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ ! -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
               echo "🖼️ New thumbnail added"
-              CHANGES=$(echo "$CHANGES" | jq -c '. + {thumbnail: added}')
+              CHANGES=$(echo "$CHANGES" | jq -c '. + {thumbnail: "added"}')
               METADATA_CHANGED=true
             elif [ ! -f "$MOD_DIR_NAME/index.thumbnail.jpg" ] && [ -f "temp-index/mods/${{ env.AUTHOR }}@${MOD_DIR_NAME}/thumbnail.jpg" ]; then
               echo "🖼️ Thumbnail removed"
-              CHANGES=$(echo "$CHANGES" | jq -c '. + {thumbnail: removed}')
+              CHANGES=$(echo "$CHANGES" | jq -c '. + {thumbnail: "removed"}')
               METADATA_CHANGED=true
             fi
 

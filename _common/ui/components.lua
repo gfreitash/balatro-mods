@@ -12,7 +12,8 @@ function RIOSODU_SHARED.UIDEF.create_option_box(content)
             align = "cm",
             colour = G.C.L_BLACK,
             r = 0.1,
-            padding = 0.1,
+            padding = 0.15,
+            emboss = 0.1,
         },
         nodes = content
     }

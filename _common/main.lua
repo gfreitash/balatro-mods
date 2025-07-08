@@ -15,6 +15,7 @@ function riosodu_shared_init()
     RIOSODU_SHARED.utils = {}
     RIOSODU_SHARED.debug = {}
     RIOSODU_SHARED.UI = {}
+    RIOSODU_SHARED.compat = {}
 
     -- Load config from either standalone mod or host mod
     RIOSODU_SHARED.config = SMODS.current_mod.config or {}
@@ -35,6 +36,7 @@ function riosodu_shared_init()
     include('ui/components.lua')
     include('debug.lua')
     include('ui/tabs.lua')
+    include('compat.lua')
 
     ---@param mod_id string The ID of the mod calling this function
     ---@param filename string The path to the file relative to the mod's directory

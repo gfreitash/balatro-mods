@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-07-07
+### Added
+- Compatibility layer for SMODS GUI dynamic area
+
+### Changed
+- Updated `RIOSODU_SHARED.UIDEF.create_option_box` to use have a bigger padding and emboss
+
 ## [1.0.5] - 2025-06-17
 This is a patch release to force update the dependent mods to ensure the use of the new `latest` syntax after CI fix.
 

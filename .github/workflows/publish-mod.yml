@@ -96,6 +96,8 @@ jobs:
         run: |
           MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
           CURRENT_MOD_VERSION="${{ steps.mod_vars.outputs.MOD_VERSION }}"
+          INDEX_META_PATH="$MOD_DIR_NAME/index.meta.json"
+          INDEX_META_CONTENT=$(cat "$INDEX_META_PATH")
 
           IS_AUTO_VERSION_CHECK="false"
           if echo "$INDEX_META_CONTENT" | jq -e 'has("automatic-version-check")' >/dev/null; then

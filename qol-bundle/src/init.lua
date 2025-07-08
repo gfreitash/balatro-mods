@@ -62,7 +62,12 @@ RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/debug.lua") -- Debug fun
 
 -- SMODS Hooks
 SMODS.current_mod.config_tab = function()
-  return QOL_BUNDLE.UI.createConfigTabDefinition()
+  return SMODS.GUI.DynamicUIManager.initTab({
+      updateFunctions = {
+          qolConfigOptions = G.FUNCS.qol_bundle_update_config_page, -- This will be handled by the direct function call
+      },
+      staticPageDefinition = QOL_BUNDLE.UI.staticConfigTabContent()
+  })
 end
 
 

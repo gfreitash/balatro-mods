@@ -32,7 +32,11 @@ return {
             qolb_eight_ball_joker_label = 'Enable Configurable 8 Ball Joker',
             qolb_eight_ball_joker_info = 'Adjust chance of 8 Ball Joker spawning Tarot cards (1=100%, 4=25%).',
             qolb_hit_the_road_joker_label = 'Enable Hit the Road Joker Rework',
-            qolb_hit_the_road_joker_info = 'When enabled, discarded Jacks are returned to the deck.'
+            qolb_hit_the_road_joker_info = 'When enabled, discarded Jacks are returned to the deck.',
+            qolb_square_joker_label = 'Enable Square Joker Modification',
+            qolb_square_joker_info = 'Changes Square Joker to give (4²) chips and be Uncommon rarity.',
+            qolb_nerf_photochad_label = 'Enable Nerf Photochad',
+            qolb_nerf_photochad_info = 'Makes Photograph and Hanging Chad jokers Uncommon rarity.',
         },
     },
 }

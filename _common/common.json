@@ -7,7 +7,7 @@
   "description": "Shared code and resources for Riosodu's Balatro mods",
   "prefix": "riosodu_shared",
   "main_file": "main.lua",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "priority": -1,
   "dependencies": []
 }

@@ -53,11 +53,43 @@ function get_ownership_hit_the_road_joker()
                         draw_card(G.hand, G.deck, animation_progress, 'up', true, jack_card)
                     end
                     G.deck:shuffle()
-                    return true
+                    return nil
                 end
             end
             return nil
         end,
+    })
+end
+
+-- Override the Square Joker
+function get_ownership_square_joker()
+    if not QOL_BUNDLE.config.square_joker_enabled then
+        return
+    end
+
+    QOL_BUNDLE.state.square_joker = SMODS.Joker:take_ownership('j_square', {
+        rarity = 2, -- Uncommon
+        config = {
+            extra = {
+                chips = 0,
+                chip_mod = 16
+            }
+        }
+    })
+end
+
+-- Override Photograph and Hanging Chad
+function get_ownership_nerf_photochad()
+    if not QOL_BUNDLE.config.nerf_photochad_enabled then
+        return
+    end
+
+    QOL_BUNDLE.state.photograph = SMODS.Joker:take_ownership('j_photograph', {
+        rarity = 2, -- Uncommon
+    })
+
+    QOL_BUNDLE.state.hanging_chad = SMODS.Joker:take_ownership('j_hanging_chad', {
+        rarity = 2, -- Uncommon
     })
 end
 
@@ -82,4 +114,6 @@ RIOSODU_SHARED.utils.sendDebugMessage("Main logic module loading...", QOL_BUNDLE
 get_ownership_wheel_of_fortune()
 get_ownership_eight_ball_joker()
 get_ownership_hit_the_road_joker()
+get_ownership_square_joker()
+get_ownership_nerf_photochad()
 QOL_BUNDLE.utils.update_hit_the_road_joker_localization()

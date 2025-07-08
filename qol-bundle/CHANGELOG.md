@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-07-07
+### Added
+- Added pagination to the settings tab, allowing users to navigate through multiple pages of configuration options.
+- Added overhaul to the square joker
+- Added "Nerf Photochad" configuration, making Photograph and Hanging Chad jokers Uncommon rarity.
+
+### Changed
+- Updated Riosodu Commons to v1.1.0.
+- Updated README to reflect missing implmented features.
+
 ## [1.3.0] - 2025-06-23
 ### Added
 - 8 Ball Joker Configuration: Introduced options to enable/disable and adjust the chance of the 8 Ball Joker spawning Tarot cards.

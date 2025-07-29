@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2025-07-29
+### Added
+- Added Portuguese (Brazil) localization
+
 ## [3.2.10] - 2025-07-07
 ### Changed
 - Updated Riosodu Commons to v1.1.0.

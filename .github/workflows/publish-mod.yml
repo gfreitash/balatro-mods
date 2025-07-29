@@ -118,8 +118,8 @@ jobs:
             LATEST_TIMESTAMP=$(echo "$RELEASE_DATA" | jq -r '.assets | map(.created_at) | sort | .[-1]')
 
             if [ -n "$LATEST_TIMESTAMP" ] && [ "$LATEST_TIMESTAMP" != "null" ]; then
-              # Format timestamp to YYYYMMDD__HHMMSS
-              FORMATTED_VERSION=$(date -d "$LATEST_TIMESTAMP" +"%Y%m%d__%H%M%S")
+              # Format timestamp to YYYYMMDD_HHMMSS
+              FORMATTED_VERSION=$(date -d "$LATEST_TIMESTAMP" +"%Y%m%d_%H%M%S")
               echo "Fetched latest asset timestamp: $LATEST_TIMESTAMP, formatted as version: $FORMATTED_VERSION"
               VERSION=$FORMATTED_VERSION
             else
@@ -224,7 +224,7 @@ jobs:
         run: |
           set -x # Enable debug mode to trace commands
           MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
-          MOD_VERSION="${{ steps.mod_vars.outputs.MOD_VERSION }}"
+          MOD_VERSION="${{ steps.fetch_auto_version.outputs.MOD_VERSION }}"
           MOD_TAG_NAME="${{ steps.mod_vars.outputs.MOD_TAG_NAME }}"
           IS_AUTO_VERSION_CHECK="${{ steps.fetch_auto_version.outputs.IS_AUTO_VERSION_CHECK }}"
 
@@ -328,7 +328,7 @@ jobs:
       - name: Prepare submission files
         run: |
           MOD_DIR_NAME="${{ steps.mod_vars.outputs.MOD_DIR_NAME }}"
-          MOD_VERSION="${{ steps.mod_vars.outputs.MOD_VERSION }}"
+          MOD_VERSION="${{ steps.fetch_auto_version.outputs.MOD_VERSION }}"
           MOD_TAG_NAME="${{ steps.mod_vars.outputs.MOD_TAG_NAME }}"
           IS_AUTO_VERSION_CHECK="${{ steps.verify_files.outputs.IS_AUTO_VERSION_CHECK }}"
 
@@ -353,7 +353,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           MOD_DIR_NAME: ${{ steps.mod_vars.outputs.MOD_DIR_NAME }}
           MOD_TITLE_NAME: ${{ steps.mod_vars.outputs.MOD_TITLE_NAME }}
-          MOD_VERSION: ${{ steps.mod_vars.outputs.MOD_VERSION }}
+          MOD_VERSION: ${{ steps.fetch_auto_version.outputs.MOD_VERSION }}
           IS_UPDATE: ${{ steps.check_exists.outputs.exists }}
           FORCE_UPDATE: ${{ github.event.inputs.force_update }}
           METADATA_CHANGED: ${{ steps.check_changes.outputs.metadata_changed }}

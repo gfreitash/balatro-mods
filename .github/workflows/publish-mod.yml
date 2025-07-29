@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production-main # CRITICAL: Enforce PAT_TOKEN usage via environment
     env:
-      TARGET_REPO: "ghfreitas-oss/balatro-mod-index"
+      TARGET_REPO: "skyline69/balatro-mod-index"
       TARGET_BRANCH: "main"
       FORK_OWNER: "gfreitash"
       AUTHOR: "riosodu"

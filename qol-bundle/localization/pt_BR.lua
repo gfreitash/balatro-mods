@@ -34,7 +34,10 @@ return {
             qolb_shop_size_label = 'Ativar tamanho aumentado da loja',
             qolb_shop_size_info = 'Aumenta o tamanho da loja em 1',
             qolb_wildcard_fix_label = 'Ativar correção do Curinga/Curinga Borrado',
-            qolb_wildcard_fix_info = 'Impede que o Curinga/Curinga Borrado seja colocado em desvantagem.',
+            qolb_wildcard_fix_info = {
+                'Impede que o Naipe Curinga/Curinga Borrado seja colocado em desvantagem',
+                'por desvantagem de naipes.'
+            },
             qolb_wheel_fortune_label = 'Ativar Roda da Fortuna mais fácil',
             qolb_wheel_fortune_info = 'Ajustar facilidade da Roda da Fortuna (1=100%, 4=25%).',
             qolb_unweighted_editions_label = 'Ativar edições base sem peso',
@@ -44,7 +47,7 @@ return {
             qolb_hit_the_road_joker_label = 'Ativar reformulação do Pé na Estrada',
             qolb_hit_the_road_joker_info = { 
                 'Quando ativado, Valetes descartados retornam ao baralho.',
-                'O novo efeitor é adicionado em conjunto com o efeito original'
+                'O novo efeito é adicionado em conjunto com o efeito original'
             },
             qolb_square_joker_label = 'Ativar modificação do Curinga Quadrado',
             qolb_square_joker_info = {

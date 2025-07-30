@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2025-07-30
+### Fixed
+- Fixed configuration description for the wildcard fix to specify that it only prevent debuffs from suit debuffs
+
 ## [1.6.0] - 2025-07-30
 ### Changed
 - Square Joker mechanics completely reworked again. From static 16 chips to dynamic 4 base + 1 in 2 chance to add +4 more chips per scoring card

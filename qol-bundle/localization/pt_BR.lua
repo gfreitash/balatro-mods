@@ -15,6 +15,16 @@ return {
                     "mesmo tempo",
                 },
             },
+            j_square = {
+                name = "Curinga Quadrado",
+                text = {
+                    "Este Curinga ganha {C:chips}+#2#{} Fichas",
+                    "se a mão jogada tem exatamente {C:attention}4{} cartas.",
+                    "Cada carta pontuando tem {C:green}#3# de #4#{} chance",
+                    "de dar {C:chips}+#2#{} Fichas a mais.",
+                    "{C:inactive}(No momento, {C:chips}#1#{C:inactive} Fichas)",
+                },
+            },
         },
     },
     misc = {
@@ -32,9 +42,16 @@ return {
             qolb_eight_ball_joker_label = 'Ativar Bola 8 configurável',
             qolb_eight_ball_joker_info = 'Ajustar chance da Bola 8 gerar cartas Tarô (1=100%, 4=25%).',
             qolb_hit_the_road_joker_label = 'Ativar reformulação do Pé na Estrada',
-            qolb_hit_the_road_joker_info = 'Quando ativado, Valetes descartados retornam ao baralho.',
+            qolb_hit_the_road_joker_info = { 
+                'Quando ativado, Valetes descartados retornam ao baralho.',
+                'O novo efeitor é adicionado em conjunto com o efeito original'
+            },
             qolb_square_joker_label = 'Ativar modificação do Curinga Quadrado',
-            qolb_square_joker_info = 'Muda Curinga Quadrado para dar (4²) fichas e ter raridade Incomum.',
+            qolb_square_joker_info = {
+                'Curinga Quadrado dá +4 Fichas,', 
+                'cada carta pontuando tem 1 em 2 chance de dar +4 mais.',
+                'Raridade Incomum.',
+            },
             qolb_nerf_photochad_label = 'Ativar nerf da Fotografia/Comprovante',
             qolb_nerf_photochad_info = 'Torna os curingas Fotografia e Comprovante de raridade Incomum.',
         },

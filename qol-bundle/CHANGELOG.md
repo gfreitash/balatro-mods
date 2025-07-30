@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-07-30
+### Changed
+- Square Joker mechanics completely reworked again. From static 16 chips to dynamic 4 base + 1 in 2 chance to add +4 more chips per scoring card
+
+
+### Fixed
+- Hit the Road Joker configuration description now clarifies new effect is added alongside original
+- Improved localization text formatting consistency
+
 ## [1.5.0] - 2025-07-29
 ### Added
 - Added Portuguese (Brazil) localization

@@ -15,6 +15,16 @@ return {
                     "same time",
                 },
             },
+            j_square = {
+                name = "Square Joker",
+                text = {
+                    "This Joker gains {C:chips}+#2#{} Chips",
+                    "if played hand has exactly {C:attention}4{} cards.",
+                    "Each scoring card has {C:green}#3# in #4#{} chance",
+                    "to give {C:chips}+#2#{} more Chips.",
+                    "{C:inactive}(Currently {C:chips}#1#{C:inactive} Chips)",
+                },
+            },
         },
     },
     misc = {
@@ -32,9 +42,16 @@ return {
             qolb_eight_ball_joker_label = 'Enable Configurable 8 Ball Joker',
             qolb_eight_ball_joker_info = 'Adjust chance of 8 Ball Joker spawning Tarot cards (1=100%, 4=25%).',
             qolb_hit_the_road_joker_label = 'Enable Hit the Road Joker Rework',
-            qolb_hit_the_road_joker_info = 'When enabled, discarded Jacks are returned to the deck.',
+            qolb_hit_the_road_joker_info = { 
+                'When enabled, discarded Jacks are returned to the deck.',
+                'The new effect is added alongside the original effect'
+            },
             qolb_square_joker_label = 'Enable Square Joker Modification',
-            qolb_square_joker_info = 'Changes Square Joker to give (4²) chips and be Uncommon rarity.',
+            qolb_square_joker_info = {
+                'Square Joker gives +4 Chips,', 
+                'each scoring card has 1 in 2 chance for +4 more.',
+                'Uncommon rarity.',
+            },
             qolb_nerf_photochad_label = 'Enable Nerf Photochad',
             qolb_nerf_photochad_info = 'Makes Photograph and Hanging Chad jokers Uncommon rarity.',
         },

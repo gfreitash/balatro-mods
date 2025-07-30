@@ -1,7 +1,7 @@
 return {
     descriptions = {
         Other = {
-            black_seal = {
+            blac_black_seal = {
                 name = 'Selo Preto',
                 text = {
                     'Se você jogar apenas esta carta:',
@@ -13,6 +13,9 @@ return {
         },
     },
     misc = {
+        labels = {
+            blac_black_seal = 'Selo Preto',
+        },
         dictionary = {
             black_seal = 'Selo Preto',
             black_seal_spawn_percentage = 'Porcentagem de geração do selo preto',

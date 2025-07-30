@@ -1,7 +1,7 @@
 return {
     descriptions = {
         Other = {
-            black_seal = {
+            blac_black_seal = {
                 name = 'Black Seal',
                 text = {
                     'If you play only this card:',
@@ -13,6 +13,9 @@ return {
         },
     },
     misc = {
+        labels = {
+            blac_black_seal = 'Black Seal',
+        },
         dictionary = {
             black_seal = 'Black Seal',
             black_seal_spawn_percentage = 'Black Seal Spawn Percentage',

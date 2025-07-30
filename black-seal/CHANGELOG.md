@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1] - 2025-07-30
+### Fixed
+- Fixed localization key naming to match SMODS convention for proper seal menu display
+- Fixed negative joker effect timing by moving set_edition call inside event function
+
 ## [3.3.0] - 2025-07-29
 ### Added
 - Added Portuguese (Brazil) localization

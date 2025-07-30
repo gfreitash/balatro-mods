@@ -29,9 +29,9 @@ function BSM.utils.add_negative_random_joker()
   if #eligible_jokers >= 1 then
     local eligible_joker_card = pseudorandom_element(eligible_jokers, pseudoseed("blackseal_neg"))
     if eligible_joker_card then
-      eligible_joker_card:set_edition({ negative = true })
       G.E_MANAGER:add_event(Event({
         func = function()
+          eligible_joker_card:set_edition({ negative = true })
           play_sound('negative')
           eligible_joker_card:juice_up(0.5, 0.5)
           return true

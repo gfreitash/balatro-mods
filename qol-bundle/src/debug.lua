@@ -109,6 +109,6 @@ function QOL_BUNDLE.debug.register_debug_keybinds()
         key_pressed = '9',
         name = 'hit_the_road_debug_action',
         desc = 'Adds Negative Hit the Road Joker & Transforms hand to Jacks',
-        action = function() QOL_BUNDLE.debug.add_joker_and_transform_hand('Hit the Road', 'j_hit_the_road', 'J', true) end
+        action = function() QOL_BUNDLE.debug.add_joker_and_transform_hand('Hit the Road', 'j_hit_the_road', 'J') end
     })
 end

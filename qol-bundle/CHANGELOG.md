@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2] - 2025-08-17
+### Fixed
+- Fixed the card duplication caused by drawing Jacks incorrectly when using Hit the Road Joker
+
 ## [1.6.1] - 2025-07-30
 ### Fixed
 - Fixed configuration description for the wildcard fix to specify that it only prevent debuffs from suit debuffs

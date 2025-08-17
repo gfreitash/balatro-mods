@@ -38,23 +38,30 @@ function get_ownership_hit_the_road_joker()
         calculate = function(self, card, context)
             -- Check if a card is being discarded
             if context.pre_discard and context.full_hand then
+                print(card.base.value)
                 local jacks_to_move = {}
                 for _, card_in_hand in ipairs(context.full_hand) do
                     if card_in_hand.base.value == 'Jack' then
                         table.insert(jacks_to_move, card_in_hand)
                     end
                 end
-
-                if #jacks_to_move > 0 then
-                    local jack_count = 0
-                    for i, jack_card in ipairs(jacks_to_move) do
-                        jack_count = jack_count + 1
-                        local animation_progress = (jack_count * 100) / #jacks_to_move
-                        draw_card(G.hand, G.deck, animation_progress, 'up', true, jack_card)
+                
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'after',
+                    blocking = true,
+                    blockable = true,
+                    delay = 0.4,
+                    func = function()
+                        local jack_count = 0
+                        for i, jack_card in ipairs(jacks_to_move) do
+                            jack_count = jack_count + 1
+                            local animation_progress = (jack_count * 100) / #jacks_to_move
+                            draw_card(G.discard, G.deck, animation_progress, 'up', true, jack_card)
+                        end
+                        G.deck:shuffle()
+                        return true
                     end
-                    G.deck:shuffle()
-                    return nil
-                end
+                }))
             end
             return nil
         end,

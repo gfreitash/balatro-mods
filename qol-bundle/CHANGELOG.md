@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.3] - 2025-08-17
+### Fixed
+- More fixes to Hit the Road joker: more randomness to shuffle and prevent blueprint from drawing jacks again
+
 ## [1.6.2] - 2025-08-17
 ### Fixed
 - Fixed the card duplication caused by drawing Jacks incorrectly when using Hit the Road Joker

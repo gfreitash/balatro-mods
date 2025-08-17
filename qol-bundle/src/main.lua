@@ -29,6 +29,7 @@ function get_ownership_eight_ball_joker()
 end
 
 -- Override the Hit the Road Joker
+jacks_to_move = {}
 function get_ownership_hit_the_road_joker()
     if not QOL_BUNDLE.config.hit_the_road_joker_enabled then
         return
@@ -39,7 +40,6 @@ function get_ownership_hit_the_road_joker()
             -- Check if a card is being discarded
             if context.pre_discard and context.full_hand then
                 print(card.base.value)
-                local jacks_to_move = {}
                 for _, card_in_hand in ipairs(context.full_hand) do
                     if card_in_hand.base.value == 'Jack' then
                         table.insert(jacks_to_move, card_in_hand)
@@ -57,8 +57,10 @@ function get_ownership_hit_the_road_joker()
                             jack_count = jack_count + 1
                             local animation_progress = (jack_count * 100) / #jacks_to_move
                             draw_card(G.discard, G.deck, animation_progress, 'up', true, jack_card)
+                            table.remove(jacks_to_move, i)
                         end
-                        G.deck:shuffle()
+
+                        G.deck:shuffle('j_hit_the_road_shuffle'..G.GAME.current_round.discards_left)
                         return true
                     end
                 }))

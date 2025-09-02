@@ -6,10 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.3.3] - 2025-09-01
-### Changed
-- Updated Riosodu Commons to v1.2.1.
-
 ## [3.3.2] - 2025-09-01
 ### Fixed
 - Fixed Ectoplasm text localization to use proper localization keys instead of hardcoded strings

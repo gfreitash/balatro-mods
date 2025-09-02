@@ -6,10 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.1] - 2025-09-01
-### Changed
-- Updated Riosodu Commons to v1.2.1.
-
 ## [1.7.0] - 2025-09-01
 ### Added
 - Flower Pot Wildcard Rework: Flower Pot now only appears in shop when Wildcard-enhanced cards exist in deck and triggers when scoring hand contains any Wildcard

@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.2] - 2025-09-01
+### Fixed
+- Fixed Ectoplasm text localization to use proper localization keys instead of hardcoded strings
+- Fixed negative joker event timing by adding proper trigger configuration
+
+### Changed  
+- Updated Riosodu Commons to v1.2.0.
+- Refactored debug keybind to use shared utility functions
+- Moved Ectoplasm text updates to proper game initialization hook
+
+### Added
+- Added Black Seal tooltip integration showing Negative edition info
+
 ## [3.3.1] - 2025-07-30
 ### Fixed
 - Fixed localization key naming to match SMODS convention for proper seal menu display

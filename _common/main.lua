@@ -16,6 +16,8 @@ function riosodu_shared_init()
     RIOSODU_SHARED.debug = {}
     RIOSODU_SHARED.UI = {}
     RIOSODU_SHARED.compat = {}
+    RIOSODU_SHARED.original = {}
+    RIOSODU_SHARED.mod = SMODS.current_mod
 
     -- Load config from either standalone mod or host mod
     RIOSODU_SHARED.config = SMODS.current_mod.config or {}
@@ -37,6 +39,7 @@ function riosodu_shared_init()
     include('debug.lua')
     include('ui/tabs.lua')
     include('compat.lua')
+    include('utils/utils.lua')
 
     ---@param mod_id string The ID of the mod calling this function
     ---@param filename string The path to the file relative to the mod's directory
@@ -56,7 +59,8 @@ function riosodu_shared_init()
 
     -- Initialize hooks table
     RIOSODU_SHARED.hooks = {
-        on_game_start = {}
+        on_game_start = {},
+        on_localization_reload = {}
     }
 
     -- Function to register hooks
@@ -71,15 +75,18 @@ function riosodu_shared_init()
         blocking = false,
         blockable = false,
         func = function()
-            if G.STATE == G.STATES.MENU  then
+            if G.STAGE == G.STAGES.MAIN_MENU then
                 for _, hook in ipairs(RIOSODU_SHARED.hooks.on_game_start) do
                     hook()
+                    print("Running hook on_game_start")
                 end
                 return true
             end
             return false
         end
     }))
+
+    include('overrides.lua')
 
     RIOSODU_SHARED.initialized = true
     print("[RIOSODU_SHARED] Initialization complete.")

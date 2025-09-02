@@ -1,7 +1,6 @@
 RIOSODU_SHARED.compat = RIOSODU_SHARED.compat or {}
 
-RIOSODU_SHARED.compat.SMODS_GUI_DynamicUIManager_updateDynamicAreas = SMODS.GUI.DynamicUIManager.updateDynamicAreas
-function SMODS.GUI.DynamicUIManager.updateDynamicAreas(uiDefinitions, config)
+function RIOSODU_SHARED.UI.updateDynamicAreas(uiDefinitions, config)
     base_conf = config or {
         offset = {x=0, y=0},
         align = 'cm',
@@ -22,8 +21,7 @@ function SMODS.GUI.DynamicUIManager.updateDynamicAreas(uiDefinitions, config)
     end
 end
 
-RIOSODU_SHARED.compat.SMODS_GUI_DynamicUIManager_initTab = SMODS.GUI.DynamicUIManager.initTab
-function SMODS.GUI.DynamicUIManager.initTab(args)
+function RIOSODU_SHARED.UI.initTab(args)
     local updateFunctions = args.updateFunctions
     local staticPageDefinition = args.staticPageDefinition
 

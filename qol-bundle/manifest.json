@@ -8,8 +8,9 @@
   "website": "https://github.com/gfreitash/balatro-mods",
   "prefix": "qolb",
   "main_file": "src/init.lua",
-  "version": "1.6.3",
+  "version": "1.7.0",
+  "priority": 10,
   "dependencies": [
-    "riosodu_shared (>=1.1.0)"
+    "riosodu_shared (>=1.2.0)"
   ]
 }

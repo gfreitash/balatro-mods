@@ -1,32 +1,4 @@
 return {
-    descriptions = {
-        Joker = {
-            j_hit_the_road = {
-                name = "Pé na Estrada",
-                text = {
-                    "Este Curinga ganha {X:mult,C:white} X#1# {} Multi",
-                    "para cada {C:attention}Valete{} descartado nesta rodada,",
-                    "e {C:attention}Valetes{} descartados retornam ao baralho.",
-                    "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)"
-                },
-                unlock = {
-                    "Descarte {E:1,C:attention}5",
-                    "{E:1,C:attention}Valetes{} ao",
-                    "mesmo tempo",
-                },
-            },
-            j_square = {
-                name = "Curinga Quadrado",
-                text = {
-                    "Este Curinga ganha {C:chips}+#2#{} Fichas",
-                    "se a mão jogada tem exatamente {C:attention}4{} cartas.",
-                    "Cada carta pontuando tem {C:green}#3# de #4#{} chance",
-                    "de dar {C:chips}+#2#{} Fichas a mais.",
-                    "{C:inactive}(No momento, {C:chips}#1#{C:inactive} Fichas)",
-                },
-            },
-        },
-    },
     misc = {
         dictionary={
             qolb_mod_name = 'Pacote QoL',
@@ -55,8 +27,184 @@ return {
                 'cada carta pontuando tem 1 em 2 chance de dar +4 mais.',
                 'Raridade Incomum.',
             },
+            qolb_flower_pot_wildcard_label = 'Ativar ajuste do Vaso de Flores',
+            qolb_flower_pot_wildcard_info = {
+                'Vaso de Flores só aparece na loja',
+                'quando cartas com melhoria Naipe Curinga existem no baralho.',
+                'Ativa se a mão tem Naipe Curinga.'
+            },
+            qolb_baron_uncommon_label = 'Ativar Barão Incomum',
+            qolb_baron_uncommon_info = {
+                'Torna o curinga Barão de raridade Incomum',
+                '(custa $5 ao invés de $8)'
+            },
+            qolb_mime_rare_label = 'Ativar Mímico Raro',
+            qolb_mime_rare_info = {
+                'Torna o curinga Mímico de raridade Rara.',
+                '(custa $6 ao invés de $5)'
+            },
+            qolb_ceremonial_dagger_common_label = 'Ativar Adaga Cerimonial Comum',
+            qolb_ceremonial_dagger_common_info = {
+                'Torna a Adaga Cerimonial de raridade Comum',
+                '(custa $3 ao invés de $6)'
+            },
+            qolb_mail_in_rebate_uncommon_label = 'Nerfar Desconto de Correio para Incomum',
+            qolb_mail_in_rebate_uncommon_info = {
+                'Nerfa o curinga Desconto de Correio para raridade Incomum',
+                '(era raridade Comum - torna mais raro)'
+            },
+            qolb_fortune_teller_cheaper_label = 'Bufar custo do Vidente',
+            qolb_fortune_teller_cheaper_info = {
+                'Torna o curinga Vidente mais barato',
+                '(custa $4 ao invés de $6)'
+            },
+            qolb_erosion_xmult_label = 'Reformular Erosão para X Multi',
+            qolb_erosion_xmult_info = {
+                'Muda Erosão de +4 Multi por carta',
+                'para X0.2 Multi por carta abaixo da quantidade inicial'
+            },
             qolb_nerf_photochad_label = 'Ativar nerf da Fotografia/Comprovante',
             qolb_nerf_photochad_info = 'Torna os curingas Fotografia e Comprovante de raridade Incomum.',
+            qolb_satellite_joker_label = 'Ativar reformulação do Satélite',
+            qolb_satellite_joker_info = {
+                'Satélite agora dá dinheiro igual à metade',
+                'do nível mais alto de mão de pôquer (arredondado para baixo)'
+            },
+            qolb_sigil_control_label = 'Ativar Símbolo controlado',
+            qolb_sigil_control_info = {
+                'Símbolo agora requer selecionar uma carta primeiro.',
+                'Todas as cartas na mão são convertidas para o',
+                'naipe da carta selecionada ao invés de naipe aleatório.'
+            },
+            qolb_ouija_control_label = 'Ativar Ouija controlado',
+            qolb_ouija_control_info = {
+                'Ouija agora requer selecionar uma carta primeiro.',
+                'Todas as cartas na mão são convertidas para a',
+                'classe da carta selecionada ao invés de classe aleatória.'
+            },
+            qolb_loyalty_card_rounds_label = 'Habilitar Modo Rodadas do Carta de Lealdade',
+            qolb_loyalty_card_rounds_info = {
+                'Carta de Lealdade é ativada com base em rodadas (apostas)',
+                'ao invés de mãos jogadas para timing mais previsível.'
+            },
+            qolb_splash_joker_retrigger_label = 'Habilitar Reativação do Splash',
+            qolb_splash_joker_retrigger_info = {
+                'O Splash Joker adicionalmente reativa',
+                'uma carta pontuante aleatória'
+            },
+            qolb_interest_on_skip_label = 'Ativar Juros ao Pular',
+            qolb_interest_on_skip_info = {
+                'Ganhe juros quando pular blinds.',
+                'Juros são calculados e concedidos',
+                'antes de obter a etiqueta'
+            },
+
+            -- Textos espectrais originais (do jogo base)
+            sigil_loc_text_original = {
+                "Converte todas as cartas",
+                "da mão em um único",
+                "{C:attention}naipe aleatório",
+            },
+            sigil_loc_text_controlled = {
+                "Converte todas as cartas da mão",
+                "para o mesmo {C:attention}naipe{} da",
+                "{C:attention}1{} carta selecionada"
+            },
+            ouija_loc_text_original = {
+                "Converte todas as cartas",
+                "da mão em uma única",
+                "{C:attention}classe aleatória",
+                "{C:red}-1{} de tamanho de mão",
+            },
+            ouija_loc_text_controlled = {
+                "Converte todas as cartas da mão",
+                "para a mesma {C:attention}classe{} da",
+                "{C:attention}1{} carta selecionada",
+                "{C:red}-1{} de tamanho de mão",
+            },
+
+            -- Textos originais dos curingas (do jogo base)
+            j_hit_the_road_original = {
+                "Este Curinga ganha {X:mult,C:white} X#1# {} Multi",
+                "para cada {C:attention}Valete{}",
+                "descartado nesta rodada",
+                "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)"
+            },
+            j_hit_the_road_modified = {
+                "Este Curinga ganha {X:mult,C:white} X#1# {} Multi",
+                "para cada {C:attention}Valete{} descartado nesta rodada,",
+                "e {C:attention}Valetes{} descartados retornam ao baralho.",
+                "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)"
+            },
+            j_square_original = {
+                "Este Curinga ganha {C:chips}+#2#{} Fichas",
+                "se a mão jogada tem",
+                "exatamente {C:attention}4{} cartas",
+                "{C:inactive}(No momento, {C:chips}+#1#{C:inactive} Fichas)"
+            },
+            j_square_modified = {
+                "Este Curinga ganha {C:chips}+#2#{} Fichas",
+                "se a mão jogada tem exatamente {C:attention}4{} cartas.",
+                "Cada carta pontuando tem {C:green}#3# em #4#{} chance",
+                "de dar {C:chips}+#2#{} Fichas a mais.",
+                "{C:inactive}(No momento, {C:chips}+#1#{C:inactive} Fichas)"
+            },
+            j_flower_pot_original = {
+                "{X:mult,C:white} X#1# {} Multi se a mão",
+                "de pôquer contém",
+                "uma carta de {C:diamonds}Ouros{}, uma carta de {C:clubs}Paus{},",
+                "uma carta de {C:hearts}Copas{} e uma carta de {C:spades}Espadas{}"
+            },
+            j_flower_pot_modified = {
+                "{X:mult,C:white} X#1# {} Multi se a mão de pôquer",
+                "contém uma {C:attention}Carta Selvagem"
+            },
+            j_satellite_original = {
+                "Ganhe {C:money}$#1#{} no fim da",
+                "rodada por {C:planet}Planeta{} único",
+                "usada nesta tentativa",
+                "{C:inactive}(No momento {C:money}$#2#{C:inactive})",
+            },
+            j_satellite_modified = {
+                "Ganhe {C:money}$#1#{} no fim da rodada para cada",
+                "{C:attention}2{} níveis da sua mão de pôquer mais alta",
+                "{C:inactive}(No momento {C:money}$#2#{C:inactive})"
+            },
+            j_loyalty_card_original = {
+                "{X:red,C:white} X#1# {} Multi a cada",
+                "{C:attention}#2#{} mãos jogadas",
+                "{C:inactive}#3#",
+            },
+            j_loyalty_card_rounds = {
+                "{X:red,C:white} X#1# {} Multi a cada",
+                "{C:attention}#2#{} rodadas",
+                "{C:inactive}#3#",
+            },
+            j_splash_original = {
+                "Toda {C:attention}carta jogada",
+                "conta na pontuação",
+            },
+            j_splash_retrigger = {
+                "Toda {C:attention}carta jogada",
+                "conta na pontuação.",
+                "{C:green}Carta pontuante aleatória",
+                "{C:green}é reativada"
+            },
+
+            j_erosion_original = {
+                "{C:red}+#1#{} Multi por cada",
+                "carta abaixo de {C:attention}#2#{}",
+                "no seu baralho completo",
+                "{C:inactive}(No momento {C:red}+#3#{C:inactive} Multi)",
+            },
+            j_erosion_xmult = {
+                "{X:mult,C:white}X#1#{} Multi por cada",
+                "carta abaixo de {C:attention}#2#{}",
+                "no seu baralho completo",
+                "{C:inactive}(No momento {X:mult,C:white}X#3#{C:inactive} Multi)",
+            },
+
+            requires_restart = "Requer reinicialização",
         },
     },
 }

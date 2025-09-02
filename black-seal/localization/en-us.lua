@@ -30,6 +30,19 @@ return {
             ectoplasm_override_reduces_hand_info = 'If ectoplasm should reduce hand size',
             debug_logging_enabled_info = 'Logs detailed mod actions to the console.',
             debug_keybinds_enabled_info = 'Enables testing keybinds. Requires restart.',
+
+            ectoplasm_loc_text_original = {
+                "Add {C:dark_edition}Negative{} to",
+                "a random {C:attention}Joker,",
+                "{C:red}-#1#{} hand size",
+            },
+            ectoplasm_loc_text_override = {
+                "Adds a {C:dark_edition}Black Seal{}",
+                "to {C:attention}1{} selected ",
+                "card in your hand"
+            },
+            ectoplasm_hand_size_line =  "{C:red}-#1#{} hand size",
+
         },
     },
 }

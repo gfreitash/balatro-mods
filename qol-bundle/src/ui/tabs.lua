@@ -2,7 +2,7 @@
 
 QOL_BUNDLE.UI = QOL_BUNDLE.UI or {}
 
-QOL_BUNDLE.UI.option_boxes_per_page = 4
+QOL_BUNDLE.UI.option_boxes_per_page = 3
 QOL_BUNDLE.UI.last_viewed_config_page = 1
 
 -- Helper function to get all config options, pre-wrapped in their intended option_boxes
@@ -14,7 +14,7 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_table = QOL_BUNDLE.config,
                 ref_value = 'joker_max_enabled',
                 label = G.localization.misc.dictionary.qolb_shop_size_label,
-                info = G.localization.misc.dictionary.qolb_shop_size_info
+                info = G.localization.misc.dictionary.qolb_shop_size_info,
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -23,7 +23,8 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_table = QOL_BUNDLE.config,
                 ref_value = 'wildcard_fix_enabled',
                 label = G.localization.misc.dictionary.qolb_wildcard_fix_label,
-                info = G.localization.misc.dictionary.qolb_wildcard_fix_info
+                info = G.localization.misc.dictionary.qolb_wildcard_fix_info,
+                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -41,6 +42,16 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 current_option = QOL_BUNDLE.wheel_of_fortune_current_option,
                 current_option_val = QOL_BUNDLE.wheel_of_fortune_current_option_val,
                 scale = 0.75,
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Nerf Photochad Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'nerf_photochad_enabled',
+                label = G.localization.misc.dictionary.qolb_nerf_photochad_label,
+                info = G.localization.misc.dictionary.qolb_nerf_photochad_info,
+                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -66,7 +77,8 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_table = QOL_BUNDLE.config,
                 ref_value = 'unweighted_editions_enabled',
                 label = G.localization.misc.dictionary.qolb_unweighted_editions_label,
-                info = G.localization.misc.dictionary.qolb_unweighted_editions_info
+                info = G.localization.misc.dictionary.qolb_unweighted_editions_info,
+                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -76,7 +88,7 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_value = 'hit_the_road_joker_enabled',
                 label = G.localization.misc.dictionary.qolb_hit_the_road_joker_label,
                 info = G.localization.misc.dictionary.qolb_hit_the_road_joker_info,
-                callback = 'qol_bundle_update_hit_the_road_joker_localization'
+                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -85,16 +97,118 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_table = QOL_BUNDLE.config,
                 ref_value = 'square_joker_enabled',
                 label = G.localization.misc.dictionary.qolb_square_joker_label,
-                info = G.localization.misc.dictionary.qolb_square_joker_info
+                info = G.localization.misc.dictionary.qolb_square_joker_info,
+                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
-            -- Nerf Photochad Config
+            -- Flower Pot Wildcard Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,
-                ref_value = 'nerf_photochad_enabled',
-                label = G.localization.misc.dictionary.qolb_nerf_photochad_label,
-                info = G.localization.misc.dictionary.qolb_nerf_photochad_info
+                ref_value = 'flower_pot_wildcard_enabled',
+                label = G.localization.misc.dictionary.qolb_flower_pot_wildcard_label,
+                info = G.localization.misc.dictionary.qolb_flower_pot_wildcard_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Baron Uncommon Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'baron_uncommon_enabled',
+                label = G.localization.misc.dictionary.qolb_baron_uncommon_label,
+                info = G.localization.misc.dictionary.qolb_baron_uncommon_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Mime Rare Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'mime_rare_enabled',
+                label = G.localization.misc.dictionary.qolb_mime_rare_label,
+                info = G.localization.misc.dictionary.qolb_mime_rare_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Ceremonial Dagger Common Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'ceremonial_dagger_common_enabled',
+                label = G.localization.misc.dictionary.qolb_ceremonial_dagger_common_label,
+                info = G.localization.misc.dictionary.qolb_ceremonial_dagger_common_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Mail-In Rebate Uncommon Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'mail_in_rebate_uncommon_enabled',
+                label = G.localization.misc.dictionary.qolb_mail_in_rebate_uncommon_label,
+                info = G.localization.misc.dictionary.qolb_mail_in_rebate_uncommon_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Fortune Teller Cheaper Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'fortune_teller_cheaper_enabled',
+                label = G.localization.misc.dictionary.qolb_fortune_teller_cheaper_label,
+                info = G.localization.misc.dictionary.qolb_fortune_teller_cheaper_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Erosion X Mult Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'erosion_xmult_enabled',
+                label = G.localization.misc.dictionary.qolb_erosion_xmult_label,
+                info = G.localization.misc.dictionary.qolb_erosion_xmult_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Sigil Control Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'sigil_control_enabled',
+                label = G.localization.misc.dictionary.qolb_sigil_control_label,
+                info = G.localization.misc.dictionary.qolb_sigil_control_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Ouija Control Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'ouija_control_enabled',
+                label = G.localization.misc.dictionary.qolb_ouija_control_label,
+                info = G.localization.misc.dictionary.qolb_ouija_control_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Splash Joker Retrigger Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'splash_joker_retrigger_enabled',
+                label = G.localization.misc.dictionary.qolb_splash_joker_retrigger_label,
+                info = G.localization.misc.dictionary.qolb_splash_joker_retrigger_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Interest on Skip Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'interest_on_skip_enabled',
+                label = G.localization.misc.dictionary.qolb_interest_on_skip_label,
+                info = G.localization.misc.dictionary.qolb_interest_on_skip_info,
+                toggle_callback = QOL_BUNDLE.funcs.apply_interest_on_skip_override
             }),
         }),
     }
@@ -136,7 +250,7 @@ function QOL_BUNDLE.UI.staticConfigTabContent()
                             padding = 0.1,
                             r = 0.1,
                             minw = 10,
-                            minh = 2 * QOL_BUNDLE.UI.option_boxes_per_page,
+                            minh = 2.25 * QOL_BUNDLE.UI.option_boxes_per_page,
                             colour = G.C.BLACK,
                             align = "tm",
                         },
@@ -197,7 +311,7 @@ end
 
 G.FUNCS.qol_bundle_update_config_page = function(e)
     if not e or not e.cycle_config then return end
-    SMODS.GUI.DynamicUIManager.updateDynamicAreas({
+    RIOSODU_SHARED.UI.updateDynamicAreas({
         ["qolConfigOptions"] = QOL_BUNDLE.UI.dynamicConfigTabContent(e.cycle_config.current_option)
     }, {
         offset = {x = 0.0, y = 0.0},

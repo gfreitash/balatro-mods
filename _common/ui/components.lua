@@ -44,6 +44,24 @@ function RIOSODU_SHARED.UIDEF.create_option_toggle(args)
             })
         end
 
+        -- Add restart warning if specified
+        if args.requires_restart then
+            local restart_text = "Requires restart"  -- Fallback text
+            -- Try to get localized text if available
+            if G and G.localization and G.localization.misc and G.localization.misc.dictionary then
+                restart_text = G.localization.misc.dictionary.requires_restart or restart_text
+            end
+            
+            table.insert(info, {
+                n = G.UIT.R,
+                config = { align = "cm", minh = 0.005 },
+                nodes = {{
+                    n = G.UIT.T,
+                    config = { text = restart_text, scale = 0.25, colour = HEX("ff9f43") }, -- Orange color for warning
+                }},
+            })
+        end
+
         -- Replace info with ours
         info = { n = G.UIT.R, config = { align = "cm" }, nodes = info }
         toggle.nodes[2] = info

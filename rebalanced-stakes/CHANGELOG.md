@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-09-01
+### Added
+- Perishable jokers now become negative when they expire alongside being debuffed
+
+### Changed
+- Updated Riosodu Commons to v1.2.0.
+- Interest system modifications via lovely patches moved to Riosodu Commons (_common module) for broader compatibility
+
 ## [1.2.10] - 2025-07-07
 ### Changed
 - Updated Riosodu Commons to v1.1.0.

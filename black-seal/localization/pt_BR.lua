@@ -30,6 +30,19 @@ return {
             ectoplasm_override_reduces_hand_info = 'Se o ectoplasma deve reduzir o tamanho da mão',
             debug_logging_enabled_info = 'Registra ações detalhadas do mod no console.',
             debug_keybinds_enabled_info = 'Ativa teclas de teste. Requer reinicialização.',
+
+            ectoplasm_loc_text_original = {
+                "Adiciona {C:dark_edition}Negativo{} a",
+                "um {C:attention}Curinga aleatório,",
+                "{C:red}-#1#{} tamanho da mão",
+            },
+            ectoplasm_loc_text_override = {
+                "Adiciona um {C:dark_edition}Selo Preto{}",
+                "a {C:attention}1{} carta ",
+                "selecionada na sua mão"
+            },
+            ectoplasm_hand_size_line = "{C:red}-#1#{} tamanho da mão",
+
         },
     },
 }

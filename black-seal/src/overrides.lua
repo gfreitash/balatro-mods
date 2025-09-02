@@ -33,6 +33,7 @@ end
 -- Store the original functions before overriding
 BSM.original.Card_use_consumeable = Card.use_consumeable
 BSM.original.Card_can_use_consumeable = Card.can_use_consumeable
+BSM.original.generate_card_ui = generate_card_ui
 
 BSM.original.P_CENTERS_c_ectoplasm = G.P_CENTERS.c_ectoplasm
 local ectoplasm = BSM.utils.copy_table(G.P_CENTERS.c_ectoplasm)
@@ -193,26 +194,21 @@ function Card:can_use_consumeable(any_state, skip_check)
 end
 
 function BSM.utils.update_ectoplasm_text()
-    local loc_text = {
-        "Add {C:dark_edition}Negative{} to",
-        "a random {C:attention}Joker,",
-        "{C:red}-#1#{} hand size",
-    }
-
-    if BSM.config.ectoplasm_override_reduces_hand then
-        loc_text[3] = "{C:red}-#1#{} hand size"
-    else
-        loc_text[3] = nil
-    end
+    local loc_text = localize('ectoplasm_loc_text_original')
 
     if BSM.config.override_ectoplasm_effect then
-        loc_text[4] = loc_text[3]
-        loc_text[1] = "Add a {C:dark_edition}Black Seal{}"
-        loc_text[2] = "to {C:attention}1{} selected"
-        loc_text[3] = "card in your hand"
+        loc_text = localize('ectoplasm_loc_text_override')
+
+        if BSM.config.ectoplasm_override_reduces_hand then
+            RIOSODU_SHARED.utils.sendDebugMessage("Ectoplasm hand size reduction enabled in localization..")
+            loc_text[4] = localize('ectoplasm_hand_size_line')
+        else
+            loc_text[4] = nil
+        end
     end
 
     G.localization.descriptions.Spectral.c_ectoplasm.text = loc_text
+    init_localization()
 end
 
-BSM.utils.update_ectoplasm_text()
+RIOSODU_SHARED.register_hook('on_game_start', BSM.utils.update_ectoplasm_text)

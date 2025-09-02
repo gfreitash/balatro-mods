@@ -6,6 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-09-01
+### Added
+- Flower Pot Wildcard Rework: Flower Pot now only appears in shop when Wildcard-enhanced cards exist in deck and triggers when scoring hand contains any Wildcard
+- Baron Uncommon: Made Baron joker Uncommon rarity with reduced cost ($5 instead of $8)
+- Mime Rare: Made Mime joker Rare rarity with increased cost ($6 instead of $5)  
+- Satellite Joker Rework: Satellite now gives gold equal to half the highest poker hand level (rounded down)
+- Controlled Sigil: Sigil now requires selecting a card first and converts all cards to selected card's suit instead of random suit
+- Controlled Ouija: Ouija now requires selecting a card first and converts all cards to selected card's rank instead of random rank
+- Loyalty Card Rounds Mode: Loyalty Card triggers based on rounds instead of hands played for more predictable timing and easier to plan around
+- Splash Joker Retrigger: Splash Joker additionally retriggers a random scoring card
+- Ceremonial Dagger Common: Made Ceremonial Dagger joker Common rarity with reduced cost ($3 instead of $6)
+- Mail-In Rebate Uncommon: Nerfed Mail-In Rebate joker to Uncommon rarity (was Common rarity - makes it rarer)
+- Fortune Teller Cheaper: Made Fortune Teller joker cheaper (cost $4 instead of $6)
+- Erosion X Mult Rework: Changed Erosion from +4 Mult per card to X0.2 Mult per card below starting amount
+- Interest on Skip: Gain interest when skipping blinds, calculated and awarded before obtaining the tag
+- Paperback mod compatibility for jester_of_nihil joker
+
+### Changed
+- Updated Riosodu Commons to v1.2.0.
+- Hit the Road and Square jokers now use dynamic localization that updates based on configuration
+- Flower Pot, Satellite, Loyalty Card, Splash, and Erosion jokers now use dynamic localization that updates based on configuration  
+- Sigil and Ouija spectral cards now use dynamic localization that updates based on configuration
+- Reduced option boxes per page from 4 to 3 for better UI layout
+- Refactored debug functions to use shared utilities from Riosodu Commons
+
 ## [1.6.3] - 2025-08-17
 ### Fixed
 - More fixes to Hit the Road joker: more randomness to shuffle and prevent blueprint from drawing jacks again

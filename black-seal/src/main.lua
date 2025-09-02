@@ -30,10 +30,11 @@ function BSM.utils.add_negative_random_joker()
     local eligible_joker_card = pseudorandom_element(eligible_jokers, pseudoseed("blackseal_neg"))
     if eligible_joker_card then
       G.E_MANAGER:add_event(Event({
+        trigger = 'after',
+        blocking = true,
+        blockable = true,
         func = function()
-          eligible_joker_card:set_edition({ negative = true })
-          play_sound('negative')
-          eligible_joker_card:juice_up(0.5, 0.5)
+          eligible_joker_card:set_edition({ negative = true }, true)
           return true
         end
       }))
@@ -97,6 +98,9 @@ SMODS.Seal({
   weight = nil, -- Initial weight will be set by the callback
   discovered = false,
   badge_colour = G.C.BLACK,
+  loc_vars = function(self, info_queue, card)
+    info_queue[#info_queue + 1] = G.P_CENTERS.e_negative
+  end,
   calculate = function(self, card, context)
     -- If the not in the proper context and only one not debuffed card played returns early
     if not (context.cardarea == G.play and context.main_scoring and #context.full_hand == 1 and not card.debuff) then return nil end

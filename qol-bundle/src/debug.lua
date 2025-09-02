@@ -40,57 +40,6 @@ function QOL_BUNDLE.debug.test_poll_edition(num_calls, guaranteed_edition)
     RIOSODU_SHARED.utils.sendDebugMessage("---------------------------------")
 end
 
--- Refactored function to add joker and transform hand
-function QOL_BUNDLE.debug.add_joker_and_transform_hand(joker_name, joker_key, card_rank, skip_transform)
-    RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Attempting to add Negative " .. joker_name .. " Joker and transform hand to " .. card_rank .. "s...")
-    local target_joker = find_joker(joker_name)
-    if not target_joker or #target_joker == 0 then
-        if SMODS and SMODS.add_card then
-            local added_card = SMODS.add_card({set='Joker', key=joker_key, edition='e_negative'})
-            if added_card then
-                RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Successfully added Negative " .. joker_name .. " Joker.")
-                if added_card.juice_up then
-                    added_card:juice_up(0.5, 0.5)
-                end
-            else
-                RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "SMODS.add_card failed to add Negative " .. joker_name .. " Joker.")
-            end
-        else
-            RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "SMODS.add_card function not found.")
-        end
-    else
-        RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, joker_name .. " Joker already exists.")
-    end
-    
-    if not G.hand then
-        RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Cannot transform hand: Hand not available.")
-        return
-    end
-
-    if skip_transform then
-        RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Skipping transform hand.")
-        return
-    end
-
-    local suits = {'Spades', 'Hearts', 'Clubs', 'Diamonds'}
-
-    for i, card_in_hand in ipairs(G.hand.cards) do
-        if card_in_hand and type(card_in_hand.set_base) == 'function' then
-            local random_suit = suits[math.random(#suits)]
-            local new_card_key = string.sub(random_suit, 1, 1) .. '_' .. card_rank
-            
-            local card_data = G.P_CARDS[new_card_key]
-            if card_data then
-                card_in_hand:set_base(card_data)
-                card_in_hand:juice_up(0.5, 0.5)
-                RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Transformed card #" .. i .. " to " .. random_suit .. " " .. card_rank)
-            else
-                RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Failed to find card data for " .. new_card_key)
-            end
-        end
-    end
-    RIOSODU_SHARED.utils.sendDebugMessage(QOL_BUNDLE.mod_id, "Finished transforming hand to " .. card_rank .. "s.")
-end
 
 function QOL_BUNDLE.debug.register_debug_keybinds()
     RIOSODU_SHARED.debug.register_keybind(QOL_BUNDLE.mod_id, {
@@ -103,12 +52,18 @@ function QOL_BUNDLE.debug.register_debug_keybinds()
         key_pressed = '8',
         name = 'eight_ball_debug_action',
         desc = 'Adds Negative 8 Ball Joker & Transforms hand to 8s',
-        action = function() QOL_BUNDLE.debug.add_joker_and_transform_hand('8 Ball', 'j_8_ball', '8') end
+        action = function() RIOSODU_SHARED.debug.add_joker_and_modify_cards('8 Ball', 'j_8_ball', '8', nil, nil, nil, false) end
     })
     RIOSODU_SHARED.debug.register_keybind(QOL_BUNDLE.mod_id, {
         key_pressed = '9',
         name = 'hit_the_road_debug_action',
         desc = 'Adds Negative Hit the Road Joker & Transforms hand to Jacks',
-        action = function() QOL_BUNDLE.debug.add_joker_and_transform_hand('Hit the Road', 'j_hit_the_road', 'J') end
+        action = function() RIOSODU_SHARED.debug.add_joker_and_modify_cards('Hit the Road', 'j_hit_the_road', 'J', nil, nil, nil, false) end
+    })
+    RIOSODU_SHARED.debug.register_keybind(QOL_BUNDLE.mod_id, {
+        key_pressed = '0',
+        name = 'flower_pot_debug_action',
+        desc = 'Adds Negative Flower Pot Joker & Makes selected cards Wildcard',
+        action = function() RIOSODU_SHARED.debug.add_joker_and_modify_cards('Flower Pot', 'j_flower_pot', nil, 'm_wild', nil, nil, true) end
     })
 end

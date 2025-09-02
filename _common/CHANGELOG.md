@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-09-01
+
+### Added
+- **Enhanced debug utilities**:
+  - `add_joker_and_modify_cards()` function for comprehensive card manipulation during testing and debugging
+  - `print_table()` function with configurable depth and circular reference detection for better debugging output
+  - Interactive joker input textbox system (F10 key) for adding jokers by key during debugging
+  - Visual "nope" animation for failed debug operations
+- **Localization system improvements**:
+  - New `on_localization_reload` hook system for dynamic localization updates without game restart
+  - Override system for `init_localization()` function to trigger custom localization hooks
+- **Enhanced UI components**:
+  - `requires_restart` option for configuration toggles with visual warning indicator
+  - Automatic localized warning text for settings that require game restart
+- **Core infrastructure additions**:
+  - `RIOSODU_SHARED.original` namespace for storing original function references safely
+  - `overrides.lua` system for global function overrides with proper chaining
+  - `utils/utils.lua` include structure prepared for future utility expansions
+- **Interest system rebalancing** (moved from rebalanced-stakes):
+  - Interest calculation now starts at $1 instead of $5 (configurable via `interest_base = 5`)
+  - Interest calculations now use dynamic `interest_base` instead of hardcoded values
+  - Seed Money and Money Tree vouchers maintain same effective interest caps but use new calculation system
+  - Comprehensive Lovely Injector patches for interest system modifications
+
+### Changed
+- **Hook system expansion**: Extended hooks table to include `on_localization_reload` events alongside existing `on_game_start`
+- **Game start detection**: Improved hook trigger condition from `G.STATE == G.STATES.MENU` to `G.STAGE == G.STAGES.MAIN_MENU` for more reliable game state detection
+- **Initialization order**: Added `overrides.lua` loading after hook system setup to ensure proper override chaining
+
 ## [1.1.0] - 2025-07-07
 ### Added
 - Compatibility layer for SMODS GUI dynamic area

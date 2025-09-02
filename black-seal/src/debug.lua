@@ -8,57 +8,14 @@ if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_features_enabled then
   RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id, "Debug features enabled. Registering keybinds...")
 
   -- Keybind to apply Black Seal to hand
-  -- Uses the key configured in config.lua
   RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
     key_pressed = 'f9',
     name = 'apply_black_seal_to_hand',
     desc = 'Apply Black Seal to all cards in hand',
-
-    action = function(self)
-      local seal_key_to_apply = BSM.black_seal_id_full -- Get the full seal key from BSM
-      local cards_sealed = 0
-
-      RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id,
-        "Attempting to apply seal '"
-        .. seal_key_to_apply
-        .. "' to hand cards..."
-      )
-
-      if not G.hand then
-        RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id, "Cannot apply seal: Hand not available.")
-        return
-      end
-
-      -- Iterate through the cards currently in the hand area
-      for i, card_in_hand in ipairs(G.hand.cards) do
-        -- Check if it's a valid card object with the set_seal method
-        if card_in_hand and type(card_in_hand.set_seal) == 'function' then
-          RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id,
-            "Applying seal to card #"
-            .. i
-            .. " (Current seal: "
-            .. tostring(card_in_hand.seal)
-            .. ")"
-          )
-
-          -- Apply the seal using the correct key
-          -- The 'true' arguments are likely for visual/immediate updates
-          card_in_hand:set_seal(seal_key_to_apply, true, true)
-
-          cards_sealed = cards_sealed + 1
-        end
-      end
-
-      RIOSODU_SHARED.utils.sendDebugMessage(BSM.mod_id,
-        "Finished applying seal. Sealed " .. cards_sealed .. " cards."
-      )
+    action = function()
+      RIOSODU_SHARED.debug.add_joker_and_modify_cards('Hanging Chad', 'j_hanging_chad', nil, nil, BSM.black_seal_id_full, nil, false)
     end,
   })
-  RIOSODU_SHARED.utils.sendDebugMessage(
-    "Keybind '"
-    .. BSM.config.debug_apply_seal_key:upper()
-    .. "' for applying seal registered."
-  )
 
   -- Define num_polls here so it's accessible for the keybind description
   local num_polls = 10000 -- Use a reasonable number of polls for testing the percentage
@@ -200,7 +157,7 @@ if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_features_enabled then
   -- Keybind to trigger the event-based seal weight test function
   -- Uses the key configured in config.lua
   RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
-    key_pressed = 'f10',
+    key_pressed = '5',
     name = 'test_seal_weights_evented',
     desc = 'Poll SMODS.poll_seal ' .. num_polls .. ' times',
     action = test_seal_weights_evented

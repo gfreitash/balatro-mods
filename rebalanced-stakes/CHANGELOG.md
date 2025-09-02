@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2025-09-02
+### Changed
+- Updated Riosodu Commons to v1.2.2.
+
 ## [1.3.1] - 2025-09-01
 ### Changed
 - Updated Riosodu Commons to v1.2.1.

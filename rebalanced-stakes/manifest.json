@@ -9,6 +9,6 @@
   "main_file": "src/init.lua",
   "version": "1.3.3",
   "dependencies": [
-    "riosodu_shared (>=1.2.2)"
+    "riosodu_shared (>=1.2.3)"
   ]
 }

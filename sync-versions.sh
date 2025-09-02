@@ -472,7 +472,7 @@ if [ -f "$common_changelog" ]; then
 	fi
 
 	SHARED_VERSION=$LATEST_VERSION
-	SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
+	SHARED_DEP_REQ="riosodu_shared (>= ${SHARED_VERSION})"
 
 	current_common_version=$(jq -r '.version' "$common_manifest")
 	if [ "$current_common_version" != "$LATEST_VERSION" ]; then

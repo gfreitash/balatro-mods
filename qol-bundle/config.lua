@@ -14,6 +14,7 @@
 --- @field square_joker_enabled boolean Enable/disable Square Joker modification
 --- @field baron_uncommon_enabled boolean Enable/disable making Baron joker Uncommon with cheaper price
 --- @field mime_rare_enabled boolean Enable/disable making Mime joker Rare with higher price
+--- @field nerf_hanging_chad_enabled boolean Enable/disable Nerf Hanging Chad (Hanging Chad is uncommon and more expensive)
 --- @field satellite_joker_enabled boolean Enable/disable Satellite Joker poker hand level modification
 --- @field sigil_control_enabled boolean Enable/disable controlled Sigil spectral card using selected card's suit
 --- @field ouija_control_enabled boolean Enable/disable controlled Ouija spectral card using selected card's rank
@@ -24,6 +25,11 @@
 --- @field fortune_teller_cheaper_enabled boolean Enable/disable making Fortune Teller cheaper
 --- @field erosion_xmult_enabled boolean Enable/disable Erosion giving 0.2X mult per card below starting amount
 --- @field interest_on_skip_enabled boolean Enable/disable gaining interest when skipping blinds
+--- @field enhanced_magic_trick_enabled boolean Enable/disable enhanced Magic Trick voucher (all upgrades + seals)
+--- @field new_illusion_enabled boolean Enable/disable new Illusion voucher (deck-based with reroll logic)
+--- @field castle_checkered_enabled boolean Enable/disable Castle joker checkered deck enhancement
+--- @field yorick_multiplier_enabled boolean Enable/disable Yorick multiplier modification
+--- @field yorick_multiplier_value number Multiplier value per 23 cards discarded (default 1.5)
 return {
   joker_max_enabled = true,         -- Enable/disable increased joker slots
   joker_max_value = 3,              -- Number of joker slots when enabled
@@ -46,7 +52,7 @@ return {
   baron_uncommon_enabled = true, -- Enable/disable making Baron joker Uncommon with cheaper price
   mime_rare_enabled = true,      -- Enable/disable making Mime joker Rare with higher price
 
-  nerf_photochad_enabled = true, -- Enable/disable Nerf Photochad (Photograph and Hanging Chad are uncommon)
+  nerf_hanging_chad_enabled = true, -- Enable/disable Nerf Hanging Chad (Hanging Chad is uncommon and more expensive)
 
   satellite_joker_enabled = true, -- Enable/disable Satellite Joker poker hand level modification
 
@@ -66,4 +72,13 @@ return {
   erosion_xmult_enabled = true, -- Enable/disable Erosion giving 0.2X mult per card below starting amount
 
   interest_on_skip_enabled = true, -- Enable/disable gaining interest when skipping blinds
+
+  -- Enhanced voucher features
+  enhanced_magic_trick_enabled = true, -- Enable/disable enhanced Magic Trick voucher (all upgrades + seals)
+  new_illusion_enabled = true, -- Enable/disable new Illusion voucher (deck-based with reroll logic)
+
+  castle_checkered_enabled = true, -- Enable/disable Castle joker checkered deck enhancement
+
+  yorick_multiplier_enabled = true, -- Enable/disable Yorick multiplier modification
+  yorick_multiplier_value = 1.5,   -- Multiplier value per 23 cards discarded (default 1.5)
 }

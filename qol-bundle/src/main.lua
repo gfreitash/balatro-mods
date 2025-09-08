@@ -3,6 +3,35 @@
 QOL_BUNDLE.utils = QOL_BUNDLE.utils or {}
 QOL_BUNDLE.funcs = QOL_BUNDLE.funcs or {}
 
+function QOL_BUNDLE.funcs.get_ownership_smeared_joker()
+    if not QOL_BUNDLE.config.wildcard_fix_enabled then
+        return
+    end
+
+    QOL_BUNDLE.state.smeared_joker = SMODS.Joker:take_ownership('j_smeared', { 
+        loc_vars = function (self, info_queue, card)
+            if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+                -- Use Paperback's light/dark suit terminology
+                info_queue[#info_queue + 1] = PB_UTIL.suit_tooltip('light')
+                info_queue[#info_queue + 1] = PB_UTIL.suit_tooltip('dark')
+            end
+        end
+     })
+
+    local apply_localization = function()
+        local loc = localize('j_smeared_original')
+        if QOL_BUNDLE.config.wildcard_fix_enabled and PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+            loc = localize('j_smeared_paperback')
+        end
+        G.localization.descriptions.Joker.j_smeared.text = loc
+    end
+
+    RIOSODU_SHARED.register_hook('on_game_start', function ()
+        apply_localization()
+        init_localization()
+    end)
+end
+
 -- Override the Wheel of Fortune consumable
 function QOL_BUNDLE.funcs.get_ownership_wheel_of_fortune()
     if not QOL_BUNDLE.config.wheel_of_fortune_enabled then
@@ -262,18 +291,15 @@ function QOL_BUNDLE.funcs.get_ownership_mime_rare()
     })
 end
 
--- Override Photograph and Hanging Chad
-function QOL_BUNDLE.funcs.get_ownership_nerf_photochad()
-    if not QOL_BUNDLE.config.nerf_photochad_enabled then
+-- Override Hanging Chad
+function QOL_BUNDLE.funcs.get_ownership_nerf_hanging_chad()
+    if not QOL_BUNDLE.config.nerf_hanging_chad_enabled then
         return
     end
 
-    QOL_BUNDLE.state.photograph = SMODS.Joker:take_ownership('j_photograph', {
-        rarity = 2, -- Uncommon
-    })
-
     QOL_BUNDLE.state.hanging_chad = SMODS.Joker:take_ownership('j_hanging_chad', {
-        rarity = 2, -- Uncommon
+        rarity = 2, -- Uncommon (was 1 - Common)
+        cost = 7,   -- More expensive (was 6)
     })
 end
 
@@ -319,7 +345,7 @@ function QOL_BUNDLE.funcs.get_ownership_erosion_xmult()
 
     QOL_BUNDLE.state.erosion = SMODS.Joker:take_ownership('j_erosion', {
         config = {
-            extra = 0.2 -- 0.2X mult per card below starting amount
+            extra = 0.15 -- 0.2X mult per card below starting amount
         },
         loc_vars = function(self, info_queue, center)
             local cards_below = math.max(0, (G.GAME and G.GAME.starting_deck_size or 52) - (G.playing_cards and #G.playing_cards or 52))
@@ -653,7 +679,7 @@ QOL_BUNDLE.funcs.get_ownership_square_joker()
 QOL_BUNDLE.funcs.get_ownership_flower_pot_joker()
 QOL_BUNDLE.funcs.get_ownership_baron_uncommon()
 QOL_BUNDLE.funcs.get_ownership_mime_rare()
-QOL_BUNDLE.funcs.get_ownership_nerf_photochad()
+QOL_BUNDLE.funcs.get_ownership_nerf_hanging_chad()
 QOL_BUNDLE.funcs.get_ownership_ceremonial_dagger_common()
 QOL_BUNDLE.funcs.get_ownership_mail_in_rebate_uncommon()
 QOL_BUNDLE.funcs.get_ownership_fortune_teller_cheaper()
@@ -664,6 +690,163 @@ QOL_BUNDLE.funcs.get_ownership_splash_joker()
 QOL_BUNDLE.funcs.get_ownership_sigil_control()
 QOL_BUNDLE.funcs.get_ownership_ouija_control()
 QOL_BUNDLE.funcs.get_ownership_jester_of_nihil()
-QOL_BUNDLE.funcs.apply_interest_on_skip_override()
+-- Override Magic Trick voucher to enable enhanced shop card generation
+function QOL_BUNDLE.funcs.get_ownership_magic_trick_enhanced()
+    if not QOL_BUNDLE.config.enhanced_magic_trick_enabled then
+        return
+    end
 
-RIOSODU_SHARED.utils.sendDebugMessage("Main logic module loading...", QOL_BUNDLE.mod_id)
+    QOL_BUNDLE.state.magic_trick = SMODS.Voucher:take_ownership('v_magic_trick', {
+        -- Keep the same config (extra = 4 for playing_card_rate)
+        -- The actual enhancement logic will be in the shop card generation override
+    })
+end
+
+-- Override Illusion voucher to enable deck-based card generation  
+function QOL_BUNDLE.funcs.get_ownership_illusion_new()
+    if not QOL_BUNDLE.config.new_illusion_enabled then
+        return
+    end
+
+    QOL_BUNDLE.state.illusion = SMODS.Voucher:take_ownership('v_illusion', {
+        -- Keep the same config (extra = 4 for playing_card_rate)  
+        -- The actual new logic will be in the shop card generation override
+    })
+end
+
+-- Override Castle joker to support checkered deck enhancement
+function QOL_BUNDLE.funcs.get_ownership_castle_checkered()
+    if not QOL_BUNDLE.config.castle_checkered_enabled then
+        return
+    end
+
+    QOL_BUNDLE.state.castle = SMODS.Joker:take_ownership('j_castle', {
+        loc_vars = function(self, info_queue, center)
+            local chosen_group = G.GAME and G.GAME.current_round and G.GAME.current_round.castle_card_group or 'dark'
+            
+            -- Check Paperback compatibility for custom light/dark suits
+            if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+                -- Use Paperback's light/dark suit terminology
+                tooltip = chosen_group == 'light' and PB_UTIL.suit_tooltip('light') or PB_UTIL.suit_tooltip('dark')
+                info_queue[#info_queue + 1] = tooltip
+
+                local group_name = chosen_group == 'light' and localize({
+                    type = 'name_text', set='Other', key='paperback_light_suits'
+                }) or localize({
+                    type = 'name_text', set='Other', key='paperback_dark_suits'
+                })
+                RIOSODU_SHARED.debug.print_table(G.C.SUITS)
+                color = chosen_group == 'light' and G.C.PAPERBACK_LIGHT_SUIT or G.C.PAPERBACK_DARK_SUIT
+                
+                -- RIOSODU_SHARED.utils.sendDebugMessage("Chosen colour: " .. color)
+                return {
+                    vars = {
+                        center.ability.extra.chip_mod, -- #1# - chip increment
+                        group_name,                     -- #2# - "light suits" or "dark suits"
+                        center.ability.extra.chips,      -- #3# - current chips
+                        colours = {color}
+                    }
+                }
+            else
+                -- Default logic: show individual suits
+                local light_suits = {'Hearts', 'Diamonds'}
+                local dark_suits = {'Spades', 'Clubs'}
+                local suits = chosen_group == 'light' and light_suits or dark_suits
+                
+                local suit1_name = localize(suits[1], 'suits_singular')
+                local suit2_name = localize(suits[2], 'suits_singular')
+                local suit1_color = G.C.SUITS[suits[1]]
+                local suit2_color = G.C.SUITS[suits[2]]
+                
+                return {
+                    vars = {
+                        center.ability.extra.chip_mod, -- #1# - chip increment  
+                        suit1_name,                     -- #2# - first suit name
+                        suit2_name,                     -- #3# - second suit name
+                        center.ability.extra.chips,     -- #4# - current chips
+                        colours = {suit1_color, suit2_color,}
+                    },
+                }
+            end
+        end,
+        calculate = function(self, card, context)
+            if context.discard and not context.other_card.debuff and not context.blueprint then
+                local is_matching_suit = false
+                
+                -- Use the chosen group from reset_castle_card
+                local chosen_group = G.GAME.current_round.castle_card_group or 'dark'
+                
+                -- Check Paperback compatibility for custom light/dark suits
+                if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+                    -- Use Paperback's is_suit function
+                    is_matching_suit = PB_UTIL.is_suit(context.other_card, chosen_group)
+                else
+                    -- Default logic when Paperback is not available
+                    local light_suits = {'Hearts', 'Diamonds'}
+                    local dark_suits = {'Spades', 'Clubs'}
+                    local suits_to_check = chosen_group == 'light' and light_suits or dark_suits
+                    
+                    for _, suit in ipairs(suits_to_check) do
+                        if context.other_card:is_suit(suit) then
+                            is_matching_suit = true
+                            break
+                        end
+                    end
+                end
+                
+                RIOSODU_SHARED.utils.sendDebugMessage("Hello, I'm a castle joker! I'm matching suit: " .. tostring(is_matching_suit))
+                if is_matching_suit then
+                    card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
+                    return {
+                        message = localize('k_upgrade_ex'),
+                        card = card,
+                        colour = G.C.CHIPS
+                    }
+                end
+            end
+            return nil
+        end,
+    })
+
+    local apply_localization = function()
+        local loc = localize('j_castle_original')
+        if QOL_BUNDLE.config.castle_checkered_enabled then
+            if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+                loc = localize('j_castle_checkered_paperback')
+            else
+                loc = localize('j_castle_checkered')
+            end
+        end
+        G.localization.descriptions.Joker.j_castle.text = loc
+    end
+
+    RIOSODU_SHARED.register_hook('on_game_start', function ()
+        apply_localization()
+        init_localization()
+    end)
+end
+
+-- Override the Yorick Joker to use configurable multiplier
+function QOL_BUNDLE.funcs.get_ownership_yorick()
+    if not QOL_BUNDLE.config.yorick_multiplier_enabled then
+        return
+    end
+
+    QOL_BUNDLE.state.yorick = SMODS.Joker:take_ownership('j_yorick', {
+        config = {
+            extra = {
+                xmult = QOL_BUNDLE.config.yorick_multiplier_value or 1.5,
+                discards = 23
+            }
+        }
+    })
+end
+
+QOL_BUNDLE.funcs.apply_interest_on_skip_override()
+QOL_BUNDLE.funcs.get_ownership_magic_trick_enhanced()
+QOL_BUNDLE.funcs.get_ownership_illusion_new()
+QOL_BUNDLE.funcs.get_ownership_castle_checkered()
+QOL_BUNDLE.funcs.get_ownership_yorick()
+QOL_BUNDLE.funcs.get_ownership_smeared_joker()
+
+RIOSODU_SHARED.utils.sendDebugMessage("Main logic module loaded", QOL_BUNDLE.mod_id)

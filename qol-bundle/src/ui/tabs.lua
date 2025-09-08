@@ -45,12 +45,12 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
-            -- Nerf Photochad Config
+            -- Nerf Hanging Chad Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,
-                ref_value = 'nerf_photochad_enabled',
-                label = G.localization.misc.dictionary.qolb_nerf_photochad_label,
-                info = G.localization.misc.dictionary.qolb_nerf_photochad_info,
+                ref_value = 'nerf_hanging_chad_enabled',
+                label = G.localization.misc.dictionary.qolb_nerf_hanging_chad_label,
+                info = G.localization.misc.dictionary.qolb_nerf_hanging_chad_info,
                 requires_restart = true
             }),
         }),
@@ -78,7 +78,6 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_value = 'unweighted_editions_enabled',
                 label = G.localization.misc.dictionary.qolb_unweighted_editions_label,
                 info = G.localization.misc.dictionary.qolb_unweighted_editions_info,
-                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -209,6 +208,34 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 label = G.localization.misc.dictionary.qolb_interest_on_skip_label,
                 info = G.localization.misc.dictionary.qolb_interest_on_skip_info,
                 toggle_callback = QOL_BUNDLE.funcs.apply_interest_on_skip_override
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Castle Checkered Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'castle_checkered_enabled',
+                label = G.localization.misc.dictionary.qolb_castle_checkered_label,
+                info = G.localization.misc.dictionary.qolb_castle_checkered_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Yorick Multiplier Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'yorick_multiplier_enabled',
+                label = G.localization.misc.dictionary.qolb_yorick_multiplier_label,
+                info = G.localization.misc.dictionary.qolb_yorick_multiplier_info,
+                requires_restart = true
+            }),
+            create_option_cycle({
+                colour = G.C.XMULT,
+                options = {1, 1.25, 1.5, 1.75, 2, 2.5, 3},
+                opt_callback = 'qol_bundle_yorick_callback',
+                current_option = QOL_BUNDLE.yorick_current_option,
+                current_option_val = QOL_BUNDLE.yorick_current_option_val,
+                scale = 0.75,
             }),
         }),
     }

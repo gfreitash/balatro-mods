@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2025-09-08
+### Added
+- Castle now counts either Clubs and Spades or Hearts and Diamonds. Make it as reliable as in the checkered deck.
+- If Paperback mod is installed, light suits or dark suits will be used instead.
+- **Reworked Magic Trick and Illusion Vouchers**:
+  - Magic Trick is now a "better" Illusion voucher, and Illusion's new goal is to upgrade your existing deck cards.
+  - Enhanced Magic Trick voucher: playing cards in shop may appear with enhancements, seals and editions 
+    - Seals now actually spawn, instead of the buggy vanilla Illusion voucher
+  - New Illusion voucher: playing cards in shop are clones of cards in your deck with ability to reroll their enhancements, editions, and seals (but never lose them)
+  - Improved shop card pricing for playing cards that accounts for enhancements, editions, and seals
+  - Paperback compatibility for paper clips. Cards in shop can now get paper clips (same chance as seals),when Paperback mod is installed.
+
+### Changed
+- Nerfed Erosion to have a 0.15X mult per card below starting amount (was 0.2X)
+- Yorick now gain a configurable amount (+1.5x for each 23 cards instead of +1x
+- Smeared Joker now considers Crowns/Stars if Paperback mod is installed
+
+### Fixed
+- Removed `requires_restart = true` from Unweighted Editions option as it was not needed
+
+
 ## [1.7.2] - 2025-09-02
 ### Changed
 - Updated Riosodu Commons to v1.2.3.

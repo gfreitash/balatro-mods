@@ -46,6 +46,23 @@ QOL_BUNDLE.init = function(self)
   -- we can use the value directly as the index
   self.eight_ball_joker_current_option = self.config.eight_ball_joker_value
   self.eight_ball_joker_current_option_val = self.config.eight_ball_joker_value
+
+  -- yorick_multiplier_value is 1.5 by default
+  self.config.yorick_multiplier_value = self.config.yorick_multiplier_value or 1.5
+  -- Map the multiplier value to the option index in the options array {1, 1.25, 1.5, 1.75, 2}
+  local yorick_options = {1, 1.25, 1.5, 1.75, 2, 2.5, 3}
+  for i, value in ipairs(yorick_options) do
+    if value == self.config.yorick_multiplier_value then
+      self.yorick_current_option = i
+      self.yorick_current_option_val = value
+      break
+    end
+  end
+  -- Fallback if value not found in options
+  if not self.yorick_current_option then
+    self.yorick_current_option = 3  -- Default to 1.5
+    self.yorick_current_option_val = 1.5
+  end
 end
 
 -- Run the initialization function

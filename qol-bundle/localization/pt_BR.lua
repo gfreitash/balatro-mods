@@ -7,8 +7,11 @@ return {
             qolb_shop_size_info = 'Aumenta o tamanho da loja em 1',
             qolb_wildcard_fix_label = 'Ativar correção do Curinga/Curinga Borrado',
             qolb_wildcard_fix_info = {
-                'Impede que o Naipe Curinga/Curinga Borrado seja colocado em desvantagem',
-                'por desvantagem de naipes.'
+                'Impede que o Naipe Curinga/Curinga Borrado',
+                'seja colocado em desvantagem por desvantagem de naipes',
+                'Se Paperback estiver presente,',
+                'Curinga Borrado considerará Coroas/Estrelas',
+
             },
             qolb_wheel_fortune_label = 'Ativar Roda da Fortuna mais fácil',
             qolb_wheel_fortune_info = 'Ajustar facilidade da Roda da Fortuna (1=100%, 4=25%).',
@@ -63,8 +66,8 @@ return {
                 'Muda Erosão de +4 Multi por carta',
                 'para X0.2 Multi por carta abaixo da quantidade inicial'
             },
-            qolb_nerf_photochad_label = 'Ativar nerf da Fotografia/Comprovante',
-            qolb_nerf_photochad_info = 'Torna os curingas Fotografia e Comprovante de raridade Incomum.',
+            qolb_nerf_hanging_chad_label = 'Ativar nerf do Comprovante',
+            qolb_nerf_hanging_chad_info = 'Torna o curinga Comprovante de raridade Incomum e mais caro (custa $8 ao invés de $6).',
             qolb_satellite_joker_label = 'Ativar reformulação do Satélite',
             qolb_satellite_joker_info = {
                 'Satélite agora dá dinheiro igual à metade',
@@ -96,7 +99,7 @@ return {
             qolb_interest_on_skip_info = {
                 'Ganhe juros quando pular blinds.',
                 'Juros são calculados e concedidos',
-                'antes de obter a etiqueta'
+                'antes de obter a marca'
             },
 
             -- Textos espectrais originais (do jogo base)
@@ -202,6 +205,90 @@ return {
                 "carta abaixo de {C:attention}#2#{}",
                 "no seu baralho completo",
                 "{C:inactive}(No momento {X:mult,C:white}X#3#{C:inactive} Multi)",
+            },
+
+            -- Enhanced voucher config labels
+            qolb_enhanced_magic_trick_label = 'Ativar Truque de Mágica Melhorado',
+            qolb_enhanced_magic_trick_info = {
+                'Truque de Mágica gera cartas de jogar com',
+                'melhorias, edições, selos',
+                'e clipes (se Paperback estiver presente)'
+            },
+            qolb_new_illusion_label = 'Ativar Nova Ilusão',
+            qolb_new_illusion_info = {
+                'Ilusão gera cartas do seu baralho',
+                'e rerrola suas melhorias enquanto',
+                'preserva as existentes se a rerrolagem falhar'
+            },
+
+            -- Original voucher texts (from base game)
+            v_magic_trick_original = {
+                "{C:attention}Cartas de jogar{} podem",
+                "ser compradas",
+                "na {C:attention}loja",
+            },
+            v_magic_trick_enhanced = {
+                "{C:attention}Cartas de jogar{} na loja podem aparecer",
+                "com {C:attention}melhorias{}, {C:dark_edition}edições{}, {C:attention}selos{},",
+                "ou {C:attention}clipes de papel{} (se Paperback estiver presente)."
+            },
+            v_illusion_original = {
+                "{C:attention}Cartas de jogar{} podem",
+                "ter uma {C:enhanced}Melhoria",
+                "quando aparecem",
+                "na {C:attention}loja"
+            },
+            v_illusion_deck_based = {
+                "{C:attention}Cartas de jogar{} na loja são",
+                "{C:attention}clones{} de cartas no seu {C:attention}baralho,",
+                "e seus aprimoramentos podem ser {C:attention}rerrolados{}."
+            },
+
+            -- Castle joker config
+            qolb_castle_checkered_label = 'Ativar Castelo com melhoria Xadrez',
+            qolb_castle_checkered_info = {
+                'Castelo agora conta ou',
+                'Paus e Espadas ou Copas e Ouros.',
+                'Consistente como no baralho xadrez.'
+            },
+            qolb_yorick_multiplier_label = 'Ativar Configuração do Multiplicador do Yorick',
+            qolb_yorick_multiplier_info = {
+                'Configure quanto XMulti Yorick ganha',
+                'por 23 cartas descartadas.',
+                'Padrão: 1.5X',
+            },
+
+            -- Smeared joker texts (from base game)
+            j_smeared_original = {
+                "{C:hearts}Copas{} e {C:diamonds}Ouros",
+                "contam como o mesmo naipe,",
+                "{C:spades}Espadas{} e {C:clubs}Paus",
+                "contam como o mesmo naipe",
+            },
+            j_smeared_paperback = {
+                "{C:paperback_light_suit}Naipes claros{} contam",
+                "como o mesmo naipe,",
+                "{C:paperback_dark_suit}Naipes escuros{} contam",
+                "como o mesmo naipe",
+            },
+
+            -- Castle joker texts (from base game)
+            j_castle_original = {
+                "Este Curinga ganha {C:chips}+#1#{} Fichas",
+                "por cada carta {V:1}#2#{} descartada,",
+                "naipe muda em cada rodada",
+                "{C:inactive}(No momento {C:chips}+#3#{C:inactive} Fichas)",
+            },
+            j_castle_checkered = {
+                "Este Curinga ganha {C:chips}+#1#{} Fichas por carta",
+                "{V:1}#2#{} ou {V:2}#3#{} descartada, grupo de naipes muda em cada rodada",
+                "{C:inactive}(No momento {C:chips}+#4#{C:inactive} Fichas)",
+            },
+            j_castle_checkered_paperback = {
+                "Este Curinga ganha {C:chips}+#1#{} Fichas",
+                "por cada carta de {C:attention}#2#{} descartada,",
+                "grupo de naipes muda em cada rodada",
+                "{C:inactive}(No momento {C:chips}+#3#{C:inactive} Fichas)",
             },
 
             requires_restart = "Requer reinicialização",

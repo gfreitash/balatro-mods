@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.1] - 2025-09-11
+### Fixed
+- Fixed crash when using Ouija or Sigil
+
 ## [1.8.0] - 2025-09-08
 ### Added
 - Castle now counts either Clubs and Spades or Hearts and Diamonds. Make it as reliable as in the checkered deck.

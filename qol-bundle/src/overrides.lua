@@ -270,7 +270,7 @@ function Card:use_consumeable(area, copier)
             G.E_MANAGER:add_event(Event({func = function()
                 local card = G.hand.cards[i]
                 local suit_prefix = _suit..'_'
-                local rank_suffix = SMODS.Ranks[card.base.id].card_key
+                local rank_suffix = SMODS.Ranks[card.base.value].card_key
                 card:set_base(G.P_CARDS[suit_prefix..rank_suffix])
             return true end }))
         end  
@@ -278,7 +278,7 @@ function Card:use_consumeable(area, copier)
     
     if self.ability.name == 'Ouija' then
         -- Use reference card's rank instead of random
-        local reference_rank_id = reference_card.base.id
+        local reference_rank_id = reference_card.base.value
         local _rank = SMODS.Ranks[reference_rank_id].card_key
         
         for i=1, #G.hand.cards do

@@ -149,7 +149,7 @@ end
 -- Paperback compatibility: Override Blind.debuff_card to handle jester_of_nihil properly
 local source_blind_debuff_card = function (self, card, from_blind)
     if self.debuff and not self.disabled and card.area ~= G.jokers then
-        if self.debuff.suit and card:is_suit(self.debuff.suit, true) then
+        if self.debuff.suit and card:is_suit(self.debuff.suit, true, nil, true) then
             card:set_debuff(true)
             return
         end

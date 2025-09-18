@@ -284,7 +284,7 @@ function Card:use_consumeable(area, copier)
         for i=1, #G.hand.cards do
             G.E_MANAGER:add_event(Event({func = function()
                 local card = G.hand.cards[i]
-                local suit_prefix = SMODS.Suits[card.base.suit].card_key
+                local suit_prefix = SMODS.Suits[card.base.suit].card_key..'_'
                 local rank_suffix = _rank
                 card:set_base(G.P_CARDS[suit_prefix..rank_suffix])
             return true end }))

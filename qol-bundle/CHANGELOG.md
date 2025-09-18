@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.3] - 2025-09-18
+### Fixed
+- Fixed Ouija not applying correctly and causing crashes due to incorrect key string
+
 ## [1.8.2] - 2025-09-16
 ### Fixed
 - Fixed wildcard fix regression where wildcards were still being debuffed by suit-based blinds

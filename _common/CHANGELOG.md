@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2025-09-23
+### Added
+- **Talisman mod compatibility**:
+  - Added `talisman_present()` function to detect if Talisman mod is loaded
+  - Added `wrap_num()` function to wrap numbers in Big numbers when Talisman is present
+  - Added new math comparison functions (`math.le`, `math.lt`, `math.ge`, `math.gt`, `math.eq`) that work with both regular numbers and Talisman's Big numbers, without knowing which is in use
+  - Updated interest calculation in Lovely Injector patches to use Talisman-compatible math functions
+
+### Fixed
+  - Fixed the common lovely patches not applying correctly
+
 ## [1.2.3] - 2025-09-01
 
 ### Fixed

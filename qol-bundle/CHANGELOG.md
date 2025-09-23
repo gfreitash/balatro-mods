@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.4] - 2025-09-23
+### Changed
+- Updated Riosodu Commons to v1.2.4.
+- Updated interest calculation logic to use Talisman-compatible math functions from Riosodu Commons for better mod compatibility
+
 ## [1.8.3] - 2025-09-18
 ### Fixed
 - Fixed Ouija not applying correctly and causing crashes due to incorrect key string

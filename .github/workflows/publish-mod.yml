@@ -270,11 +270,11 @@ jobs:
             # Normalize the existing meta.json for comparison
             if [ -f "$EXISTING_META_JSON_PATH" ]; then
               if [ "$IS_AUTO_VERSION_CHECK" = "true" ]; then
-                # For auto-version mods: Normalize by removing version and standardizing format
-                jq 'del(.version)' "$EXISTING_META_JSON_PATH" | jq -c '.' > "temp-index/normalized_existing_meta.json"
+                # For auto-version mods: Remove version and last-updated fields
+                jq 'del(.version, ."last-updated")' "$EXISTING_META_JSON_PATH" | jq -c '.' > "temp-index/normalized_existing_meta.json"
               else
-                # For explicit version mods: Just standardize format
-                jq '.' "$EXISTING_META_JSON_PATH" | jq -c '.' > "temp-index/normalized_existing_meta.json"
+                # For explicit version mods: Remove only last-updated field
+                jq 'del(."last-updated")' "$EXISTING_META_JSON_PATH" | jq -c '.' > "temp-index/normalized_existing_meta.json"
               fi
 
               # Compare the normalized files to detect meaningful changes (including version)

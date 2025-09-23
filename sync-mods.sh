@@ -65,6 +65,17 @@ sync_all_mods() {
             if [ -f "$dest_path/$mod_name/common/common.json" ]; then
                 mv "$dest_path/$mod_name/common/common.json" "$dest_path/$mod_name/common/manifest.json"
             fi
+
+            # Copy lovely patches from common to mod's lovely directory with common_ prefix
+            if [ -d "_common/lovely" ]; then
+                mkdir -p "$dest_path/$mod_name/lovely"
+                for patch_file in _common/lovely/*.toml; do
+                    if [ -f "$patch_file" ]; then
+                        base_name=$(basename "$patch_file")
+                        cp "$patch_file" "$dest_path/$mod_name/lovely/common_$base_name"
+                    fi
+                done
+            fi
         fi
     done
 }

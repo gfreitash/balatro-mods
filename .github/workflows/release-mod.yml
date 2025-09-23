@@ -149,6 +149,17 @@ jobs:
           cp -r $MOD_NAME/* temp/$MOD_NAME/
           if [ -d "_common" ] && [ "$(ls -A _common)" ]; then
             cp -r _common/* temp/$MOD_NAME/common/
+
+            # Copy lovely patches from common to mod's lovely directory with common_ prefix
+            if [ -d "_common/lovely" ]; then
+              mkdir -p temp/$MOD_NAME/lovely
+              for patch_file in _common/lovely/*.toml; do
+                if [ -f "$patch_file" ]; then
+                  base_name=$(basename "$patch_file")
+                  cp "$patch_file" "temp/$MOD_NAME/lovely/common_$base_name"
+                fi
+              done
+            fi
           fi
 
       - name: Create release zips

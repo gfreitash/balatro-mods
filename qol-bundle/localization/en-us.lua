@@ -67,7 +67,10 @@ return {
                 'to X0.2 Mult per card below starting amount'
             },
             qolb_nerf_hanging_chad_label = 'Enable Nerf Hanging Chad',
-            qolb_nerf_hanging_chad_info = 'Makes Hanging Chad joker Uncommon rarity and more expensive (cost $8 instead of $6).',
+            qolb_nerf_hanging_chad_info = {
+                'Makes Hanging Chad joker Uncommon rarity and',
+                'more expensive (cost $8 instead of $6).'
+            },
             qolb_satellite_joker_label = 'Enable Satellite Joker Rework',
             qolb_satellite_joker_info = {
                 'Satellite now gives gold equal to half',
@@ -190,8 +193,8 @@ return {
             j_splash_retrigger = {
                 "Every {C:attention}played card",
                 "counts in scoring.",
-                "{C:green}Random scoring card",
-                "{C:green}is retriggered"
+                "{C:green}Two random scoring cards",
+                "{C:green}are retriggered"
             },
 
             j_erosion_original = {

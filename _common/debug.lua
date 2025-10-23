@@ -160,6 +160,44 @@ function RIOSODU_SHARED.debug.show_voucher_input()
     })
 end
 
+-- Consumable input using generic function
+function RIOSODU_SHARED.debug.show_consumable_input()
+    RIOSODU_SHARED.debug.show_generic_input({
+        input_key = 'consumable',
+        default_value = RIOSODU_SHARED.config.last_consumable_key or 'c_fool',
+        title = 'Add Consumable',
+        prompt = 'Enter consumable key...',
+        colour = G.C.SECONDARY_SET.Tarot,
+        max_length = 100,
+        textbox_id = 'consumable_input_textbox',
+        config_key = 'last_consumable_key',
+        on_submit = function(value)
+            RIOSODU_SHARED.debug.add_consumable_by_key(value)
+        end
+    })
+end
+
+function RIOSODU_SHARED.debug.add_random_joker()
+    local mod_id = 'riosodu_shared'
+    RIOSODU_SHARED.utils.sendDebugMessage("Debug key pressed: Attempting to add random Joker...", mod_id)
+    if SMODS and SMODS.add_card then
+        local added_card = SMODS.add_card({ set = 'Joker' })
+        if added_card then
+            RIOSODU_SHARED.utils.sendDebugMessage(
+                "Successfully added Joker: " .. (added_card.name or 'Unknown Joker'), mod_id
+            )
+            -- Add visual feedback like juicing the card
+            if added_card.juice_up then
+                added_card:juice_up(0.5, 0.5)
+            end
+        else
+            RIOSODU_SHARED.utils.sendDebugMessage("SMODS.add_card called, but failed to add a Joker.", mod_id)
+        end
+    else
+        RIOSODU_SHARED.utils.sendDebugMessage("Cannot add Joker: SMODS.add_card function not found.", mod_id)
+    end
+end
+
 function RIOSODU_SHARED.debug.add_joker_by_key(joker_key)
     local mod_id = 'riosodu_shared'
     if not joker_key or joker_key == '' then
@@ -247,6 +285,53 @@ function RIOSODU_SHARED.debug.add_voucher_by_key(voucher_key)
         voucher:start_materialize()
         
         RIOSODU_SHARED.utils.sendDebugMessage("Successfully redeemed voucher: " .. voucher_key .. " using manual method", mod_id)
+    end
+end
+
+function RIOSODU_SHARED.debug.add_consumable_by_key(consumable_key)
+    local mod_id = 'riosodu_shared'
+    if not consumable_key or consumable_key == '' then
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    -- Ensure the consumable key has the c_ prefix
+    if string.sub(consumable_key, 1, 2) ~= 'c_' then
+        consumable_key = 'c_' .. consumable_key
+        RIOSODU_SHARED.utils.sendDebugMessage("Prepended 'c_' to consumable key: " .. consumable_key, mod_id)
+    end
+
+    -- Check if consumable exists in the game's centers
+    local consumable_center = G.P_CENTERS[consumable_key]
+    if not consumable_center then
+        RIOSODU_SHARED.utils.sendDebugMessage("Consumable key '" .. consumable_key .. "' not found", mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    -- Verify it's actually a consumable (set should be Tarot, Planet, or Spectral)
+    local valid_sets = {Tarot = true, Planet = true, Spectral = true}
+    if not valid_sets[consumable_center.set] then
+        RIOSODU_SHARED.utils.sendDebugMessage("'" .. consumable_key .. "' is not a valid consumable (set: " .. tostring(consumable_center.set) .. ")", mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    -- Add the consumable to the consumables area
+    if SMODS and SMODS.add_card then
+        local added_card = SMODS.add_card({set=consumable_center.set, key=consumable_key})
+        if added_card then
+            RIOSODU_SHARED.utils.sendDebugMessage("Successfully added " .. consumable_key .. " (" .. consumable_center.set .. ")", mod_id)
+            if added_card.juice_up then
+                added_card:juice_up(0.5, 0.5)
+            end
+        else
+            RIOSODU_SHARED.utils.sendDebugMessage("Failed to add consumable: " .. consumable_key, mod_id)
+            RIOSODU_SHARED.debug.show_nope_animation()
+        end
+    else
+        RIOSODU_SHARED.utils.sendDebugMessage("SMODS.add_card function not found", mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
     end
 end
 
@@ -469,14 +554,14 @@ function RIOSODU_SHARED.debug.change_suit_of_highlighted(suit_input)
 end
 
 RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
-  key_pressed = 'f10',
+  key_pressed = 'j',
   name = 'add_joker_textbox',
   desc = 'Open Add Joker Textbox',
   action = function() RIOSODU_SHARED.debug.show_joker_input() end
 })
 
 RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
-  key_pressed = 'f11',
+  key_pressed = 'v',
   name = 'add_voucher_textbox',
   desc = 'Open Add Voucher Textbox',
   action = function() RIOSODU_SHARED.debug.show_voucher_input() end
@@ -499,6 +584,44 @@ RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
   name = 'change_suit_textbox',
   desc = 'Open Change Suit Textbox',
   action = function() RIOSODU_SHARED.debug.show_suit_input() end
+})
+
+RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
+  key_pressed = 'c',
+  name = 'add_consumable_textbox',
+  desc = 'Open Add Consumable Textbox',
+  action = function() RIOSODU_SHARED.debug.show_consumable_input() end
+})
+
+RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
+  key_pressed = 'h',
+  name = 'add_hands',
+  desc = 'Add 5 Hands',
+  action = function()
+    if G.GAME and ease_hands_played then
+      ease_hands_played(5)
+      RIOSODU_SHARED.utils.sendDebugMessage("Added 5 hands using ease_hands_played", 'riosodu_shared')
+    end
+  end
+})
+
+RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
+  key_pressed = 'd',
+  name = 'add_discards',
+  desc = 'Add 5 Discards',
+  action = function()
+    if G.GAME and ease_discard then
+      ease_discard(5)
+      RIOSODU_SHARED.utils.sendDebugMessage("Added 5 discards using ease_discard", 'riosodu_shared')
+    end
+  end
+})
+
+RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
+  key_pressed = 'J',
+  name = 'add_random_joker',
+  desc = 'Add Random Joker',
+  action = function() RIOSODU_SHARED.debug.add_random_joker() end
 })
 
 --- Recursively prints a Lua table with configurable depth and handles circular references.

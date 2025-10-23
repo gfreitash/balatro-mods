@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-09-29
+### Added
+- Added `get_interest_base()` function with fallback logic for missing interest_base values
+- Added consumable `c` keybind to add consumables by key, similar with joker and voucher inputs
+- Added hand and discard keybinds, `h` and `d`, to add hands and discards
+- Added random joker functionality with `J` keybind (moved from black-seal mod to commons)
+
+### Changed
+- Updated joker textbox keybind from `f10` to `j`
+- Updated voucher textbox keybind from `f11` to `v`
+
+### Fixed
+- Updated interest system patches to use `get_interest_base()` function instead of direct access
+
 ## [1.2.4] - 2025-09-23
 ### Added
 - **Talisman mod compatibility**:

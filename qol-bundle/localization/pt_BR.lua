@@ -67,7 +67,10 @@ return {
                 'para X0.2 Multi por carta abaixo da quantidade inicial'
             },
             qolb_nerf_hanging_chad_label = 'Ativar nerf do Comprovante',
-            qolb_nerf_hanging_chad_info = 'Torna o curinga Comprovante de raridade Incomum e mais caro (custa $8 ao invés de $6).',
+            qolb_nerf_hanging_chad_info = {
+                'Torna o curinga Comprovante de raridade Incomum',
+                'e mais caro (custa $8 ao invés de $6).'
+            },
             qolb_satellite_joker_label = 'Ativar reformulação do Satélite',
             qolb_satellite_joker_info = {
                 'Satélite agora dá dinheiro igual à metade',
@@ -190,8 +193,8 @@ return {
             j_splash_retrigger = {
                 "Toda {C:attention}carta jogada",
                 "conta na pontuação.",
-                "{C:green}Carta pontuante aleatória",
-                "{C:green}é reativada"
+                "{C:green}Duas cartas pontuantes aleatórias",
+                "{C:green}são reativadas"
             },
 
             j_erosion_original = {

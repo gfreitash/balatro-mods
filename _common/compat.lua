@@ -104,3 +104,22 @@ end
 function math.eq(a, b)
     return num_wrap(a) == num_wrap(b)
 end
+
+--- This is a railguard function to safely get the interest base from the game state table.
+--- This is required because some times the game state table will not have the interest base.
+--- Since the bug couldn't be reproduced, going for the safe route is the better approach,
+--- specially since this function has extra debug embedded.
+--- @return integer interest_base The required amount of dollars to gain $1 of interest
+function get_interest_base()
+    local interest = G.GAME.interest_base
+    if interest == nil then
+        value = (not not RSM and G.game.stake and G.GAME.stake >= 8) and 6 or 5
+        RIOSODU_SHARED.utils.sendDebugMessage("Interest base not found, defaulting to " .. value)
+
+        RIOSODU_SHARED.utils.sendDebugMessage("Inserting on game state table...")
+        interest = value
+        G.GAME.interest_base = value
+    end
+
+    return interest
+end

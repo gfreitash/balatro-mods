@@ -97,7 +97,7 @@ function QOL_BUNDLE.funcs.get_ownership_hit_the_road_joker()
 
                         G.deck:shuffle(
                             'j_hit_the_road_shuffle_'
-                            ..G.GAME.round
+                            ..G.GAME.hands_played
                             ..'_'
                             ..G.GAME.current_round.hands_left
                             ..'_'
@@ -403,8 +403,8 @@ function QOL_BUNDLE.funcs.get_ownership_satellite_joker()
                 end
             end
 
-            -- Calculate gold amount (half the highest level, rounded down)
-            local gold_amount = math.floor(highest_level / 2)
+            -- Calculate gold amount (half the highest level, rounded up)
+            local gold_amount = math.ceil(highest_level / 2)
 
             return {
                 vars = {
@@ -413,28 +413,23 @@ function QOL_BUNDLE.funcs.get_ownership_satellite_joker()
                 }
             }
         end,
-        calculate = function(self, card, context)
-            if context.end_of_round and not context.individual and not context.repetition then
-                -- Find the highest poker hand level
-                local highest_level = 0
-                for hand_name, hand_data in pairs(G.GAME.hands) do
-                    if hand_data.level > highest_level then
-                        highest_level = hand_data.level
-                    end
-                end
+        calc_dollar_bonus = function(self, card)
+            if card.debuff then return end
 
-                -- Calculate gold amount (half the highest level, rounded down)
-                local gold_amount = math.floor(highest_level / 2)
-
-                if gold_amount > 0 then
-                    return {
-                        message = localize('$')..gold_amount,
-                        dollars = gold_amount,
-                        colour = G.C.MONEY
-                    }
+            -- Find the highest poker hand level
+            local highest_level = 0
+            for hand_name, hand_data in pairs(G.GAME.hands) do
+                if hand_data.level > highest_level then
+                    highest_level = hand_data.level
                 end
             end
-            return nil
+
+            -- Calculate gold amount (half the highest level, rounded up)
+            local gold_amount = math.ceil(highest_level / 2)
+
+            if gold_amount > 0 then
+                return gold_amount
+            end
         end
     })
 
@@ -553,16 +548,36 @@ function QOL_BUNDLE.funcs.get_ownership_splash_joker()
 
     QOL_BUNDLE.state.splash_joker = SMODS.Joker:take_ownership('j_splash', {
         calculate = function(self, card, context)
-            -- On scoring start, select a random card to retrigger on the repetition phase
+            -- On scoring start, select two random cards to retrigger on the repetition phase
             if context.initial_scoring_step then
-                random_splah_retrigger = pseudorandom_element(context.scoring_hand, pseudoseed('splash_retrigger'))
-                RIOSODU_SHARED.utils.sendDebugMessage("Splash Joker retriggering random card: " .. random_splah_retrigger.base.value, QOL_BUNDLE.mod_id)
+                -- Create a copy of the scoring hand to select from
+                local available_cards = {}
+                for _, v in ipairs(context.scoring_hand) do
+                    table.insert(available_cards, v)
+                end
+
+                -- Select first random card
+                local first_index = pseudorandom(pseudoseed('splash_retrigger_1'), 1, #available_cards)
+                random_splash_retrigger_1 = available_cards[first_index]
+
+                -- Remove the first card from the pool
+                table.remove(available_cards, first_index)
+
+                -- Select second random card (if available)
+                random_splash_retrigger_2 = nil
+                if #available_cards > 0 then
+                    local second_index = pseudorandom(pseudoseed('splash_retrigger_2'), 1, #available_cards)
+                    random_splash_retrigger_2 = available_cards[second_index]
+                    RIOSODU_SHARED.utils.sendDebugMessage("Splash Joker retriggering random cards: " .. random_splash_retrigger_1.base.value .. " and " .. random_splash_retrigger_2.base.value, QOL_BUNDLE.mod_id)
+                else
+                    RIOSODU_SHARED.utils.sendDebugMessage("Splash Joker retriggering random card: " .. random_splash_retrigger_1.base.value, QOL_BUNDLE.mod_id)
+                end
             end
 
             -- Handle the random card retrigger effect during scoring
             if context.repetition and context.cardarea == G.play and context.other_card then
-                -- Check if this is a random retrigger by checking if there are multiple scoring cards
-                if context.other_card == random_splah_retrigger then
+                -- Check if this card is one of the selected retrigger cards
+                if context.other_card == random_splash_retrigger_1 or context.other_card == random_splash_retrigger_2 then
                     return {
                         message = localize('k_again_ex'),
                         repetitions = 1,

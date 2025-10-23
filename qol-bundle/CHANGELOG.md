@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2025-10-23
+### Changed
+- Updated Riosodu Commons to v1.3.0.
+- Splash joker now retriggers two random scoring cards instead of one (when retrigger option is enabled)
+- Satellite joker rounds up instead of down when calculating half poker hand level for gold reward
+
+### Fixed
+- Fixed Satellite joker not triggering at the round evaluation screen
+- Fixed Satellite joker causing performance issues due to being evaluated in wrong context
+- Fixed Satellite joker evaluating multiple times per round
+- Fixed Hit the Road shuffle seed to include total hands played for better uniqueness and consistency
+- Fixed clipping in the config UI
+
 ## [1.8.4] - 2025-09-23
 ### Changed
 - Updated Riosodu Commons to v1.2.4.

@@ -277,7 +277,7 @@ function QOL_BUNDLE.UI.staticConfigTabContent()
                             padding = 0.1,
                             r = 0.1,
                             minw = 10,
-                            minh = 2.25 * QOL_BUNDLE.UI.option_boxes_per_page,
+                            minh = 2.4 * QOL_BUNDLE.UI.option_boxes_per_page,
                             colour = G.C.BLACK,
                             align = "tm",
                         },

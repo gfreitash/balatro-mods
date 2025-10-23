@@ -163,36 +163,6 @@ if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_features_enabled then
     action = test_seal_weights_evented
   })
 
-  -- Function to add a random Joker using SMODS.add_card
-  local function add_random_joker()
-    RIOSODU_SHARED.utils.sendDebugMessage("Debug key pressed: Attempting to add random Joker...")
-    if SMODS and SMODS.add_card then
-      local added_card = SMODS.add_card({ set = 'Joker' })
-      if added_card then
-        RIOSODU_SHARED.utils.sendDebugMessage(
-          "Successfully added Joker: " .. (added_card.name or 'Unknown Joker')
-        )
-        -- Optional: Add visual feedback like juicing the card
-        if added_card.juice_up then
-          added_card:juice_up(0.5, 0.5)
-        end
-      else
-        RIOSODU_SHARED.utils.sendDebugMessage("SMODS.add_card called, but failed to add a Joker.")
-      end
-    else
-      RIOSODU_SHARED.utils.sendDebugMessage("Cannot add Joker: SMODS.add_card function not found.")
-    end
-  end
-
-  -- Keybind to trigger adding a random Joker
-  -- Assumes a key like 'j' is configured in config.lua as BSM.config.debug_add_joker_key
-  -- Example config entry: debug_add_joker_key = 'j'
-  RIOSODU_SHARED.debug.register_keybind(BSM.mod_id, {
-    key_pressed = 'j',
-    name = 'add_random_joker',
-    desc = 'Add a random Joker',
-    action = add_random_joker
-  })
 
   local function open_spectral_pack()
     if G.STATE ~= G.STATES.SHOP then

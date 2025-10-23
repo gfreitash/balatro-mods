@@ -356,9 +356,18 @@ needs_index_meta_update() {
 		[ "$current_version" != "$target_version" ]
 	else
 		# For automatic-version-check, validate URL format
-		local current_url expected_url repo_path
+		local current_url expected_url repo_path remote_url
 		current_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
-		repo_path=$(git config --get remote.origin.url | sed -E 's/.*github.com[\/:](.*)\.git$/\1/' || true)
+
+		# Handle both SSH and HTTPS URL formats
+		remote_url=$(git config --get remote.origin.url || true)
+		if [[ "$remote_url" =~ github\.com[/:]([^/]+/[^/.]+)(\.git)?$ ]]; then
+			repo_path="${BASH_REMATCH[1]}"
+		else
+			log_error "Could not determine GitHub repository path from URL: ${remote_url}"
+			return 1
+		fi
+
 		expected_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
 		[ "$current_url" != "$expected_url" ]
 	fi
@@ -375,11 +384,20 @@ update_index_meta_json() {
 	log_debug "Updating index.meta.json: ${index_meta_file} for version ${version}"
 
 	local repo_path
-	repo_path=$(git config --get remote.origin.url | sed -E 's/.*github.com[\/:](.*)\.git$/\1/' || true)
-	if [ -z "$repo_path" ]; then
-		log_error "Could not determine GitHub repository path. Please ensure git remote.origin.url is a GitHub URL."
+	local remote_url
+	remote_url=$(git config --get remote.origin.url || true)
+
+	# Handle both SSH (git@github.com:user/repo.git) and HTTPS (https://github.com/user/repo.git) formats
+	# Also handle URLs with or without .git suffix
+	if [[ "$remote_url" =~ github\.com[/:]([^/]+/[^/.]+)(\.git)?$ ]]; then
+		repo_path="${BASH_REMATCH[1]}"
+	else
+		log_error "Could not determine GitHub repository path from URL: ${remote_url}"
+		log_error "Expected format: git@github.com:user/repo.git or https://github.com/user/repo.git"
 		return 1
 	fi
+
+	log_debug "Extracted repository path: ${repo_path} from URL: ${remote_url}"
 
 	local index_meta_content
 	index_meta_content=$(cat "$index_meta_file")

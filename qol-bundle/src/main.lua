@@ -398,7 +398,7 @@ function QOL_BUNDLE.funcs.get_ownership_satellite_joker()
             -- Find the highest poker hand level
             local highest_level = 0
             for hand_name, hand_data in pairs(G.GAME and G.GAME.hands or {}) do
-                if hand_data.level > highest_level then
+                if math.gt(hand_data.level, highest_level) then
                     highest_level = hand_data.level
                 end
             end
@@ -419,7 +419,7 @@ function QOL_BUNDLE.funcs.get_ownership_satellite_joker()
             -- Find the highest poker hand level
             local highest_level = 0
             for hand_name, hand_data in pairs(G.GAME.hands) do
-                if hand_data.level > highest_level then
+                if math.gt(hand_data.level, highest_level) then
                     highest_level = hand_data.level
                 end
             end
@@ -427,7 +427,7 @@ function QOL_BUNDLE.funcs.get_ownership_satellite_joker()
             -- Calculate gold amount (half the highest level, rounded up)
             local gold_amount = math.ceil(highest_level / 2)
 
-            if gold_amount > 0 then
+            if math.gt(gold_amount, 0) then
                 return gold_amount
             end
         end

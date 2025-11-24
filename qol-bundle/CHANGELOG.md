@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.1] - 2025-11-24
+### Fixed
+- Fixed missing talisman safe comparison in the satellite joker (closes #4)
+- Updates the label in the interest on skip option to show that it requires a restart to apply
+
 ## [1.9.0] - 2025-10-23
 ### Changed
 - Updated Riosodu Commons to v1.3.0.

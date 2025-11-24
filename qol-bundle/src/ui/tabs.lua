@@ -207,7 +207,8 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_value = 'interest_on_skip_enabled',
                 label = G.localization.misc.dictionary.qolb_interest_on_skip_label,
                 info = G.localization.misc.dictionary.qolb_interest_on_skip_info,
-                toggle_callback = QOL_BUNDLE.funcs.apply_interest_on_skip_override
+                toggle_callback = QOL_BUNDLE.funcs.apply_interest_on_skip_override,
+                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({

@@ -71,11 +71,25 @@ QOL_BUNDLE:init()
 QOL_BUNDLE.config = SMODS.load_mod_config(QOL_BUNDLE.mod) or QOL_BUNDLE.config -- Ensure config is loaded before UI
 QOL_BUNDLE.mod.config = QOL_BUNDLE.config -- Re-link config to mod object to maintain ownership
 -- Include other core modules
+RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/utils.lua") -- Utility functions (needed by content files)
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/main.lua") -- Main mod logic
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/overrides.lua") -- Function overrides
-RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/callbacks.lua") -- Callbacks
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/ui/tabs.lua") -- UI definitions
 RIOSODU_SHARED.include_mod_file(QOL_BUNDLE.mod_id, "src/debug.lua") -- Debug functions
+
+-- Dynamically load all content modifications
+local content_files_loaded = RIOSODU_SHARED.load_directory_recursive(
+    QOL_BUNDLE.mod_id,
+    "src/content",
+    {
+        exclude_patterns = {"init.lua"},
+        sort = true,
+        on_error = "log"
+    }
+)
+RIOSODU_SHARED.utils.sendDebugMessage(
+    string.format("Loaded %d content files from src/content/", content_files_loaded)
+)
 
 -- SMODS Hooks
 SMODS.current_mod.config_tab = function()

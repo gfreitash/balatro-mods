@@ -16,6 +16,19 @@ function RIOSODU_SHARED.utils.sendDebugMessage(msg, mod_id)
   end
 end
 
+function RIOSODU_SHARED.utils.sendWarnMessage(msg, mod_id)
+  if RIOSODU_SHARED.config and RIOSODU_SHARED.config.debug_logging_enabled then
+    local full_msg = (mod_id or 'riosodu_shared') .. ": " .. tostring(msg)
+    if SMODS and SMODS.log then
+      SMODS.log(full_msg)
+    elseif G and G.log and G.log.warn then
+      G.log.warn(full_msg)
+    else
+      print(full_msg)
+    end
+  end
+end
+
 function RIOSODU_SHARED.debug.register_keybind(mod_id, keybind_def)
   if RIOSODU_SHARED.config.debug_features_enabled then
     local kb = keybind_def

@@ -7,9 +7,13 @@
         "_common"
     ],
     "diagnostics.disable": [
-        "lowercase-global"
+        "lowercase-global",
+        "duplicate-set-field"
     ],
     "types": {
         "weakUnionCheck": true
-    }
+    },
+    "diagnostics.globals": [
+        "PB_UTIL"
+    ]
 }

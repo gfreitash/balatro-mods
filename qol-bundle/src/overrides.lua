@@ -13,9 +13,10 @@ QOL_BUNDLE.original.create_card_for_shop = create_card_for_shop
 QOL_BUNDLE.original.reset_castle_card = reset_castle_card
 
 -- Store Paperback's is_suit function if it exists to avoid infinite recursion
+-- TODO: This is breaking the 'Da Capo' joker, find out why
 if PB_UTIL and PB_UTIL.is_suit then
     QOL_BUNDLE.original.PB_UTIL_is_suit = PB_UTIL.is_suit
-    
+
     -- Override PB_UTIL.is_suit to use original Card:is_suit
     function PB_UTIL.is_suit(card, type)
         for _, v in ipairs(type == 'light' and PB_UTIL.light_suits or PB_UTIL.dark_suits) do
@@ -25,7 +26,7 @@ if PB_UTIL and PB_UTIL.is_suit then
     end
 end
 
--- Override Card:is_suit with wildcard and blurred joker fixes
+-- Override Card:is_suit with wildcard and blurred joker overhaul
 function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
     -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit called with suit: " .. tostring(suit) .. ", bypass_debuff: " .. tostring(bypass_debuff) .. ", flush_calc: " .. tostring(flush_calc) .. ", trying_to_debuff: " .. tostring(trying_to_debuff))
     if not QOL_BUNDLE.config.wildcard_fix_enabled then
@@ -50,10 +51,8 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
     end
 
     local has_smeared_joker = next(find_joker('Smeared Joker'))
-    -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit has_smeared_joker: " .. tostring(has_smeared_joker))
     if has_smeared_joker then
         if trying_to_debuff then
-            -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit trying to debuff with Smeared Joker, returning false.")
             return false
         end
 
@@ -62,7 +61,7 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
             -- Use Paperback's enhanced light/dark suit logic
             local is_base_light = PB_UTIL.is_suit(self, 'light')
             local is_target_light = false
-            
+
             -- Check if target suit is light
             for _, light_suit in ipairs(PB_UTIL.light_suits) do
                 if suit == light_suit then
@@ -70,16 +69,15 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
                     break
                 end
             end
-            
+
             -- Cards match if both are light suits or both are dark suits
             if is_base_light == is_target_light then
                 return true
             end
         else
-            -- Fallback to original red/black logic when Paperback is not available
+            -- Fallback to original logic when Paperback is not available
             local is_base_red = self.base.suit == 'Hearts' or self.base.suit == 'Diamonds'
             local is_target_red = suit == 'Hearts' or suit == 'Diamonds'
-            -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit is_base_red: " .. tostring(is_base_red) .. ", is_target_red: " .. tostring(is_target_red))
 
             if is_base_red == is_target_red then
                 return true
@@ -87,19 +85,19 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
         end
     end
 
-    -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit returning base suit match: " .. tostring(self.base.suit == suit))
     return self.base.suit == suit
 end
 
-
--- Override Game:init_game_object to handle Joker Max
--- Calls the original function first and replace shop.joker_max with the mod's config value
-function Game:init_game_object()
-    result = QOL_BUNDLE.original.Game_init_game_object(self)
-    RIOSODU_SHARED.utils.sendDebugMessage("Setting shop.joker_max to: " .. (QOL_BUNDLE.config.joker_max_enabled and QOL_BUNDLE.config.joker_max_value or 2))
-    result.shop.joker_max = QOL_BUNDLE.config.joker_max_enabled and QOL_BUNDLE.config.joker_max_value or 2
-    return result
+--- comment
+--- @param game_obj Game
+--- @return Game
+local function shop_joker_max(game_obj)
+    if game_obj then
+        game_obj.shop.joker_max = QOL_BUNDLE.config.joker_max_enabled and QOL_BUNDLE.config.joker_max_value or 2
+    end
+    return game_obj
 end
+RIOSODU_SHARED.utils.override_game_obj(shop_joker_max)
 
 -- Override poll_edition to make foil, holo, and poly editions unweighted
 function poll_edition(_key, _mod, _no_neg, _guaranteed)
@@ -249,10 +247,10 @@ function Card:use_consumeable(area, copier)
         play_sound('tarot1')
         used_tarot:juice_up(0.3, 0.5)
         return true end }))
-    
+
     for i=1, #G.hand.cards do
         local percent = 1.15 - (i-0.999)/(#G.hand.cards-0.998)*0.3
-        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() 
+        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function()
             G.hand.cards[i]:flip()
             play_sound('card1', percent)
             G.hand.cards[i]:juice_up(0.3, 0.3)
@@ -260,12 +258,12 @@ function Card:use_consumeable(area, copier)
         end }))
     end
     delay(0.2)
-    
+
     if self.ability.name == 'Sigil' then
         -- Use reference card's suit instead of random
         local reference_suit = reference_card.base.suit
         local _suit = SMODS.Suits[reference_suit].card_key
-        
+
         for i=1, #G.hand.cards do
             G.E_MANAGER:add_event(Event({func = function()
                 local card = G.hand.cards[i]
@@ -273,14 +271,14 @@ function Card:use_consumeable(area, copier)
                 local rank_suffix = SMODS.Ranks[card.base.value].card_key
                 card:set_base(G.P_CARDS[suit_prefix..rank_suffix])
             return true end }))
-        end  
+        end
     end
-    
+
     if self.ability.name == 'Ouija' then
         -- Use reference card's rank instead of random
         local reference_rank_id = reference_card.base.value
         local _rank = SMODS.Ranks[reference_rank_id].card_key
-        
+
         for i=1, #G.hand.cards do
             G.E_MANAGER:add_event(Event({func = function()
                 local card = G.hand.cards[i]
@@ -291,14 +289,14 @@ function Card:use_consumeable(area, copier)
         end
         G.hand:change_size(-1)
     end
-    
+
     for i=1, #G.hand.cards do
         local percent = 0.85 + (i-0.999)/(#G.hand.cards-0.998)*0.3
-        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() 
+        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function()
             G.hand.cards[i]:flip()
             play_sound('tarot2', percent, 0.6)
             G.hand.cards[i]:juice_up(0.3, 0.3)
-            return true 
+            return true
         end }))
     end
     delay(0.5)
@@ -309,95 +307,28 @@ function Card:set_ability(center, initial, delay_sprites)
     self.ability.rounds_played_at_create = G.GAME and G.GAME.round or 0
 end
 
--- Update Sigil spectral card text based on configuration
-function QOL_BUNDLE.utils.update_sigil_text()
-    local loc_text = localize('sigil_loc_text_original')
-    
-    if QOL_BUNDLE.config.sigil_control_enabled then
-        loc_text = localize('sigil_loc_text_controlled')
-    end
-    
-    G.localization.descriptions.Spectral.c_sigil.text = loc_text
-    init_localization()
-end
-
--- Update Ouija spectral card text based on configuration
-function QOL_BUNDLE.utils.update_ouija_text()
-    local loc_text = localize('ouija_loc_text_original')
-    
-    if QOL_BUNDLE.config.ouija_control_enabled then
-        loc_text = localize('ouija_loc_text_controlled')
-    end
-    
-    G.localization.descriptions.Spectral.c_ouija.text = loc_text
-    init_localization()
-end
-
--- Update Magic Trick voucher text based on configuration
-function QOL_BUNDLE.utils.update_magic_trick_text()
-    local loc_text = localize('v_magic_trick_original')
-    
-    if QOL_BUNDLE.config.enhanced_magic_trick_enabled then
-        loc_text = localize('v_magic_trick_enhanced')
-    end
-    
-    G.localization.descriptions.Voucher.v_magic_trick.text = loc_text
-    init_localization()
-end
-
--- Update Illusion voucher text based on configuration
-function QOL_BUNDLE.utils.update_illusion_text()
-    local loc_text = localize('v_illusion_original')
-    
-    if QOL_BUNDLE.config.new_illusion_enabled then
-        loc_text = localize('v_illusion_deck_based')
-    end
-    
-    G.localization.descriptions.Voucher.v_illusion.text = loc_text
-    init_localization()
-end
-
--- Update Smeared Joker text based on configuration and Paperback availability
-function QOL_BUNDLE.utils.update_smeared_text()
-    local loc_text = localize('j_smeared_original')
-    
-    if QOL_BUNDLE.config.wildcard_fix_enabled and PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
-        loc_text = localize('j_smeared_paperback')
-    end
-    
-    G.localization.descriptions.Joker.j_smeared.text = loc_text
-    init_localization()
-end
-
--- Register hooks for text updates
-RIOSODU_SHARED.register_hook('on_game_start', QOL_BUNDLE.utils.update_sigil_text)
-RIOSODU_SHARED.register_hook('on_game_start', QOL_BUNDLE.utils.update_ouija_text)
-RIOSODU_SHARED.register_hook('on_game_start', QOL_BUNDLE.utils.update_magic_trick_text)
-RIOSODU_SHARED.register_hook('on_game_start', QOL_BUNDLE.utils.update_illusion_text)
-RIOSODU_SHARED.register_hook('on_game_start', QOL_BUNDLE.utils.update_smeared_text)
-
 -- Enhanced shop card generation with Magic Trick and Illusion improvements
 function create_card_for_shop(area)
     -- Call original function first
     local card = QOL_BUNDLE.original.create_card_for_shop(area)
-    
+
     -- Only apply enhancements to playing cards when vouchers are active
     if card and card.ability and (card.ability.set == 'Default' or card.ability.set == 'Enhanced') then
         local has_enhanced_magic_trick = QOL_BUNDLE.config.enhanced_magic_trick_enabled and G.GAME.used_vouchers["v_magic_trick"]
         local has_new_illusion = QOL_BUNDLE.config.new_illusion_enabled and G.GAME.used_vouchers["v_illusion"]
-        
+
         if has_enhanced_magic_trick and not has_new_illusion then
             -- Enhanced Magic Trick: Apply all possible upgrades with proper probabilities
             QOL_BUNDLE.utils.apply_enhanced_magic_trick_upgrades(card)
             QOL_BUNDLE.utils.recalculate_playing_card_cost(card)
-            
+
         elseif has_new_illusion then
             -- New Illusion: Replace card with deck-based card and reroll upgrades
             card = QOL_BUNDLE.utils.apply_new_illusion_logic(card, area) or card
             QOL_BUNDLE.utils.recalculate_playing_card_cost(card)
         end
     end
-    
+
     return card
 end
 
@@ -410,172 +341,24 @@ function reset_castle_card()
 
     G.GAME.current_round.castle_card.suit = 'Spades'
     local valid_castle_cards = {}
-    
+
     for k, v in ipairs(G.playing_cards) do
         if not SMODS.has_no_suit(v) then
             valid_castle_cards[#valid_castle_cards+1] = v
         end
     end
-    
+
     if valid_castle_cards[1] then 
         -- Enhanced logic: Choose between light suits (Hearts+Diamonds) or dark suits (Clubs+Spades)
         -- Randomly choose light or dark suits
         local chosen_group = pseudorandom(pseudoseed('castle_group'..G.GAME.round_resets.ante)) > 0.5 and 'light' or 'dark'
-        
+
         -- Store which group was chosen for the joker logic and UI display
         G.GAME.current_round.castle_card_group = chosen_group
-        
+
         -- Keep the original suit assignment for compatibility, but it won't be used in the logic
         local castle_card = pseudorandom_element(valid_castle_cards, pseudoseed('cas'..G.GAME.round_resets.ante))
         G.GAME.current_round.castle_card.suit = castle_card.base.suit
-    end
-end
-
--- Helper functions for enhanced voucher logic
-QOL_BUNDLE.utils = QOL_BUNDLE.utils or {}
-
--- Apply enhanced Magic Trick upgrades: enhancements, editions, seals, and clips
-function QOL_BUNDLE.utils.apply_enhanced_magic_trick_upgrades(card)
-    if not card then return end
-    
-    -- Use the shared try_apply functions for consistent logic
-    QOL_BUNDLE.utils.try_apply_enhancement(card, 'magic_trick_enh')
-    QOL_BUNDLE.utils.try_apply_edition(card, 'magic_trick_shop')  
-    QOL_BUNDLE.utils.try_apply_seal(card, 'magic_trick_seal')
-    QOL_BUNDLE.utils.try_apply_clip(card, 'magic_trick_clip')
-end
-
--- Apply new Illusion logic: deck-based cards with reroll upgrades
-function QOL_BUNDLE.utils.apply_new_illusion_logic(original_card, area)
-    if not G.playing_cards or #G.playing_cards == 0 then
-        -- Fallback to enhanced Magic Trick if no deck cards available
-        QOL_BUNDLE.utils.apply_enhanced_magic_trick_upgrades(original_card)
-        return original_card
-    end
-    
-    -- Select random card from player's deck
-    local deck_card = pseudorandom_element(G.playing_cards, pseudoseed('illusion_deck'..G.GAME.round_resets.ante))
-    if not deck_card then
-        QOL_BUNDLE.utils.apply_enhanced_magic_trick_upgrades(original_card)
-        return original_card
-    end
-    
-    -- Modify the existing shop card instead of creating a new one
-    -- Change base suit/rank to match deck card
-    original_card:set_base(G.P_CARDS[deck_card.config.card_key])
-    
-    -- Copy ALL existing properties from deck card (complete copy)
-    if deck_card.edition then
-        original_card:set_edition(deck_card.edition)
-    end
-    if deck_card.seal then  
-        original_card:set_seal(deck_card.seal)
-    end
-    if deck_card.config.center.set == 'Enhanced' then
-        original_card:set_ability(deck_card.config.center)
-    end
-    
-    -- Now attempt improvements with Magic Trick logic (only if they would improve the card)
-    QOL_BUNDLE.utils.try_apply_enhancement(original_card, 'illusion_enh_improve')
-    QOL_BUNDLE.utils.try_apply_edition(original_card, 'illusion_ed_improve')
-    QOL_BUNDLE.utils.try_apply_seal(original_card, 'illusion_seal_improve')
-    QOL_BUNDLE.utils.try_apply_clip(original_card, 'illusion_clip_improve')
-    
-    return original_card
-end
-
--- Recalculate playing card cost based on new rules
-function QOL_BUNDLE.utils.recalculate_playing_card_cost(card)
-    if not card or not (card.ability.set == 'Default' or card.ability.set == 'Enhanced') then
-        return
-    end
-
-    local extra_cost = 0
-
-    -- Editions
-    if card.edition then
-        if card.edition.polychrome then
-            extra_cost = extra_cost + 3
-        else -- Foil, Holo, Negative
-            extra_cost = extra_cost + 2
-        end
-    end
-
-    -- Seals
-    if card.seal then
-        extra_cost = extra_cost + 1
-    end
-
-    -- Enhancements
-    if card.ability.set == 'Enhanced' then
-        extra_cost = extra_cost + 1
-    end
-
-    -- Recalculate final cost, respecting discounts
-    card.cost = math.max(1, math.floor((card.base_cost + extra_cost + 0.5) * (100 - G.GAME.discount_percent) / 100))
-
-    -- Recalculate sell cost
-    card.sell_cost = math.max(1, math.floor(card.cost / 2)) + (card.ability.extra_value or 0)
-    card.sell_cost_label = card.sell_cost
-end
-
--- Try to apply enhancement using SMODS poll system (now with reroll logic for Illusion)
-function QOL_BUNDLE.utils.try_apply_enhancement(card, seed_key)
-    if not card then return end
-    
-    local enhancement_key = SMODS.poll_enhancement({
-        key = seed_key,
-        mod = 2.5, -- 40% chance (default 16% * 2.5 = 40%)
-        guaranteed = nil
-    })
-    
-    if enhancement_key then
-        card:set_ability(G.P_CENTERS[enhancement_key])
-    end
-end
-
--- Try to apply edition using poll_edition (now with reroll logic for Illusion)
-function QOL_BUNDLE.utils.try_apply_edition(card, seed_key)
-    if not card then return end
-    
-    -- Use poll_edition which respects game logic and SMODS overrides
-    local new_edition = poll_edition(seed_key, 1, false, false)
-    if new_edition then
-        card:set_edition(new_edition)
-    end
-end
-
--- Try to apply seal using SMODS poll system (now with reroll logic for Illusion)
-function QOL_BUNDLE.utils.try_apply_seal(card, seed_key)
-    if not card then return end
-    
-    local seal_key = SMODS.poll_seal({
-        key = seed_key,
-        mod = 10, -- 20% chance (default 2% * 10 = 20%)
-        guaranteed = false
-    })
-    
-    if seal_key then
-        card:set_seal(seal_key)
-    end
-end
-
--- Try to apply paperclip using Paperback's poll system (if Paperback is available)
-function QOL_BUNDLE.utils.try_apply_clip(card, seed_key)
-    if not card then return end
-
-    -- Check if Paperback mod is available
-    if not PB_UTIL or not PB_UTIL.poll_paperclip or not PB_UTIL.set_paperclip then
-        return -- Paperback not available, skip
-    end
-
-    -- Use 20% chance (same as seals) split equally between all clips
-    local clip_chance = pseudorandom(pseudoseed(seed_key))
-    if clip_chance > 0.8 then -- 20% chance
-        local clip_type = PB_UTIL.poll_paperclip(seed_key)
-        if clip_type then
-            PB_UTIL.set_paperclip(card, clip_type)
-        end
     end
 end
 

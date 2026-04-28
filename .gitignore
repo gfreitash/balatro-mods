@@ -3,6 +3,7 @@ lib/
 .idea/
 .temp/
 .vscode/
+.opencode/
 misc/
 .summary*
 CLAUDE.md

@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-08-17
+### Changed
+- Updated Riosodu Commons to v2.0.0.
+- Riosodu Commons is no longer a standalone mod; fixes mods being disabled by default on launch when multiple mods bundle the shared library.
+
 ## [1.9.1] - 2025-11-24
 ### Fixed
 - Fixed missing talisman safe comparison in the satellite joker (closes #4)

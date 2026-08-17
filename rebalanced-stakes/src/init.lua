@@ -34,6 +34,10 @@ end
 -- Run the initialization function
 RSM:init()
 
+-- Bootstrap the shared library (idempotent: only the first mod to load initializes it)
+local common_chunk = SMODS.load_file('common/main.lua', RSM.mod_id)
+if common_chunk then common_chunk() end
+
 -- Include other core modules
 RIOSODU_SHARED.include_mod_file(RSM.mod_id, "src/main.lua") -- Includes the main logic
 RIOSODU_SHARED.utils.sendDebugMessage("Rebalanced Stakes mod initialized", RSM.mod_id)

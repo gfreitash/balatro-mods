@@ -465,7 +465,7 @@ function RIOSODU_SHARED.debug.show_generic_input(args)
             -- Store config if provided
             if config_key then
                 RIOSODU_SHARED.config[config_key] = input_data[input_key]
-                SMODS.save_mod_config(RIOSODU_SHARED.mod)
+                RIOSODU_SHARED.save_config()
             end
             -- Execute the submit callback
             if on_submit then

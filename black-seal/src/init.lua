@@ -46,12 +46,15 @@ end
 
 -- Run the initialization function
 BSM:init()
+-- Bootstrap the shared library (idempotent: only the first mod to load initializes it)
+local common_chunk = SMODS.load_file('common/main.lua', BSM.mod_id)
+if common_chunk then common_chunk() end
 -- Include other core modules
 BSM.include("src/debug.lua") -- Includes Debug keybinds
 BSM.include("src/main.lua") -- Includes Seal definition & initial weight setting
 BSM.include("src/callbacks.lua") -- Functions for callbacks and events
 BSM.include("src/overrides.lua") -- Includes the overrides for original functions
--- UI components moved to common mod via manifest dependency
+-- UI components come from the bundled Riosodu Commons library (bootstrap above)
 BSM.include("src/ui/tabs.lua") -- Includes UI definitions
 
 -- --- SMODS Hooks ---

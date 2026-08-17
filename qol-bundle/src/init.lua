@@ -67,6 +67,9 @@ end
 
 -- Run the initialization function
 QOL_BUNDLE:init()
+-- Bootstrap the shared library (idempotent: only the first mod to load initializes it)
+local common_chunk = SMODS.load_file('common/main.lua', QOL_BUNDLE.mod_id)
+if common_chunk then common_chunk() end
 -- Load config and re-acquire ownership
 QOL_BUNDLE.config = SMODS.load_mod_config(QOL_BUNDLE.mod) or QOL_BUNDLE.config -- Ensure config is loaded before UI
 QOL_BUNDLE.mod.config = QOL_BUNDLE.config -- Re-link config to mod object to maintain ownership

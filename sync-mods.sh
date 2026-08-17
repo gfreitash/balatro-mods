@@ -61,11 +61,6 @@ sync_all_mods() {
         # Sync the common library into the mod's destination folder
         if [ -d "_common" ]; then
             rsync -a --delete "_common/" "$dest_path/$mod_name/common/"
-            # Rename common.json to manifest.json for consistency
-            if [ -f "$dest_path/$mod_name/common/common.json" ]; then
-                mv "$dest_path/$mod_name/common/common.json" "$dest_path/$mod_name/common/manifest.json"
-            fi
-
             # Copy lovely patches from common to mod's lovely directory with common_ prefix
             if [ -d "_common/lovely" ]; then
                 mkdir -p "$dest_path/$mod_name/lovely"

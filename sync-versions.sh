@@ -244,24 +244,6 @@ create_new_version_entry() {
 	log_success "Created new v${new_version} entry in $changelog_file."
 }
 
-# Update manifest dependency only
-# Usage: update_manifest_dependency <manifest_file> <dependency>
-update_manifest_dependency() {
-	local manifest_file="$1"
-	local dependency="$2"
-	local tmp_file="${manifest_file}.$$"
-
-	log_debug "Updating manifest dependency: ${manifest_file} to ${dependency}"
-
-	jq --arg dep "$dependency" '
-		if has("dependencies") and (.dependencies | type == "array") then
-			.dependencies = (.dependencies | map(select(startswith("riosodu_shared") | not)) + [$dep] | sort)
-		else
-			.dependencies = [$dep]
-		end
-	' "$manifest_file" >"$tmp_file" && mv "$tmp_file" "$manifest_file"
-}
-
 # Update manifest version only
 # Usage: update_manifest_version <manifest_file> <version>
 update_manifest_version() {
@@ -273,36 +255,6 @@ update_manifest_version() {
 
 	jq --arg ver "$version" '.version = $ver' "$manifest_file" >"$tmp_file" &&
 		mv "$tmp_file" "$manifest_file"
-}
-
-# Get dependency version from manifest
-# Usage: get_dependency_version <manifest_file>
-# Returns: version string (e.g., "1.0.0") or empty string if not found/parsed
-get_dependency_version() {
-	local manifest_file="$1"
-	local dep_version=""
-
-	if [ ! -f "$manifest_file" ]; then
-		log_debug "Manifest file not found: ${manifest_file}"
-		echo ""
-		return 0
-	fi
-
-	# Extract version from "riosodu_shared (>=X.Y.Z)" or "riosodu_shared (X.Y.Z)" etc.
-	# jq -r '.dependencies[] | select(startswith("riosodu_shared"))'
-	# This extracts the full string, then we parse the version using grep -oP
-	dep_string=$(jq -r '.dependencies[]? | select(startswith("riosodu_shared"))' "$manifest_file" || true)
-
-	if [ -n "$dep_string" ]; then
-		dep_version=$(echo "$dep_string" | grep -oP '\(\W*\K[0-9]+\.[0-9]+\.[0-9]+(?=\))' || true)
-	fi
-
-	if [ -z "$dep_version" ]; then
-		log_debug "Could not find or parse riosodu_shared dependency version in ${manifest_file}. Dependency string: '${dep_string}'"
-	else
-		log_debug "Found riosodu_shared dependency version: ${dep_version} in ${manifest_file}"
-	fi
-	echo "$dep_version"
 }
 
 # Check if version entry exists in changelog
@@ -478,28 +430,31 @@ log_success "Phase 1: Validation passed. All mods have versioned changelogs."
 log_info "Phase 2: Synchronizing shared library (_common)..."
 
 common_changelog="_common/CHANGELOG.md"
-common_manifest="_common/common.json"
+common_version_file="_common/version.lua"
 SHARED_VERSION=""
-SHARED_DEP_REQ=""
 
 if [ -f "$common_changelog" ]; then
 	get_latest_version_info "$common_changelog"
 	if [ -z "$LATEST_VERSION" ]; then
-		log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common and dependencies."
+		log_warn "Could not find a versioned entry in '$common_changelog'. Cannot sync _common and dependent mods."
 		exit 1
 	fi
 
 	SHARED_VERSION=$LATEST_VERSION
-	SHARED_DEP_REQ="riosodu_shared (>=${SHARED_VERSION})"
 
-	current_common_version=$(jq -r '.version' "$common_manifest")
+	# Read the hardcoded version from version.lua (expected format: return "x.y.z")
+	current_common_version=$(sed -n 's/^return[[:space:]]*"\([0-9][0-9.]*\)"[[:space:]]*$/\1/p' "$common_version_file" | head -n 1)
+	if [ -z "$current_common_version" ]; then
+		log_error "Could not parse version from '$common_version_file'. Expected format: return \"x.y.z\"."
+		exit 1
+	fi
+
 	if [ "$current_common_version" != "$LATEST_VERSION" ]; then
-		log_info "Syncing _common: changelog version is '$LATEST_VERSION', manifest is '$current_common_version'."
-		jq --arg ver "$LATEST_VERSION" '.version = $ver' "$common_manifest" >"${common_manifest}.$$" &&
-			mv "${common_manifest}.$$" "$common_manifest"
-		log_success "Updated $common_manifest to version $LATEST_VERSION."
+		log_info "Syncing _common: changelog version is '$LATEST_VERSION', version.lua is '$current_common_version'."
+		printf 'return "%s"\n' "$LATEST_VERSION" > "$common_version_file"
+		log_success "Updated $common_version_file to version $LATEST_VERSION."
 	else
-		log_info "_common manifest version is already up to date ($LATEST_VERSION)."
+		log_info "_common version.lua is already up to date ($LATEST_VERSION)."
 	fi
 else
 	log_info "No _common changelog found. Skipping _common synchronization."
@@ -508,7 +463,7 @@ fi
 log_success "Phase 2: Common library sync complete. Canonical version: ${SHARED_VERSION}"
 
 # --- Phase 3: Mod Discovery & Planning ---
-log_info "Phase 3: Analyzing mod dependencies and generating update plan..."
+log_info "Phase 3: Analyzing mods and generating update plan..."
 
 UPDATE_PLAN_FILE="/tmp/sync_plan_$$.json"
 UPDATE_PLAN='{"shared_version":"'$SHARED_VERSION'","mods":[]}'
@@ -530,7 +485,6 @@ for mod_dir in $MOD_DIRS; do
 
 	# Read current state
 	mod_manifest_version=$(jq -r '.version' "$manifest_file")
-	current_mod_common_dep_version=$(get_dependency_version "$manifest_file")
 
 	# Determine what needs to be done
 	needs_changelog=false
@@ -538,42 +492,30 @@ for mod_dir in $MOD_DIRS; do
 	action="sync_only"
 	target_version="$LATEST_VERSION"
 
-	# Check if dependency needs updating
-	dependency_needs_update=false
-	if [ -z "$current_mod_common_dep_version" ] || \
-		{ [ "$(printf '%s\n%s\n' "$current_mod_common_dep_version" "$SHARED_VERSION" | sort -V | head -n 1)" = "$current_mod_common_dep_version" ] && \
-		[ "$current_mod_common_dep_version" != "$SHARED_VERSION" ]; }; then
-		dependency_needs_update=true
+	# The common library is embedded in each mod, so a mod needs a bump when its
+	# latest changelog entry doesn't mention the current Riosodu Commons version
+	update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
+	common_note_present="false"
+	if note_exists_in_version "$changelog_file" "$LATEST_VERSION" "$update_note"; then
+		common_note_present="true"
 	fi
 
 	# Determine action based on current state
-	if [ "$dependency_needs_update" = "true" ]; then
+	if [ "$common_note_present" = "false" ]; then
 		needs_manifest=true
-
-		# Get version block boundaries for note checking
-		BLOCK_END_LINE=$(get_version_block_end "$changelog_file" "$LATEST_VERSION_LINE_NUM")
-		update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
-		note_exists="false"
-		if note_exists_in_version "$changelog_file" "$LATEST_VERSION" "$update_note"; then
-			note_exists="true"
-		fi
 
 		if [ "$mod_manifest_version" != "$LATEST_VERSION" ]; then
 			# Mod was manually updated, add note to existing version
-			if [ "$note_exists" = "false" ]; then
-				action="add_note"
-				needs_changelog=true
-			fi
+			action="add_note"
+			needs_changelog=true
 		else
 			# Mod is in sync, need to bump version and create new entry
-			if [ "$note_exists" = "false" ]; then
-				target_version=$(bump_patch_version "$LATEST_VERSION")
-				action="new_entry"
-				needs_changelog=true
-			fi
+			target_version=$(bump_patch_version "$LATEST_VERSION")
+			action="new_entry"
+			needs_changelog=true
 		fi
 	else
-		# Check if manifest version needs syncing (without dependency changes)
+		# Check if manifest version needs syncing (without common updates)
 		if [ "$mod_manifest_version" != "$LATEST_VERSION" ]; then
 			needs_manifest=true
 		fi
@@ -640,19 +582,7 @@ echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs
 	# Generate update note dynamically when needed
 	update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
 
-	# Step 1: Update manifest dependency if needed (idempotent)
-	if [ "$needs_manifest" = "true" ]; then
-		current_dep_version=$(get_dependency_version "$manifest_file")
-		if [ "$current_dep_version" != "$SHARED_VERSION" ]; then
-			log_info "Updating dependency: $current_dep_version → $SHARED_VERSION"
-			update_manifest_dependency "$manifest_file" "$SHARED_DEP_REQ"
-			log_success "Updated dependency in $manifest_file"
-		else
-			log_info "Dependency already correct: $SHARED_VERSION ✓"
-		fi
-	fi
-
-	# Step 2: Update changelog if needed (idempotent)
+	# Step 1: Update changelog if needed (idempotent)
 	if [ "$needs_changelog" = "true" ]; then
 		case "$action" in
 		"new_entry")
@@ -676,7 +606,7 @@ echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs
 		esac
 	fi
 
-	# Step 3: Update manifest version (idempotent)
+	# Step 2: Update manifest version (idempotent)
 	if [ "$needs_manifest" = "true" ]; then
 		current_manifest_version=$(jq -r '.version' "$manifest_file")
 		if [ "$current_manifest_version" != "$target_version" ]; then
@@ -688,7 +618,7 @@ echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs
 		fi
 	fi
 
-	# Step 4: Update index.meta.json (idempotent)
+	# Step 3: Update index.meta.json (idempotent)
 	if needs_index_meta_update "$index_meta_file" "$target_version" "$mod_name"; then
 		log_info "Updating index.meta.json for version $target_version"
 		update_index_meta_json "$index_meta_file" "$target_version" "$mod_name"

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-17
+### Changed
+- **BREAKING: Riosodu Commons is no longer a standalone mod.** The `common.json` manifest was removed so the vendored `common/` folder is no longer scanned by Steamodded as a nested mod. This fixes mods being disabled by default on launch when multiple mods bundling the shared library were installed (duplicate mod handling blacklisted the parent mod folder).
+- Mods now bootstrap the library themselves via `SMODS.load_file('common/main.lua', mod_id)`. The `RIOSODU_SHARED` global gates initialization: only the first mod to load initializes the library.
+- Internal version is now hardcoded in `common/version.lua` (exposed as `RIOSODU_SHARED.version`) for easier debugging, replacing the manifest version.
+- Shared config is now loaded from `common/config.lua` and persisted to `config/riosodu_shared.jkr` directly, replacing the Steamodded mod config system (same save file name, so existing settings carry over). Use `RIOSODU_SHARED.save_config()` instead of `SMODS.save_mod_config`.
+- Removed the shared debug settings tab (`ui/tabs.lua`) that previously lived in the standalone mod's config tab.
+- Manifest `dependencies` entries for `riosodu_shared` were removed from all dependent mods.
+
 ## [1.3.0] - 2025-09-29
 ### Added
 - Added `get_interest_base()` function with fallback logic for missing interest_base values

@@ -1,43 +1,83 @@
 -- _common/main.lua
--- Shared UI and utilities module initialization
-
----@global
-RIOSODU_SHARED = RIOSODU_SHARED or {}
+-- Shared UI and utilities module bootstrap.
+--
+-- This is NOT a standalone Steamodded mod anymore. Each mod bundles this file
+-- under its own `common/` folder and loads it via:
+--   local chunk = SMODS.load_file('common/main.lua', mod_id)
+--   if chunk then chunk() end
+--
+-- Only the first mod to load initializes the library: the `RIOSODU_SHARED`
+-- global acts as the gate, so subsequent mods simply skip initialization.
 
 function riosodu_shared_init()
-    if RIOSODU_SHARED.initialized then
+    if RIOSODU_SHARED ~= nil then
         return
     end
 
-    -- Initialize namespaces
     RIOSODU_SHARED = {}
+
+    -- The mod currently being loaded bootstraps the library
+    local host_id = SMODS.current_mod.id
+
+    -- Load the hardcoded internal version (used for debugging)
+    local version_chunk = SMODS.load_file('common/version.lua', host_id)
+    RIOSODU_SHARED.version = version_chunk and version_chunk() or 'unknown'
+
+    -- Initialize namespaces
     RIOSODU_SHARED.UIDEF = {}
     RIOSODU_SHARED.utils = {}
     RIOSODU_SHARED.debug = {}
     RIOSODU_SHARED.UI = {}
     RIOSODU_SHARED.compat = {}
     RIOSODU_SHARED.original = {}
-    RIOSODU_SHARED.mod = SMODS.current_mod
 
-    -- Load config from either standalone mod or host mod
-    RIOSODU_SHARED.config = SMODS.current_mod.config or {}
-    if SMODS.current_mod.id == 'riosodu_shared' then
-        RIOSODU_SHARED._is_standalone = true
+    -- Load shared config: defaults from common/config.lua merged with the
+    -- saved config (config/riosodu_shared.jkr, same file as the old standalone
+    -- mod so existing saves carry over)
+    local config_chunk = SMODS.load_file('common/config.lua', host_id)
+    RIOSODU_SHARED.config = config_chunk and config_chunk() or {}
+
+    local function insert_saved_config(savedCfg, defaultCfg)
+        for savedKey, savedVal in pairs(savedCfg) do
+            local savedValType = type(savedVal)
+            local defaultValType = type(defaultCfg[savedKey])
+            if not defaultCfg[savedKey] then
+                defaultCfg[savedKey] = savedVal
+            elseif savedValType == "table" and defaultValType == "table" then
+                insert_saved_config(savedVal, defaultCfg[savedKey])
+            elseif savedVal ~= defaultCfg[savedKey] then
+                defaultCfg[savedKey] = savedVal
+            end
+        end
     end
 
-    -- Determine include prefix based on installation location
-    local is_mod = SMODS.current_mod.id == 'riosodu_shared'
-    local prefix = is_mod and '' or 'common/'
+    local saved_config
+    local loaded_saved = pcall(function()
+        saved_config = load(NFS.read('config/riosodu_shared.jkr'), '=[RIOSODU_SHARED "config"]')()
+    end)
+    if loaded_saved and type(saved_config) == 'table' then
+        insert_saved_config(saved_config, RIOSODU_SHARED.config)
+    end
 
+    function RIOSODU_SHARED.save_config()
+        local success = pcall(function()
+            NFS.createDirectory('config')
+            assert(RIOSODU_SHARED.config and next(RIOSODU_SHARED.config))
+            local serialized = 'return ' .. serialize(RIOSODU_SHARED.config)
+            NFS.write('config/riosodu_shared.jkr', serialized)
+        end)
+        return success
+    end
+
+    -- Files are always loaded from the vendored `common/` folder
     local function include(path)
-        local chunk = SMODS.load_file(prefix .. path, SMODS.current_mod.id)
+        local chunk = SMODS.load_file('common/' .. path, host_id)
         if chunk then chunk() end
     end
 
     -- Load shared components
     include('ui/components.lua')
     include('debug.lua')
-    include('ui/tabs.lua')
     include('compat.lua')
     include('utils/utils.lua')
 
@@ -187,13 +227,6 @@ function riosodu_shared_init()
         end
     end
 
-    -- Set config tab hook for main mod
-    if SMODS.current_mod.id == 'riosodu_shared' then
-        SMODS.current_mod.config_tab = function()
-            return RIOSODU_SHARED.UI.createDebugSettingsTabDefinition()
-        end
-    end
-
     -- Initialize hooks table
     RIOSODU_SHARED.hooks = {
         on_game_start = {},
@@ -231,9 +264,8 @@ function riosodu_shared_init()
     end
     RIOSODU_SHARED.utils.override_game_obj(ensure_interest_properties)
 
-    RIOSODU_SHARED.initialized = true
-    print("[RIOSODU_SHARED] Initialization complete.")
+    print(string.format("[RIOSODU_SHARED] v%s initialization complete (bootstrapped by mod: %s)", RIOSODU_SHARED.version, host_id))
 end
 
--- Initialize when loaded as `common` mod or included as common folder
+-- Initialize when the first mod loads this file
 riosodu_shared_init()

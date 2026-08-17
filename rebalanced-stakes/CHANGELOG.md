@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-08-17
+### Changed
+- Updated Riosodu Commons to v2.0.0.
+- Riosodu Commons is no longer a standalone mod; fixes mods being disabled by default on launch when multiple mods bundle the shared library.
+
 ## [1.3.5] - 2025-10-23
 ### Changed
 - Updated Riosodu Commons to v1.3.0.

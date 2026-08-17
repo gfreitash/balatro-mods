@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-08-17
+### Added
+- New debug feature: swap the current ante's boss blind while in the blind selection screen (keybind `b`, gated behind debug features). Opens a text prompt for the boss blind key (with or without the `bl_` prefix) and swaps it using the Director's Cut reroll animation.
+
 ## [2.0.0] - 2026-08-17
 ### Changed
 - **BREAKING: Riosodu Commons is no longer a standalone mod.** The `common.json` manifest was removed so the vendored `common/` folder is no longer scanned by Steamodded as a nested mod. This fixes mods being disabled by default on launch when multiple mods bundling the shared library were installed (duplicate mod handling blacklisted the parent mod folder).

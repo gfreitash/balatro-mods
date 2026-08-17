@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.8] - 2026-08-17
+### Changed
+- Updated Riosodu Commons to v2.1.0.
+- Riosodu Commons 2.1.0 adds a debug feature to swap the boss blind in the blind selection screen (keybind B, debug features only).
+
 ## [3.3.7] - 2026-08-17
 ### Changed
 - Updated Riosodu Commons to v2.0.0.

@@ -190,6 +190,119 @@ function RIOSODU_SHARED.debug.show_consumable_input()
     })
 end
 
+-- Swap boss blind input (blind selection screen only)
+function RIOSODU_SHARED.debug.show_swap_boss_input()
+    if not G.blind_select_opts then
+        RIOSODU_SHARED.utils.sendDebugMessage("Swap boss blind: only available in the blind selection screen", 'riosodu_shared')
+        return
+    end
+
+    RIOSODU_SHARED.debug.show_generic_input({
+        input_key = 'boss',
+        default_value = RIOSODU_SHARED.config.last_boss_key or G.GAME.round_resets.blind_choices.Boss or 'bl_wall',
+        title = 'Swap Boss Blind',
+        prompt = 'Enter boss blind key...',
+        colour = G.C.PURPLE,
+        max_length = 100,
+        textbox_id = 'boss_input_textbox',
+        config_key = 'last_boss_key',
+        on_submit = function(value)
+            RIOSODU_SHARED.debug.swap_boss_blind(value)
+        end
+    })
+end
+
+function RIOSODU_SHARED.debug.swap_boss_blind(boss_input)
+    local mod_id = 'riosodu_shared'
+    if not boss_input or boss_input == '' then
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    -- Normalize: accept both "bl_wall" and "wall"
+    local input = boss_input:lower()
+    if string.sub(input, 1, 3) == 'bl_' then
+        input = string.sub(input, 4)
+    end
+
+    -- Look up the boss blind by key (with or without the default bl_ prefix)
+    local target_key = nil
+    for k, v in pairs(G.P_BLINDS) do
+        if v.boss then
+            local short_key = string.match(k, '^bl_(.+)$') or k
+            if k:lower() == input or short_key:lower() == input then
+                target_key = k
+                break
+            end
+        end
+    end
+
+    if not target_key then
+        RIOSODU_SHARED.utils.sendWarnMessage("Boss blind key '" .. boss_input .. "' not found or not a boss blind", mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    if G.GAME.round_resets.blind_choices.Boss == target_key then
+        RIOSODU_SHARED.utils.sendDebugMessage("Boss blind is already " .. target_key, mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    if not G.blind_select_opts or not G.blind_select_opts.boss then
+        RIOSODU_SHARED.utils.sendWarnMessage("Boss blind UI not available", mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    G.GAME.round_resets.blind_choices.Boss = target_key
+    RIOSODU_SHARED.utils.sendDebugMessage("Swapping boss blind to " .. target_key, mod_id)
+
+    -- Swap with the same animation as the Director's Cut voucher reroll
+    G.E_MANAGER:add_event(Event({
+        trigger = 'immediate',
+        func = function()
+            play_sound('other1')
+            G.blind_select_opts.boss:set_role({xy_bond = 'Weak'})
+            G.blind_select_opts.boss.alignment.offset.y = 20
+            return true
+        end
+    }))
+
+    G.E_MANAGER:add_event(Event({
+        trigger = 'after',
+        delay = 0.3,
+        func = function()
+            if not G.blind_select_opts or not G.blind_select_opts.boss then
+                return true
+            end
+            local par = G.blind_select_opts.boss.parent
+            G.blind_select_opts.boss:remove()
+            G.blind_select_opts.boss = UIBox{
+                T = {par.T.x, 0, 0, 0},
+                definition = {n=G.UIT.ROOT, config={align = "cm", colour = G.C.CLEAR}, nodes={
+                    UIBox_dyn_container({create_UIBox_blind_choice('Boss')},false,get_blind_main_colour('Boss'), mix_colours(G.C.BLACK, get_blind_main_colour('Boss'), 0.8))
+                }},
+                config = {align="bmi",
+                            offset = {x=0,y=G.ROOM.T.y + 9},
+                            major = par,
+                            xy_bond = 'Weak'
+                        }
+            }
+            par.config.object = G.blind_select_opts.boss
+            par.config.object:recalculate()
+            G.blind_select_opts.boss.parent = par
+            G.blind_select_opts.boss.alignment.offset.y = 0
+
+            save_run()
+            for i = 1, #G.GAME.tags do
+                if G.GAME.tags[i]:apply_to_run({type = 'new_blind_choice'}) then break end
+            end
+            return true
+        end
+    }))
+end
+
 function RIOSODU_SHARED.debug.add_random_joker()
     local mod_id = 'riosodu_shared'
     RIOSODU_SHARED.utils.sendDebugMessage("Debug key pressed: Attempting to add random Joker...", mod_id)
@@ -604,6 +717,13 @@ RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
   name = 'add_consumable_textbox',
   desc = 'Open Add Consumable Textbox',
   action = function() RIOSODU_SHARED.debug.show_consumable_input() end
+})
+
+RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
+  key_pressed = 'b',
+  name = 'swap_boss_blind_textbox',
+  desc = 'Open Swap Boss Blind Textbox',
+  action = function() RIOSODU_SHARED.debug.show_swap_boss_input() end
 })
 
 RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {

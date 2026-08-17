@@ -4,4 +4,5 @@ return {
   debug_features_enabled = false, -- Enable debug keybinds and features
   last_joker_key = '',            -- Store the last used joker key for debug function
   last_voucher_key = '',          -- Store the last used voucher key for debug function
+  last_boss_key = '',             -- Store the last used boss blind key for debug function
 }

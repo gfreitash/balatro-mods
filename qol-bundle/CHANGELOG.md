@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.4] - 2026-08-17
+### Changed
+- Updated Riosodu Commons to v2.1.0.
+- Riosodu Commons 2.1.0 adds a debug feature to swap the boss blind in the blind selection screen (keybind B, debug features only).
+
 ## [1.9.3] - 2026-08-17
 ### Changed
 - Wildcard/Smeared fix no longer relies on a lovely patch: it is now applied dynamically via the Blind:debuff_card override, so toggling it no longer requires a restart.

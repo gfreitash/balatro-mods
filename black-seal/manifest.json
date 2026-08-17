@@ -9,5 +9,5 @@
   "website": "https://www.nexusmods.com/balatro/mods/411",
   "prefix": "blac",
   "main_file": "src/init.lua",
-  "version": "3.3.7"
+  "version": "3.3.8"
 }

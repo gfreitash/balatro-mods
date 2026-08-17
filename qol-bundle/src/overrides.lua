@@ -26,7 +26,11 @@ if PB_UTIL and PB_UTIL.is_suit then
     end
 end
 
--- Override Card:is_suit with wildcard and blurred joker overhaul
+-- Override Card:is_suit with wildcard and blurred joker overhaul.
+-- Base cases (suitless, any-suit, smeared, modded suits) delegate to the
+-- modern SMODS-aware implementation; the wildcard fix only intercepts the
+-- boss debuff context (signaled by QOL_BUNDLE.wildcard_debuff_check from the
+-- Blind:debuff_card override, or the legacy trying_to_debuff parameter).
 function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
     -- RIOSODU_SHARED.utils.sendDebugMessage("Card:is_suit called with suit: " .. tostring(suit) .. ", bypass_debuff: " .. tostring(bypass_debuff) .. ", flush_calc: " .. tostring(flush_calc) .. ", trying_to_debuff: " .. tostring(trying_to_debuff))
     if not QOL_BUNDLE.config.wildcard_fix_enabled then
@@ -34,29 +38,28 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
         return QOL_BUNDLE.original.Card_is_suit(self, suit, bypass_debuff, flush_calc)
     end
 
+    -- Debuffed cards don't match any suit (mirrors the modern implementation)
     if not flush_calc and self.debuff and not bypass_debuff then
         return nil
     end
 
-    if self.ability.effect == 'Stone Card' then
-        return false
+    -- While a boss is evaluating a suit-based debuff, Wild Cards and cards
+    -- under Smeared Joker resist matching a specific suit
+    if trying_to_debuff or QOL_BUNDLE.wildcard_debuff_check then
+        if self.ability.name == "Wild Card" then
+            return false
+        end
+        if next(find_joker('Smeared Joker')) then
+            return false
+        end
     end
 
     if self.ability.name == "Wild Card" then
-        if trying_to_debuff then
-            return false
-        else
-            return not flush_calc or not self.debuff
-        end
+        return not flush_calc or not self.debuff
     end
 
-    local has_smeared_joker = next(find_joker('Smeared Joker'))
-    if has_smeared_joker then
-        if trying_to_debuff then
-            return false
-        end
-
-        -- Enhanced Smeared Joker logic: Use Paperback's light/dark suits when available
+    -- Enhanced Smeared Joker logic: Use Paperback's light/dark suits when available
+    if next(find_joker('Smeared Joker')) then
         if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
             -- Use Paperback's enhanced light/dark suit logic
             local is_base_light = PB_UTIL.is_suit(self, 'light')
@@ -85,7 +88,8 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
         end
     end
 
-    return self.base.suit == suit
+    -- Delegate everything else to the modern, SMODS-aware implementation
+    return QOL_BUNDLE.original.Card_is_suit(self, suit, bypass_debuff, flush_calc)
 end
 
 --- comment
@@ -144,39 +148,17 @@ function poll_edition(_key, _mod, _no_neg, _guaranteed)
 end
 
 
--- Paperback compatibility: Override Blind.debuff_card to handle jester_of_nihil properly
-local source_blind_debuff_card = function (self, card, from_blind)
-    if self.debuff and not self.disabled and card.area ~= G.jokers then
-        if self.debuff.suit and card:is_suit(self.debuff.suit, true, nil, true) then
-            card:set_debuff(true)
-            return
-        end
-        if self.debuff.is_face =='face' and card:is_face(true) then
-            card:set_debuff(true)
-            return
-        end
-        if self.name == 'The Pillar' and card.ability.played_this_ante then
-            card:set_debuff(true)
-            return
-        end
-        if self.debuff.value and self.debuff.value == card.base.value then
-            card:set_debuff(true)
-            return
-        end
-        if self.debuff.nominal and self.debuff.nominal == card.base.nominal then
-            card:set_debuff(true)
-            return
-        end
-    end
-    if self.name == 'Crimson Heart' and not self.disabled and card.area == G.jokers then 
-        return
-    end
-    if self.name == 'Verdant Leaf' and not self.disabled and card.area ~= G.jokers then card:set_debuff(true); return end
-    card:set_debuff(false)
-end
-
+-- Override Blind:debuff_card to protect Wild Cards / Smeared Joker cards from
+-- suit-based boss debuffs (the "wildcard fix"). We delegate to the modern
+-- implementation so recalc_debuff callbacks, Crimson Heart, and other boss
+-- mechanics keep working, and signal the debuff context to Card:is_suit via
+-- the wildcard_debuff_check flag.
 function Blind:debuff_card(card, from_blind)
-    local ret = source_blind_debuff_card(self, card, from_blind)
+    local prev_check = QOL_BUNDLE.wildcard_debuff_check
+    QOL_BUNDLE.wildcard_debuff_check = QOL_BUNDLE.config.wildcard_fix_enabled
+    local ok, ret = pcall(QOL_BUNDLE.original.Blind_debuff_card, self, card, from_blind)
+    QOL_BUNDLE.wildcard_debuff_check = prev_check
+    if not ok then error(ret) end
 
     if PB_UTIL then
         -- Handle jester_of_nihil compatibility by re-implementing its logic with the trying_to_debuff parameter

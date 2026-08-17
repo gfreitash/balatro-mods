@@ -26,6 +26,7 @@ QOL_BUNDLE.init = function(self)
   self.original = {} -- Table to store original functions or values before overrides
   self.debug = {}    -- Namespace for debug functions
   self.UI = {}       -- Namespace for UI related functions/definitions
+  self.wildcard_debuff_check = false -- Signals a boss suit-debuff check to Card:is_suit
 
   -- Link to the SMODS mod object and its config
   self.mod = SMODS.current_mod

@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.3] - 2026-08-17
+### Changed
+- Wildcard/Smeared fix no longer relies on a lovely patch: it is now applied dynamically via the Blind:debuff_card override, so toggling it no longer requires a restart.
+- Fixed boss debuffs (e.g. Crimson Heart, modded bosses) being broken by the outdated Blind:debuff_card override; the modern implementation (recalc_debuff callbacks, crimson_heart_chosen) is preserved.
+- Card:is_suit now delegates to the Steamodded-aware implementation for non-wildcard cases, restoring compatibility with modded suits.
+- Updated Riosodu Commons to v2.0.0.
+
 ## [1.9.2] - 2026-08-17
 ### Changed
 - Updated Riosodu Commons to v2.0.0.

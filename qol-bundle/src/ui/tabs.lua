@@ -24,7 +24,6 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 ref_value = 'wildcard_fix_enabled',
                 label = G.localization.misc.dictionary.qolb_wildcard_fix_label,
                 info = G.localization.misc.dictionary.qolb_wildcard_fix_info,
-                requires_restart = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({

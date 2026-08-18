@@ -139,7 +139,7 @@ return {
             j_hit_the_road_modified = {
                 "This Joker gains {X:mult,C:white} X#1# {} Mult",
                 "for every {C:attention}Jack{} discarded this round,",
-                "and discarded {C:attention}Jacks{} are returned to deck.",
+                "and discarded {C:attention}Jacks{} are returned to deck",
                 "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)"
             },
             j_square_original = {
@@ -150,9 +150,9 @@ return {
             },
             j_square_modified = {
                 "This Joker gains {C:chips}+#2#{} Chips",
-                "if played hand has exactly {C:attention}4{} cards.",
+                "if played hand has exactly {C:attention}4{} cards",
                 "Each scoring card has {C:green}#3# in #4#{} chance",
-                "to give {C:chips}+#2#{} more Chips.",
+                "to give {C:chips}+#2#{} more Chips",
                 "{C:inactive}(Currently {C:chips}+#1#{C:inactive} Chips)"
             },
             j_flower_pot_original = {
@@ -192,7 +192,7 @@ return {
             },
             j_splash_retrigger = {
                 "Every {C:attention}played card",
-                "counts in scoring.",
+                "counts in scoring",
                 "{C:green}Two random scoring cards",
                 "{C:green}are retriggered"
             },
@@ -232,8 +232,13 @@ return {
             },
             v_magic_trick_enhanced = {
                 "{C:attention}Playing cards{} in shop",
-                "may appear with {C:attention}enhancements{}, {C:dark_edition}editions{}, {C:attention}seals{},",
-                "or {C:attention}paper clips{} (if Paperback is present)."
+                "may appear with {C:attention}enhancements{}, {C:dark_edition}editions{},",
+                "and/or {C:attention}seals{}"
+            },
+            v_magic_trick_paperback = {
+                "{C:attention}Playing cards{} in shop",
+                "may appear with {C:attention}enhancements{}, {C:dark_edition}editions{},",
+                "{C:attention}seals{}, and/or {C:attention}paper clips{}"
             },
             v_illusion_original = {
                 "{C:attention}Playing cards{} in shop",
@@ -243,7 +248,7 @@ return {
             v_illusion_deck_based = {
                 "{C:attention}Playing cards{} in shop are",
                 "{C:attention}clones{} of cards in your {C:attention}deck{},",
-                "and their upgrades can be {C:attention}rerolled{}."
+                "and their upgrades can be {C:attention}rerolled{}"
             },
 
             -- Castle joker config

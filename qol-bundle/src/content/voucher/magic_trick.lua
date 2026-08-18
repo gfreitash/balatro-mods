@@ -29,6 +29,10 @@ function QOL_BUNDLE.funcs.get_ownership_voucher_magic_trick()
             loc_text = localize('v_magic_trick_enhanced')
         end
 
+        if QOL_BUNDLE.config.enhanced_magic_trick_enabled and PB_UTIL then
+            loc_text = localize('v_magic_trick_paperback')
+        end
+
         G.localization.descriptions.Voucher.v_magic_trick.text = loc_text
     end
 

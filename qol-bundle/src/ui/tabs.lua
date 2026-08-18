@@ -231,7 +231,7 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
             create_option_cycle({
                 colour = G.C.XMULT,
-                options = {1, 1.25, 1.5, 1.75, 2, 2.5, 3},
+                options = {1, 1.23, 1.25, 1.5, 1.75, 2, 2.5, 3},
                 opt_callback = 'qol_bundle_yorick_callback',
                 current_option = QOL_BUNDLE.yorick_current_option,
                 current_option_val = QOL_BUNDLE.yorick_current_option_val,

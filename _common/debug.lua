@@ -156,6 +156,23 @@ function RIOSODU_SHARED.debug.show_joker_input()
     })
 end
 
+-- Debug feature: Swap the first card on the shop for a joker via textbox
+function RIOSODU_SHARED.debug.show_swap_shop_joker_input()
+    RIOSODU_SHARED.debug.show_generic_input({
+        input_key = 'joker',
+        default_value = RIOSODU_SHARED.config.last_shop_joker_key or '',
+        title = 'Swap First Shop Card for Joker',
+        prompt = 'Enter joker key (empty for random)...',
+        colour = G.C.BLUE,
+        max_length = 100,
+        textbox_id = 'swap_shop_joker_input_textbox',
+        config_key = 'last_shop_joker_key',
+        on_submit = function(value)
+            RIOSODU_SHARED.debug.swap_first_shop_card_joker(value)
+        end
+    })
+end
+
 -- Simplified voucher input using generic function
 function RIOSODU_SHARED.debug.show_voucher_input()
     RIOSODU_SHARED.debug.show_generic_input({
@@ -361,6 +378,42 @@ function RIOSODU_SHARED.debug.add_joker_by_key(joker_key)
         RIOSODU_SHARED.utils.sendDebugMessage("SMODS.add_card function not found", mod_id)
         RIOSODU_SHARED.debug.show_nope_animation()
     end
+end
+
+function RIOSODU_SHARED.debug.swap_first_shop_card_joker(joker_key)
+    local mod_id = 'riosodu_shared'
+    if not G.shop_jokers or not G.shop_jokers.cards or #G.shop_jokers.cards == 0 then
+        RIOSODU_SHARED.utils.sendWarnMessage("Swap shop card: only available when the shop is open", mod_id)
+        RIOSODU_SHARED.debug.show_nope_animation()
+        return
+    end
+
+    -- Normalize and validate the joker key (empty input means random joker)
+    if joker_key and joker_key ~= '' then
+        if string.sub(joker_key, 1, 2) ~= 'j_' then
+            joker_key = 'j_' .. joker_key
+        end
+        local joker_center = G.P_CENTERS[joker_key]
+        if not joker_center or joker_center.set ~= 'Joker' then
+            RIOSODU_SHARED.utils.sendWarnMessage("Joker key '" .. joker_key .. "' not found or invalid", mod_id)
+            RIOSODU_SHARED.debug.show_nope_animation()
+            return
+        end
+    else
+        joker_key = nil
+    end
+
+    -- Remove the first card on the shop (mirrors the base game reroll pattern)
+    local old_card = G.shop_jokers:remove_card(G.shop_jokers.cards[1])
+    if old_card then old_card:remove() end
+
+    -- Create the new joker and place it in the first slot
+    local new_card = SMODS.create_card({set = 'Joker', area = G.shop_jokers, key = joker_key, skip_materialize = true})
+    create_shop_card_ui(new_card, 'Joker', G.shop_jokers)
+    G.shop_jokers:emplace(new_card, 'front')
+    new_card:juice_up(0.5, 0.5)
+
+    RIOSODU_SHARED.utils.sendDebugMessage("Swapped first shop card for joker: " .. (joker_key or 'random'), mod_id)
 end
 
 function RIOSODU_SHARED.debug.add_voucher_by_key(voucher_key)
@@ -724,6 +777,13 @@ RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
   name = 'swap_boss_blind_textbox',
   desc = 'Open Swap Boss Blind Textbox',
   action = function() RIOSODU_SHARED.debug.show_swap_boss_input() end
+})
+
+RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {
+  key_pressed = 'q',
+  name = 'swap_shop_joker_textbox',
+  desc = 'Open Swap First Shop Card for Joker Textbox',
+  action = function() RIOSODU_SHARED.debug.show_swap_shop_joker_input() end
 })
 
 RIOSODU_SHARED.debug.register_keybind('riosodu_shared', {

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- New debug feature: swap the first card on the shop for a joker (keybind `q`, gated behind debug features). Opens a text prompt for a joker key (with or without the `j_` prefix); leaving it empty swaps in a random joker. The card is replaced in the first slot using the base game's shop reroll pattern, so cost, editions, and shop stickers are applied correctly.
+
 ## [2.1.0] - 2026-08-17
 ### Added
 - New debug feature: swap the current ante's boss blind while in the blind selection screen (keybind `b`, gated behind debug features). Opens a text prompt for the boss blind key (with or without the `bl_` prefix) and swaps it using the Director's Cut reroll animation.

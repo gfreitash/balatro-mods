@@ -2,7 +2,7 @@
 
 ## About This Project
 
-Welcome to my Balatro mods collection! This repository houses all of my mods for the popular roguelike deckbuilder game Balatro. This is a personal hobby project that I'm passionate about, allowing me to combine my love for gaming with programming skills.
+Welcome to my Balatro mods collection! This repository houses all of my mods for the popular roguelike deckbuilder game Balatro. This is a personal hobby project that I'm passionate about.
 
 ## For Players
 
@@ -41,28 +41,20 @@ This repository uses a CI/CD pipeline to automate versioning and releases. To co
    ```
 4.  **Make Code Changes**: Edit the files for the mod(s) you are working on.
 
-5.  **Update the Changelog**: This is the most important step. For every mod you changed, you **must** update its `CHANGELOG.md`:
-    *   Find the `## [Unreleased]` section.
-    *   Create a new version block below it with the new version number and today's date (e.g., `## [1.2.4] - 2025-06-05`).
-    *   Move all your change notes from `[Unreleased]` into the new version block under the appropriate headings (`### Added`, `### Fixed`, etc.).
-    *   The `[Unreleased]` section must be empty for any mod you are including in the release.
+5.  **Update the Changelog**: This is the most important step. For every mod you changed, you **must** add a bullet describing your change under the existing `## [Unreleased]` section of its `CHANGELOG.md` (this includes `_common/` when changed). Two rules apply:
+    *   The `[Unreleased]` section must be non-empty.
+    *   Never add to or delete from already-released version blocks — historical entries are immutable. (Editing notes inside `[Unreleased]` is fine.)
 
-6.  **Run the Sync Script**: Run the version synchronization script from the repository root:
-    ```bash
-    ./sync-versions.sh
-    ```
-    This script will:
-    *   **Validate** that your changelogs are correctly versioned.
-    *   **Synchronize** the `version` in each mod's `manifest.json` to match its latest changelog entry.
-    *   If `_common` was changed, it will automatically inject update notes into the changelogs of all dependent mods.
-
-7.  **Commit All Changes**: Stage all your original changes *and* the changes made by the script.
+6.  **Commit All Changes**:
     ```bash
     git add .
     git commit -m "Describe your new feature"
     ```
 
-8.  **Push Your Changes**: Push to your fork and open a Pull Request to the `main` branch. A CI check will validate that your PR is correctly synced.
+7.  **Push Your Changes**: Push to your fork and open a Pull Request to the `main` branch. A CI check will enforce the changelog rules above. You can run the same check locally first:
+    ```bash
+    ./scripts/check-changelogs.sh origin/main
+    ```
 
 ### Local Testing (Linux)
 

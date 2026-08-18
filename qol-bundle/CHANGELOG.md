@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Magic Trick voucher now uses a separate localization string when Paperback is present, showing that shop cards can also appear with paper clips.
+- Added `1.23` option to the Yorick X-mult cycle. A nod to the 23 years Yorick was buried, so `x1.23` Mult.
+- Removed trailing periods from localization text, since vanilla Jokers don't use periods in their descriptions.
+- Improved localization wording.
 
 ## [1.9.4] - 2026-08-17
 ### Changed

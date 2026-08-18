@@ -1,0 +1,16 @@
+{
+    "mods": {
+        "riosodu@qol-bundle": {
+            "manifest": "qol-bundle/manifest.json",
+            "release_prefix": "qol-bundle__"
+        },
+        "riosodu@black-seal": {
+            "manifest": "black-seal/manifest.json",
+            "release_prefix": "black-seal__"
+        },
+        "riosodu@rebalanced-stakes": {
+            "manifest": "rebalanced-stakes/manifest.json",
+            "release_prefix": "rebalanced-stakes__"
+        }
+    }
+}

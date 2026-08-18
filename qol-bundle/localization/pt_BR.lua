@@ -233,12 +233,12 @@ return {
             v_magic_trick_enhanced = {
                 "{C:attention}Cartas de jogar{} na loja podem aparecer",
                 "com {C:attention}melhorias{}, {C:dark_edition}edições{},",
-                "e/ou  {C:attention}selos{}"
+                "e/ou {C:attention}selos{}"
             },
             v_magic_trick_paperback = {
                 "{C:attention}Cartas de jogar{} na loja podem aparecer",
                 "com {C:attention}melhorias{}, {C:dark_edition}edições{},",
-                "{C:attention}selos{}, e/ou {C:attention}clipes de papel{}"
+                "{C:attention}selos{} e {C:attention}clipes de papel{}"
             },
             v_illusion_original = {
                 "{C:attention}Cartas de jogar{} podem",

@@ -1,4 +1,4 @@
-name: PR Checks - Changelog Hygiene
+name: PR Checks - Version Consistency
 
 on:
   pull_request:
@@ -10,11 +10,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Fetch base ref
-        run: git fetch origin "${{ github.base_ref }}"
+      - name: Run Version Sync Script in Validation Mode
+        id: sync
+        run: |
+          echo "🔍 Running full repository sync validation..."
+          ./sync-versions.sh
 
-      - name: Run changelog hygiene check
-        run: ./scripts/check-changelogs.sh "origin/${{ github.base_ref }}"
+      - name: Check for Uncommitted Changes After Validation
+        run: |
+          echo "Checking for uncommitted changes after running the sync script..."
+          if ! git diff --quiet; then
+            echo "::error::The sync-versions.sh script produced changes."
+            echo "This means a manifest.json version or a CHANGELOG.md is out of sync."
+            echo "Please run './sync-versions.sh' locally, commit the resulting changes, and push again."
+            echo "---"
+            echo "Changes detected:"
+            git diff
+            exit 1
+          else
+            echo "✅ Validation successful. Versions are in sync."
+          fi

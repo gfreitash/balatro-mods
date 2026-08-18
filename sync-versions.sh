@@ -266,6 +266,30 @@ version_entry_exists() {
 	grep -q "## \[$version\]" "$changelog_file" 2>/dev/null
 }
 
+# Check if a note exists in ANY versioned block of the changelog.
+# Searches only inside `## [x.y.z]` blocks (skips `## [Unreleased]`).
+# Usage: note_exists_in_any_versioned_block <changelog_file> <note>
+# Returns: 0 if found, 1 if not found
+note_exists_in_any_versioned_block() {
+	local changelog_file="$1"
+	local note="$2"
+
+	# Locate the first `## [x.y.z]` block (skipping `## [Unreleased]`).
+	local first_version_line
+	first_version_line=$(
+		grep -n -m 1 -E "^## \[[0-9]+\.[0-9]+\.[0-9]+\]" "$changelog_file" 2>/dev/null |
+			cut -d: -f1 || true
+	)
+
+	if [ -z "$first_version_line" ]; then
+		return 1
+	fi
+
+	# `grep -F` for a literal-string match; `-q` means quiet.
+	tail -n +"$first_version_line" "$changelog_file" 2>/dev/null |
+		grep -q -F -- "$note"
+}
+
 # Check if specific note exists in version block
 # Usage: note_exists_in_version <changelog_file> <version> <note>
 # Returns: 0 if exists, 1 if not found
@@ -492,11 +516,13 @@ for mod_dir in $MOD_DIRS; do
 	action="sync_only"
 	target_version="$LATEST_VERSION"
 
-	# The common library is embedded in each mod, so a mod needs a bump when its
-	# latest changelog entry doesn't mention the current Riosodu Commons version
+	# The common library is embedded in each mod, so a mod needs a bump when no
+	# version block in its changelog mentions the current Riosodu Commons version.
+	# (Searches all versioned blocks, ignoring `## [Unreleased]` so that pending
+	# notes don't falsely satisfy this check.)
 	update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
 	common_note_present="false"
-	if note_exists_in_version "$changelog_file" "$LATEST_VERSION" "$update_note"; then
+	if note_exists_in_any_versioned_block "$changelog_file" "$update_note"; then
 		common_note_present="true"
 	fi
 

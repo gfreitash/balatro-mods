@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.1] - 2026-08-19
+### Changed
+- Reworded the mod description (manifest and README) to reflect that the mod provides balance and gameplay changes, configurable per feature.
+
 ## [1.10.0] - 2026-08-17
 ### Changed
 - Magic Trick voucher now uses a separate localization string when Paperback is present, showing that shop cards can also appear with paper clips.

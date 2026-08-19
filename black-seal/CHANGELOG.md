@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.9] - 2026-08-19
+### Changed
+- Reworded the mod description and README to clarify the seal is a rare single-use seal that adds negative to a random joker.
+- Documented that the spawn chance is absolute: the remaining seal pool's weights are normalized to stay proportional.
+
 ## [3.3.8] - 2026-08-17
 ### Changed
 - Updated Riosodu Commons to v2.1.0.

@@ -4,6 +4,7 @@ lib/
 .temp/
 .vscode/
 .opencode/
+.bmt.json
 misc/
 .summary*
 CLAUDE.md

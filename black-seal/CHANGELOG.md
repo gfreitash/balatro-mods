@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-08-19
+### Added
+- New "Retrigger Black Seal Effect" option: when disabled, the seal effect only fires on the first scoring of the card, so retriggers (e.g. Red Seal, Seltzer) no longer launch additional events. Enabled by default to preserve previous behavior.
+- New "Keep Black Seals in Hand" option: when disabled, every black seal in the run is removed when one is triggered, including those in hand (e.g. from DNA). Enabled by default to preserve previous behavior.
+- The seal's description now reflects whether black seals in hand are kept or removed.
+
+### Fixed
+- Fixed retriggered effects targeting a joker that a previously queued event already made negative; eligibility is now re-checked when the event executes.
+- The seal is no longer consumed when no eligible joker exists at play time (no events are queued at all).
+
 ## [3.3.9] - 2026-08-19
 ### Changed
 - Reworded the mod description and README to clarify the seal is a rare single-use seal that adds negative to a random joker.

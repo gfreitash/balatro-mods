@@ -21,6 +21,8 @@ return {
             black_seal_spawn_percentage = 'Porcentagem de geração do selo preto',
             override_ectoplasm_effect = 'Sobrescrever efeito do ectoplasma',
             ectoplasm_override_reduces_hand = 'Ectoplasma reduz tamanho da mão',
+            retrigger_black_seal = 'Reativar efeito do Selo Preto',
+            keep_seals_in_hand = 'Não remover selos pretos na mão',
             debug_logging_enabled = 'Ativar registro de debug',
             debug_keybinds_enabled = 'Ativar teclas de debug',
             black_seal_spawn_percentage_info1 = 'Chance percentual (%) de um selo preto ser escolhido aleatoriamente.',
@@ -28,6 +30,8 @@ return {
             black_seal_spawn_percentage_info3 = 'Chance igual com outros selos: %s%%.',
             override_ectoplasm_effect_info = 'Ectoplasma adiciona um selo preto a uma carta.',
             ectoplasm_override_reduces_hand_info = 'Se o ectoplasma deve reduzir o tamanho da mão',
+            retrigger_black_seal_info = 'Se o efeito do Selo Preto deve ser ativado novamente quando a carta for reativada (ex.: Comprovante).',
+            keep_seals_in_hand_info = 'Selos pretos em cartas na sua mão não são removidos quando um é ativado. Desative para remover todos os selos pretos.',
             debug_logging_enabled_info = 'Registra ações detalhadas do mod no console.',
             debug_keybinds_enabled_info = 'Ativa teclas de teste. Requer reinicialização.',
 
@@ -35,6 +39,18 @@ return {
                 "Adiciona {C:dark_edition}Negativo{} a",
                 "um {C:attention}Curinga aleatório,",
                 "{C:red}-#1#{} tamanho da mão",
+            },
+            black_seal_loc_text_keep_in_hand = {
+                'Se você jogar apenas esta carta:',
+                'adicione {C:dark_edition}negativo{} a um {C:attention}Curinga{} aleatório',
+                'remova todos os {C:dark_edition}selos pretos{} que não estão na sua mão',
+                '{C:inactive}(Efeito não é ativado se a carta estiver com desvantagem){}',
+            },
+            black_seal_loc_text_remove_all = {
+                'Se você jogar apenas esta carta:',
+                'adicione {C:dark_edition}negativo{} a um {C:attention}Curinga{} aleatório',
+                'remova todos os {C:dark_edition}selos pretos{} do seu baralho',
+                '{C:inactive}(Efeito não é ativado se a carta estiver com desvantagem){}',
             },
             ectoplasm_loc_text_override = {
                 "Adiciona um {C:dark_edition}Selo Preto{}",

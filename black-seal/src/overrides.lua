@@ -211,4 +211,17 @@ function BSM.utils.update_ectoplasm_text()
     init_localization()
 end
 
+function BSM.utils.update_black_seal_text()
+    local loc_text = localize('black_seal_loc_text_keep_in_hand')
+
+    if not BSM.config.keep_seals_in_hand then
+        loc_text = localize('black_seal_loc_text_remove_all')
+    end
+
+    G.localization.descriptions.Other.blac_black_seal.text = loc_text
+    init_localization()
+end
+
+RIOSODU_SHARED.register_hook('on_game_start', BSM.utils.update_black_seal_text)
+
 RIOSODU_SHARED.register_hook('on_game_start', BSM.utils.update_ectoplasm_text)

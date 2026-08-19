@@ -21,6 +21,8 @@ return {
             black_seal_spawn_percentage = 'Black Seal Spawn Percentage',
             override_ectoplasm_effect = 'Override Ectoplasm Effect',
             ectoplasm_override_reduces_hand = 'Ectoplasm Reduces Hand Size',
+            retrigger_black_seal = 'Retrigger Black Seal Effect',
+            keep_seals_in_hand = 'Don\'t Remove Black Seals in Hand',
             debug_logging_enabled = 'Enable Debug Logging',
             debug_keybinds_enabled = 'Enable Debug Keybinds',
             black_seal_spawn_percentage_info1 = 'Percentage chance (%) for a black seal to be picked randomly.',
@@ -28,6 +30,8 @@ return {
             black_seal_spawn_percentage_info3 = 'Equal chance with other seals: %s%%.',
             override_ectoplasm_effect_info = 'Ectoplasm adds a black seal to a card instead.',
             ectoplasm_override_reduces_hand_info = 'If ectoplasm should reduce hand size',
+            retrigger_black_seal_info = 'If the Black Seal effect should trigger again when the card is retriggered (e.g. Hanging Chad).',
+            keep_seals_in_hand_info = 'Black seals on cards in your hand are not removed when one is triggered. Disable to remove every black seal.',
             debug_logging_enabled_info = 'Logs detailed mod actions to the console.',
             debug_keybinds_enabled_info = 'Enables testing keybinds. Requires restart.',
 
@@ -35,6 +39,18 @@ return {
                 "Add {C:dark_edition}Negative{} to",
                 "a random {C:attention}Joker,",
                 "{C:red}-#1#{} hand size",
+            },
+            black_seal_loc_text_keep_in_hand = {
+                'If you play only this card:',
+                'add {C:dark_edition}negative{} to a random {C:attention}Joker{}',
+                'remove all {C:dark_edition}Black Seals{} not in your hand',
+                '{C:inactive}(Effect does not trigger if card is debuffed){}',
+            },
+            black_seal_loc_text_remove_all = {
+                'If you play only this card:',
+                'add {C:dark_edition}negative{} to a random {C:attention}Joker{}',
+                'remove all {C:dark_edition}Black Seals{} from your deck',
+                '{C:inactive}(Effect does not trigger if card is debuffed){}',
             },
             ectoplasm_loc_text_override = {
                 "Adds a {C:dark_edition}Black Seal{}",

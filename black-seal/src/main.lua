@@ -17,7 +17,9 @@ SMODS.Atlas({
 RIOSODU_SHARED.utils.sendDebugMessage("Atlas registered.")
 
 -- --- Helper function related to the Seal's effect ---
-function BSM.utils.add_negative_random_joker()
+--- Returns all Joker cards currently in the joker area without an edition.
+--- @return Card[]
+function BSM.utils.get_eligible_jokers()
   local eligible_jokers = {}
   for k, v in pairs(G.jokers.cards) do
     -- Assert that the card is a Joker and does not already have an edition
@@ -25,25 +27,31 @@ function BSM.utils.add_negative_random_joker()
       table.insert(eligible_jokers, v)
     end
   end
+  return eligible_jokers
+end
 
-  if #eligible_jokers >= 1 then
-    local eligible_joker_card = pseudorandom_element(eligible_jokers, pseudoseed("blackseal_neg"))
-    if eligible_joker_card then
-      G.E_MANAGER:add_event(Event({
-        trigger = 'after',
-        blocking = true,
-        blockable = true,
-        func = function()
+--- Queues an event that adds a negative edition to a random eligible joker.
+--- Eligibility is re-checked when the event executes, so queued events never
+--- target a joker that a previous event already made negative.
+function BSM.utils.queue_black_seal_negative()
+  G.E_MANAGER:add_event(Event({
+    trigger = 'after',
+    blocking = true,
+    blockable = true,
+    func = function()
+      local eligible_jokers = BSM.utils.get_eligible_jokers()
+      if #eligible_jokers >= 1 then
+        local eligible_joker_card = pseudorandom_element(eligible_jokers, pseudoseed("blackseal_neg"))
+        if eligible_joker_card then
           eligible_joker_card:set_edition({ negative = true }, true)
-          return true
+          RIOSODU_SHARED.utils.sendDebugMessage("Added Negative to a random eligible Joker.")
         end
-      }))
-      RIOSODU_SHARED.utils.sendDebugMessage("Added Negative to a random eligible Joker.")
+      else
+        RIOSODU_SHARED.utils.sendDebugMessage("No eligible Joker found to add Negative edition.")
+      end
       return true
     end
-  end
-  RIOSODU_SHARED.utils.sendDebugMessage("No eligible Joker found to add Negative edition.")
-  return false
+  }))
 end
 
 --- Calculates and directly sets all seal weights in G.P_SEALS based on config percentage.
@@ -105,10 +113,19 @@ SMODS.Seal({
     -- If the not in the proper context and only one not debuffed card played returns early
     if not (context.cardarea == G.play and context.main_scoring and #context.full_hand == 1 and not card.debuff) then return nil end
 
+    -- If retriggering is disabled, only fire on the first scoring of the card
+    if not BSM.config.retrigger_black_seal and card.repetition_trigger then return nil end
+
     RIOSODU_SHARED.utils.sendDebugMessage("Black Seal effect triggered.")
 
-    -- Tries to add a negative edition to a random eligible joker
-    if not BSM.utils.add_negative_random_joker() then return nil end
+    -- Safeguard: if there is no eligible joker at play time, the effect cannot apply,
+    -- so the seal is not consumed and no events are queued
+    if #BSM.utils.get_eligible_jokers() == 0 then
+      RIOSODU_SHARED.utils.sendDebugMessage("No eligible Joker found, Black Seal not consumed.")
+      return nil
+    end
+
+    BSM.utils.queue_black_seal_negative()
 
     local played_card_from_hand_ref = context.full_hand[1]
     G.E_MANAGER:add_event(Event({
@@ -135,8 +152,8 @@ SMODS.Seal({
           local is_in_hand = hand_lookup[playing_card]
           local is_the_played_card = (playing_card == played_card_from_hand_ref)
 
-          -- If the card is in hand but not the played card, skip it
-          if is_in_hand and not is_the_played_card then goto next_playing_card end
+          -- If the card is in hand but not the played card, skip it (unless all seals should be removed)
+          if BSM.config.keep_seals_in_hand and is_in_hand and not is_the_played_card then goto next_playing_card end
 
           -- Finally, remove the seal from the card
           RIOSODU_SHARED.utils.sendDebugMessage("Removing Black Seal from card (was played or not in hand).")

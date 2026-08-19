@@ -40,6 +40,35 @@ function BSM.UI.createConfigTabDefinition()
           })
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+          RIOSODU_SHARED.UIDEF.create_option_toggle({
+            ref_table = BSM.config,
+            ref_value = "retrigger_black_seal",
+            label = localize('retrigger_black_seal'),
+            info = localize('retrigger_black_seal_info'),
+            inactive_colour = G.C.WHITE,
+            active_colour = G.C.BLUE,
+            callback = function()
+              RIOSODU_SHARED.utils.sendDebugMessage("Black Seal retrigger toggled.")
+              SMODS.save_mod_config(BSM.mod)
+            end,
+          })
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+          RIOSODU_SHARED.UIDEF.create_option_toggle({
+            ref_table = BSM.config,
+            ref_value = "keep_seals_in_hand",
+            label = localize('keep_seals_in_hand'),
+            info = localize('keep_seals_in_hand_info'),
+            inactive_colour = G.C.WHITE,
+            active_colour = G.C.BLUE,
+            callback = function()
+              RIOSODU_SHARED.utils.sendDebugMessage("Black Seal keep-in-hand toggled.")
+              BSM.utils.update_black_seal_text()
+              SMODS.save_mod_config(BSM.mod)
+            end,
+          })
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             RIOSODU_SHARED.UIDEF.create_option_toggle({
             ref_table = BSM.config,
             ref_value = "override_ectoplasm_effect",

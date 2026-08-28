@@ -1,5 +1,5 @@
 -- Override Erosion to give Xmult per card below starting amount
-function QOL_BUNDLE.funcs.get_ownership_erosion_xmult()
+function QOL_BUNDLE.funcs.get_ownership_joker_erosion()
     if not QOL_BUNDLE.config.erosion_xmult_enabled then
         return
     end

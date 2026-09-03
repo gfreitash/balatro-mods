@@ -90,9 +90,14 @@ return {
             },
             qolb_loyalty_card_rounds_label = 'Enable Loyalty Card Rounds Mode',
             qolb_loyalty_card_rounds_info = {
-                'Loyalty Card triggers based on rounds (antes)',
-                'instead of hands played for more predictable timing.'
+                'Loyalty Card triggers based on rounds',
+                'instead of hands played. Skipping counts twice,',
+                'but consecutive cheating raises the chance',
+                'of the card being permanently caught'
             },
+            qolb_loyalty_cheated = 'Cheated!',
+            qolb_loyalty_active = 'Active',
+            qolb_loyalty_got_caught = 'Got caught!',
             qolb_splash_joker_retrigger_label = 'Enable Splash Joker Retrigger',
             qolb_splash_joker_retrigger_info = {
                 'Splash Joker additionally retriggers',
@@ -181,11 +186,6 @@ return {
                 "{C:attention}#2#{} hands played",
                 "{C:inactive}#3#",
             },
-            j_loyalty_card_rounds = {
-                "{X:red,C:white} X#1# {} Mult every",
-                "{C:attention}#2#{} rounds",
-                "{C:inactive}#3#",
-            },
             j_splash_original = {
                 "Every {C:attention}played card",
                 "counts in scoring",
@@ -256,7 +256,7 @@ return {
             qolb_castle_checkered_info = {
                 'Castle now counts either',
                 'Clubs and Spades or Hearts and Diamonds.',
-                'Become as reliable as in the checkered deck.'
+                'The group follows the suits in your deck'
             },
             qolb_yorick_multiplier_label = 'Enable Yorick Multiplier Configuration',
             qolb_yorick_multiplier_info = {
@@ -299,6 +299,33 @@ return {
             },
 
             requires_restart = "Requires restart",
+        },
+        v_dictionary = {
+            qolb_loyalty_status_remaining = '#1# rounds left',
+        },
+    },
+    descriptions = {
+        Joker = {
+            j_loyalty_card_rounds = {
+                text = {
+                    "{X:red,C:white} X#1# {} Mult every {C:attention}#2#{} rounds",
+                    "Skipping counts twice — it cheats to see you sooner",
+                    "{C:inactive}#3#{}",
+                },
+            },
+            j_loyalty_card_rounds_cheated = {
+                text = {
+                    "{X:red,C:white} X#1# {} Mult every {C:attention}#2#{} rounds",
+                    "Skipping counts twice — it cheats to see you sooner",
+                    "{C:inactive}#3#{}",
+                    "{C:red}Cheated:{} {C:green}#4# in #5#{} to get caught",
+                },
+            },
+            j_loyalty_card_caught = {
+                text = {
+                    "(got caught)",
+                },
+            },
         },
     },
 }

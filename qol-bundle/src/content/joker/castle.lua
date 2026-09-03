@@ -19,10 +19,8 @@ function QOL_BUNDLE.funcs.get_ownership_joker_castle()
                 }) or localize({
                     type = 'name_text', set='Other', key='paperback_dark_suits'
                 })
-                RIOSODU_SHARED.debug.print_table(G.C.SUITS)
                 color = chosen_group == 'light' and G.C.PAPERBACK_LIGHT_SUIT or G.C.PAPERBACK_DARK_SUIT
 
-                -- RIOSODU_SHARED.utils.sendDebugMessage("Chosen colour: " .. color)
                 return {
                     vars = {
                         center.ability.extra.chip_mod, -- #1# - chip increment
@@ -78,7 +76,6 @@ function QOL_BUNDLE.funcs.get_ownership_joker_castle()
                     end
                 end
 
-                RIOSODU_SHARED.utils.sendDebugMessage("Hello, I'm a castle joker! I'm matching suit: " .. tostring(is_matching_suit))
                 if is_matching_suit then
                     card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
                     return {

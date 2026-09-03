@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.11.0] - 2026-09-03
+### Added
+- Loyalty Card Rounds Mode: Loyalty Card now triggers by rounds instead of hands, becoming active for a whole round after every 3 rounds played. Skipping a blind counts twice toward the next activation, but raises the chance of the card being permanently disabled on that redeem (a clean redeem lowers it again).
+
+### Fixed
+- Castle no longer activates on one extra opposite suit (#10).
+
+### Changed
+- Castle's suit group now follows your deck composition, so suit fixing makes Castle increasingly reliable and a checkered deck always counts the same group.
+
 ## [1.10.2] - 2026-08-28
 ### Fixed
 - Fixed the Erosion rework not applying (ownership function failing to load).

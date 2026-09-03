@@ -14,12 +14,13 @@ function QOL_BUNDLE.funcs.get_ownership_joker_square()
             }
         },
         loc_vars = function(self, info_queue, center)
+            local num, denom = SMODS.get_probability_vars(center, 1, center.ability.extra.odds, 'qolb_square_odds')
             return {
                 vars = {
                     center.ability.extra.chips,
                     center.ability.extra.chip_mod,
-                    ''..(G.GAME and G.GAME.probabilities.normal or 1),
-                    center.ability.extra.odds
+                    num,
+                    denom
                 }
             }
         end,

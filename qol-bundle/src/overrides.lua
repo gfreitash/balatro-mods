@@ -322,6 +322,7 @@ function reset_castle_card()
     end
 
     G.GAME.current_round.castle_card.suit = 'Spades'
+    G.GAME.current_round.castle_card_group = nil
     local valid_castle_cards = {}
 
     for k, v in ipairs(G.playing_cards) do
@@ -331,16 +332,26 @@ function reset_castle_card()
     end
 
     if valid_castle_cards[1] then 
-        -- Enhanced logic: Choose between light suits (Hearts+Diamonds) or dark suits (Clubs+Spades)
-        -- Randomly choose light or dark suits
-        local chosen_group = pseudorandom(pseudoseed('castle_group'..G.GAME.round_resets.ante)) > 0.5 and 'light' or 'dark'
-
-        -- Store which group was chosen for the joker logic and UI display
-        G.GAME.current_round.castle_card_group = chosen_group
-
-        -- Keep the original suit assignment for compatibility, but it won't be used in the logic
+        -- Enhanced logic: The suit group follows the deck composition, so Castle
+        -- scales with suit fixing and is always as reliable as in the checkered deck.
         local castle_card = pseudorandom_element(valid_castle_cards, pseudoseed('cas'..G.GAME.round_resets.ante))
         G.GAME.current_round.castle_card.suit = castle_card.base.suit
+
+        -- Derive the light/dark group from the picked card's suit, so the vanilla
+        -- Castle fallback (matching castle_card.suit) can never leave the group.
+        local chosen_group
+        if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+            if PB_UTIL.is_suit(castle_card, 'light') then
+                chosen_group = 'light'
+            elseif PB_UTIL.is_suit(castle_card, 'dark') then
+                chosen_group = 'dark'
+            end
+        end
+        if not chosen_group then
+            chosen_group = (castle_card.base.suit == 'Hearts' or castle_card.base.suit == 'Diamonds') and 'light' or 'dark'
+        end
+
+        G.GAME.current_round.castle_card_group = chosen_group
     end
 end
 

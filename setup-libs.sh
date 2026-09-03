@@ -111,6 +111,21 @@ setup_symlink() {
     fi
 }
 
+setup_smods_in_mods() {
+    echo ""
+    log_info "Syncing SMods to the Balatro Mods folder..."
+    local link_name="$LIB_DIR/mod_folder"
+
+    if [ ! -d "$link_name" ]; then
+        log_warn "Balatro Mods folder not found at $link_name."
+        log_warn "Skipping SMods sync. Please run setup_symlink or Balatro at least once."
+        return
+    fi
+
+    rsync -a --delete "$LIB_DIR/smods/" "$link_name/smods/"
+    log_success "SMods synced to $link_name/smods."
+}
+
 # --- Main Execution ---
 main() {
     check_prerequisites
@@ -131,6 +146,8 @@ main() {
         "https://github.com/Steamodded/smods/archive/refs/heads/main.zip" \
         "$LIB_DIR/smods" \
         "smods-main"
+
+    setup_smods_in_mods
 
     setup_zip_lib "SMods Wiki" \
         "https://github.com/Steamodded/Wiki/archive/refs/heads/master.zip" \

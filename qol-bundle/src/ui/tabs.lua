@@ -221,6 +221,16 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Loyalty Card Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'loyalty_card_rounds_enabled',
+                label = G.localization.misc.dictionary.qolb_loyalty_card_rounds_label,
+                info = G.localization.misc.dictionary.qolb_loyalty_card_rounds_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             -- Yorick Multiplier Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,

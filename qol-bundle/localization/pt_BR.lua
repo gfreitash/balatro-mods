@@ -90,9 +90,14 @@ return {
             },
             qolb_loyalty_card_rounds_label = 'Habilitar Modo Rodadas do Carta de Lealdade',
             qolb_loyalty_card_rounds_info = {
-                'Carta de Lealdade é ativada com base em rodadas (apostas)',
-                'ao invés de mãos jogadas para timing mais previsível.'
+                'O Carta de Lealdade ativa com base em rodadas',
+                'em vez de mãos jogadas. Pular conta em dobro,',
+                'mas trapacear seguido aumenta a chance',
+                'de a carta ser pega permanentemente'
             },
+            qolb_loyalty_cheated = 'Trapaceou!',
+            qolb_loyalty_active = 'Ativo',
+            qolb_loyalty_got_caught = 'Foi pego!',
             qolb_splash_joker_retrigger_label = 'Habilitar Reativação do Splash',
             qolb_splash_joker_retrigger_info = {
                 'O Splash Joker adicionalmente reativa',
@@ -181,11 +186,6 @@ return {
                 "{C:attention}#2#{} mãos jogadas",
                 "{C:inactive}#3#",
             },
-            j_loyalty_card_rounds = {
-                "{X:red,C:white} X#1# {} Multi a cada",
-                "{C:attention}#2#{} rodadas",
-                "{C:inactive}#3#",
-            },
             j_splash_original = {
                 "Toda {C:attention}carta jogada",
                 "conta na pontuação",
@@ -257,7 +257,7 @@ return {
             qolb_castle_checkered_info = {
                 'Castelo agora conta ou',
                 'Paus e Espadas ou Copas e Ouros.',
-                'Consistente como no baralho xadrez.'
+                'O grupo acompanha os naipes do seu baralho'
             },
             qolb_yorick_multiplier_label = 'Ativar Configuração do Multiplicador do Yorick',
             qolb_yorick_multiplier_info = {
@@ -300,6 +300,33 @@ return {
             },
 
             requires_restart = "Requer reinicialização",
+        },
+        v_dictionary = {
+            qolb_loyalty_status_remaining = '#1# rodadas restantes',
+        },
+    },
+    descriptions = {
+        Joker = {
+            j_loyalty_card_rounds = {
+                text = {
+                    "{X:red,C:white} X#1# {} de Mult a cada {C:attention}#2#{} rodadas",
+                    "Pular conta em dobro — ele trapaceia para te ver antes",
+                    "{C:inactive}#3#{}",
+                },
+            },
+            j_loyalty_card_rounds_cheated = {
+                text = {
+                    "{X:red,C:white} X#1# {} de Mult a cada {C:attention}#2#{} rodadas",
+                    "Pular conta em dobro — ele trapaceia para te ver antes",
+                    "{C:inactive}#3#{}",
+                    "{C:red}Trapaceou:{} {C:green}#4# em #5#{} de ser pego",
+                },
+            },
+            j_loyalty_card_caught = {
+                text = {
+                    "(foi pego)",
+                },
+            },
         },
     },
 }

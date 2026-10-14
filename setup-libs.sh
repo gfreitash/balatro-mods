@@ -12,7 +12,7 @@ log_error() { echo -e "${C_RED}ERROR: $1${C_NC}"; }
 check_prerequisites() {
     log_info "Checking for required tools..."
     local missing_tools=0
-    for tool in curl unzip 7z rsync; do
+    for tool in curl unzip 7z rsync jq; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             log_error "Required tool '$tool' is not installed."
             missing_tools=$((missing_tools + 1))
@@ -111,6 +111,39 @@ setup_symlink() {
     fi
 }
 
+setup_smods() {
+    echo ""
+    log_info "Setting up SMods (latest Thunderstore release)..."
+
+    local api_url="https://thunderstore.io/api/experimental/package/Steamodded/Steamodded/"
+    local smods_version
+    smods_version=$(curl -sL "$api_url" | jq -r '.latest.version_number // empty')
+
+    if [ -z "$smods_version" ]; then
+        log_error "Could not resolve the latest SMods release version from Thunderstore."
+        exit 1
+    fi
+    log_info "Latest SMods release: ${smods_version}"
+
+    local download_url="https://thunderstore.io/package/download/Steamodded/Steamodded/${smods_version}/"
+    local zip_file="$LIB_DIR/smods.zip"
+    local target_dir="$LIB_DIR/smods"
+
+    log_info "Downloading SMods ${smods_version} from ${download_url}..."
+    curl -L "$download_url" -o "$zip_file"
+
+    log_info "Extracting release into ${target_dir}..."
+    rm -rf "$target_dir"
+    mkdir -p "$target_dir"
+    unzip -oq "$zip_file" -d "$target_dir"
+    rm "$zip_file"
+
+    if [ -f "$target_dir/version.lua" ]; then
+        log_info "Installed SMods version: $(sed -n 's/return "\(.*\)"/\1/p' "$target_dir/version.lua")"
+    fi
+    log_success "SMods release setup complete."
+}
+
 setup_smods_in_mods() {
     echo ""
     log_info "Syncing SMods to the Balatro Mods folder..."
@@ -142,10 +175,7 @@ main() {
         "$LIB_DIR/love2d" \
         "love2d-main"
 
-    setup_zip_lib "SMods" \
-        "https://github.com/Steamodded/smods/archive/refs/heads/main.zip" \
-        "$LIB_DIR/smods" \
-        "smods-main"
+    setup_smods
 
     setup_smods_in_mods
 

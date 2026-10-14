@@ -1,5 +1,37 @@
 QOL_BUNDLE.utils = QOL_BUNDLE.utils or {}
 
+-- Resolve a suit key to its light/dark shade. Prefers Steamodded's shade
+-- metadata (vanilla suits and modded ones like Paperback's Stars/Crowns),
+-- then Paperback's suit lists, then the vanilla red/black groups.
+function QOL_BUNDLE.utils.get_suit_shade(suit)
+    if SMODS.Suits and SMODS.Suits[suit] and SMODS.Suits[suit].shade then
+        return SMODS.Suits[suit].shade
+    end
+
+    if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+        for _, v in ipairs(PB_UTIL.light_suits) do
+            if v == suit then return 'light' end
+        end
+        for _, v in ipairs(PB_UTIL.dark_suits) do
+            if v == suit then return 'dark' end
+        end
+    end
+
+    if suit == 'Hearts' or suit == 'Diamonds' then return 'light' end
+    if suit == 'Spades' or suit == 'Clubs' then return 'dark' end
+    return nil
+end
+
+-- Whether a playing card counts as being of the given light/dark shade.
+-- Wild Cards match either shade; suitless cards match neither.
+function QOL_BUNDLE.utils.card_is_shade(card, shade, bypass_debuff)
+    if not card or not card.base then return false end
+    if card.debuff and not bypass_debuff then return false end
+    if SMODS.has_no_suit(card) then return false end
+    if SMODS.has_any_suit(card) then return true end
+    return QOL_BUNDLE.utils.get_suit_shade(card.base.suit) == shade
+end
+
 -- Try to apply enhancement using SMODS poll system (now with reroll logic for Illusion)
 function QOL_BUNDLE.utils.try_apply_enhancement(card, seed_key)
     if not card then return end

@@ -60,8 +60,8 @@ function QOL_BUNDLE.funcs.get_ownership_joker_castle()
 
                 -- Check Paperback compatibility for custom light/dark suits
                 if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
-                    -- Use Paperback's is_suit function
-                    is_matching_suit = PB_UTIL.is_suit(context.other_card, chosen_group)
+                    -- Use the suit shade metadata
+                    is_matching_suit = QOL_BUNDLE.utils.card_is_shade(context.other_card, chosen_group)
                 else
                     -- Default logic when Paperback is not available
                     local light_suits = {'Hearts', 'Diamonds'}

@@ -12,20 +12,6 @@ QOL_BUNDLE.original.Card_set_ability = Card.set_ability
 QOL_BUNDLE.original.create_card_for_shop = create_card_for_shop
 QOL_BUNDLE.original.reset_castle_card = reset_castle_card
 
--- Store Paperback's is_suit function if it exists to avoid infinite recursion
--- TODO: This is breaking the 'Da Capo' joker, find out why
-if PB_UTIL and PB_UTIL.is_suit then
-    QOL_BUNDLE.original.PB_UTIL_is_suit = PB_UTIL.is_suit
-
-    -- Override PB_UTIL.is_suit to use original Card:is_suit
-    function PB_UTIL.is_suit(card, type)
-        for _, v in ipairs(type == 'light' and PB_UTIL.light_suits or PB_UTIL.dark_suits) do
-            if QOL_BUNDLE.original.Card_is_suit(card, v) then return true end
-        end
-        return false
-    end
-end
-
 -- Override Card:is_suit with wildcard and blurred joker overhaul.
 -- Base cases (suitless, any-suit, smeared, modded suits) delegate to the
 -- modern SMODS-aware implementation; the wildcard fix only intercepts the
@@ -58,22 +44,26 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
         return not flush_calc or not self.debuff
     end
 
-    -- Enhanced Smeared Joker logic: Use Paperback's light/dark suits when available
+    -- Enhanced Smeared Joker logic: Use SMODS suit shade metadata when available
     if next(find_joker('Smeared Joker')) then
-        if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
-            -- Use Paperback's enhanced light/dark suit logic
-            local is_base_light = PB_UTIL.is_suit(self, 'light')
-            local is_target_light = false
+        -- Suitless cards (e.g. Stone Cards) never match a suit
+        if SMODS.has_no_suit(self) then
+            return false
+        end
 
-            -- Check if target suit is light
-            for _, light_suit in ipairs(PB_UTIL.light_suits) do
-                if suit == light_suit then
-                    is_target_light = true
-                    break
-                end
-            end
+        if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
+            local base_shade = QOL_BUNDLE.utils.get_suit_shade(self.base.suit)
+            local target_shade = QOL_BUNDLE.utils.get_suit_shade(suit)
 
             -- Cards match if both are light suits or both are dark suits
+            if base_shade and target_shade then
+                return base_shade == target_shade
+            end
+
+            -- Unknown shade metadata: fall back to the legacy light/dark grouping
+            local is_base_light = base_shade == 'light'
+            local is_target_light = target_shade == 'light'
+
             if is_base_light == is_target_light then
                 return true
             end
@@ -341,9 +331,9 @@ function reset_castle_card()
         -- Castle fallback (matching castle_card.suit) can never leave the group.
         local chosen_group
         if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
-            if PB_UTIL.is_suit(castle_card, 'light') then
+            if QOL_BUNDLE.utils.card_is_shade(castle_card, 'light') then
                 chosen_group = 'light'
-            elseif PB_UTIL.is_suit(castle_card, 'dark') then
+            elseif QOL_BUNDLE.utils.card_is_shade(castle_card, 'dark') then
                 chosen_group = 'dark'
             end
         end

@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.2] - 2026-10-14
+### Fixed
+- Fixed a crash on run start with Paperback 0.9.0+ when the Castle rework was enabled: Paperback removed `PB_UTIL.is_suit`, so suit shade checks now use Steamodded's suit shade metadata (`SMODS.Suits`) with Paperback fallbacks.
+- Smeared Joker with the wildcard fix no longer treats light and dark suits as the same suit (e.g. a Spades card matching a Stars card), and suitless cards (e.g. Stone Cards) no longer match any suit.
+- Removed the legacy `PB_UTIL.is_suit` wrapper that broke Paperback's Da Capo joker.
+
 ## [1.11.1] - 2026-10-13
 ### Changed
 - Migrated distribution to ThunderStore (`Riosodu-QoL_Bundle`); GitHub releases now ship a ThunderStore-compatible package.

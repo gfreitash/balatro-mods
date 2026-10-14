@@ -57,7 +57,9 @@ jobs:
       - name: Check if version is already published
         id: check
         run: |
-          API_URL="https://thunderstore.io/api/experimental/package/${NAMESPACE}/${PACKAGE_NAME}/"
+          # Cache-buster: Cloudflare caches 404s, which would make a freshly
+          # created package look unpublished on immediate re-runs.
+          API_URL="https://thunderstore.io/api/experimental/package/${NAMESPACE}/${PACKAGE_NAME}/?cb=$(date +%s)"
           HTTP_STATUS=$(curl -s -o /tmp/package.json -w "%{http_code}" "$API_URL")
 
           if [ "$HTTP_STATUS" = "404" ]; then

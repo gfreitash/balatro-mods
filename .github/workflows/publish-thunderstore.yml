@@ -119,7 +119,8 @@ jobs:
             exit 1
           fi
           echo "🚀 Publishing ${NAMESPACE}-${PACKAGE_NAME} v${VERSION} to Thunderstore..."
+          # Version/name/namespace come from the manifest.json inside the prebuilt
+          # package; tcli 0.2.4 rejects --package-version together with --file.
           tcli publish \
             --config-path "$TOML_FILE" \
-            --package-version "$VERSION" \
             --file "dist/$ZIP_NAME"

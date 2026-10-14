@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-10-13
+### Changed
+- Migrated distribution to ThunderStore (`Riosodu-Black_Seal`); GitHub releases now ship a ThunderStore-compatible package.
+- Added explicit Steamodded and Lovely dependencies to the mod metadata.
+
 ## [3.4.0] - 2026-08-19
 ### Added
 - New "Retrigger Black Seal Effect" option: when disabled, the seal effect only fires on the first scoring of the card, so retriggers (e.g. Red Seal, Seltzer) no longer launch additional events. Enabled by default to preserve previous behavior.

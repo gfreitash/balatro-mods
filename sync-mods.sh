@@ -13,6 +13,10 @@ check_prerequisites() {
         log_error "Required tool 'rsync' is not installed. Please install it."
         exit 1
     fi
+    if ! command -v jq >/dev/null 2>&1; then
+        log_error "Required tool 'jq' is not installed. Please install it."
+        exit 1
+    fi
 }
 
 # --- Sync Functions ---
@@ -41,33 +45,40 @@ sync_all_mods() {
     local dest_path="$1"
     log_info "Syncing mods to: $dest_path"
 
-    # Find all directories containing a manifest.json, excluding _common and lib
+    # Find all directories containing a smods.json (Steamodded metadata), excluding _common and lib
     local mod_dirs
-    mod_dirs=$(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;)
+    mod_dirs=$(find . -maxdepth 2 -name "smods.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;)
 
     if [ -z "$mod_dirs" ]; then
-        log_warn "No mod directories with a manifest.json found to sync."
+        log_warn "No mod directories with a smods.json found to sync."
         return
     fi
 
     for dir in $mod_dirs; do
         local mod_name
         mod_name=$(basename "$dir")
-        echo -e "  · Syncing ${C_YELLOW}${mod_name}${C_NC}"
+        # Install under the ThunderStore package name so local testing matches
+        # ThunderStore-manager installs (Mods/<PackageName>/).
+        local dest_name
+        dest_name=$(jq -r '.name // empty' "$dir/manifest.json" 2>/dev/null || true)
+        if [ -z "$dest_name" ]; then
+            dest_name="$mod_name"
+        fi
+        echo -e "  · Syncing ${C_YELLOW}${mod_name}${C_NC} → ${dest_name}"
 
         # Sync the mod directory itself
-        rsync -a --delete --exclude='*.tmp' "$dir/" "$dest_path/$mod_name/"
+        rsync -a --delete --exclude='*.tmp' "$dir/" "$dest_path/$dest_name/"
 
         # Sync the common library into the mod's destination folder
         if [ -d "_common" ]; then
-            rsync -a --delete "_common/" "$dest_path/$mod_name/common/"
+            rsync -a --delete "_common/" "$dest_path/$dest_name/common/"
             # Copy lovely patches from common to mod's lovely directory with common_ prefix
             if [ -d "_common/lovely" ]; then
-                mkdir -p "$dest_path/$mod_name/lovely"
+                mkdir -p "$dest_path/$dest_name/lovely"
                 for patch_file in _common/lovely/*.toml; do
                     if [ -f "$patch_file" ]; then
                         base_name=$(basename "$patch_file")
-                        cp "$patch_file" "$dest_path/$mod_name/lovely/common_$base_name"
+                        cp "$patch_file" "$dest_path/$dest_name/lovely/common_$base_name"
                     fi
                 done
             fi

@@ -21,9 +21,9 @@ When a card with black seal is used, it will apply **negative edition** to a ran
 
 ## Installation
 
-1. **Requirements**: Download and install [Steamodded](https://github.com/Steamodded/smods)
-2. **Download**: Get the latest version of Black Seal from the releases
-3. **Install Location**: Extract to `%appdata%\Balatro\Mods` on Windows
+1. **Requirements**: [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector) (mod managers install both automatically)
+2. **Recommended**: Install from [Thunderstore](https://thunderstore.io/c/balatro/p/Riosodu/Black_Seal/) using the Thunderstore Mod Manager or r2modman
+3. **Manual**: Download the latest release and extract its contents into a new folder inside your Balatro `Mods` directory (e.g. `Mods/Black_Seal` on Windows: `%appdata%\Balatro\Mods`) — do not extract directly into the `Mods` root
 4. **Configuration**: Adjust spawn rates and Ectoplasm behavior through the mod settings
 
 ## Configuration Options

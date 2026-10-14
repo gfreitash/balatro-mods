@@ -1,0 +1,125 @@
+name: Publish to Thunderstore
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to publish (e.g. qol-bundle__v1.11.1)"
+        required: true
+        type: string
+
+jobs:
+  publish-thunderstore:
+    name: Publish package to Thunderstore
+    # This job MUST run in the production-main environment to access TCLI_AUTH_TOKEN
+    environment: production-main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # For downloading the release asset
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse tag and package metadata
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          if [[ ! "$TAG_NAME" =~ ^([a-z0-9-]+)__v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "::error::Invalid tag format '${TAG_NAME}'. Expected '<mod-dir>__v<major>.<minor>.<patch>'."
+            exit 1
+          fi
+          MOD_NAME="${BASH_REMATCH[1]}"
+          VERSION="${BASH_REMATCH[2]}"
+          TOML_FILE="thunderstore/${MOD_NAME}.toml"
+
+          if [ ! -f "$TOML_FILE" ]; then
+            echo "::error::Missing Thunderstore config: ${TOML_FILE}"
+            exit 1
+          fi
+
+          NAMESPACE=$(sed -n 's/^namespace[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$TOML_FILE" | head -n 1)
+          PACKAGE_NAME=$(sed -n 's/^name[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$TOML_FILE" | head -n 1)
+
+          if [ -z "$NAMESPACE" ] || [ -z "$PACKAGE_NAME" ]; then
+            echo "::error::Could not read namespace/name from ${TOML_FILE}"
+            exit 1
+          fi
+
+          {
+            echo "MOD_NAME=${MOD_NAME}"
+            echo "VERSION=${VERSION}"
+            echo "TOML_FILE=${TOML_FILE}"
+            echo "NAMESPACE=${NAMESPACE}"
+            echo "PACKAGE_NAME=${PACKAGE_NAME}"
+            echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip"
+          } >> "$GITHUB_ENV"
+
+      - name: Check if version is already published
+        id: check
+        run: |
+          API_URL="https://thunderstore.io/api/experimental/package/${NAMESPACE}/${PACKAGE_NAME}/"
+          HTTP_STATUS=$(curl -s -o /tmp/package.json -w "%{http_code}" "$API_URL")
+
+          if [ "$HTTP_STATUS" = "404" ]; then
+            echo "📦 Package ${NAMESPACE}-${PACKAGE_NAME} does not exist yet. It will be created."
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Unexpected response from Thunderstore API (HTTP ${HTTP_STATUS})"
+            cat /tmp/package.json
+            exit 1
+          fi
+
+          LATEST=$(jq -r '.latest.version_number // empty' /tmp/package.json)
+          echo "Latest published version: ${LATEST:-none}"
+
+          if [ "$LATEST" = "$VERSION" ]; then
+            echo "✅ Version ${VERSION} is already published. Thunderstore packages are immutable, nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$LATEST" ] && [ "$(printf '%s\n%s\n' "$VERSION" "$LATEST" | sort -V | tail -n 1)" != "$VERSION" ]; then
+            echo "::error::Version ${VERSION} is older than the published version ${LATEST}; Thunderstore only accepts newer versions."
+            exit 1
+          fi
+
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up .NET
+        if: steps.check.outputs.publish == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Install Thunderstore CLI
+        if: steps.check.outputs.publish == 'true'
+        run: dotnet tool install --global tcli --version 0.2.4
+
+      - name: Download release package
+        if: steps.check.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ inputs.tag_name }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ZIP_NAME" \
+            --dir dist
+
+      - name: Publish to Thunderstore
+        if: steps.check.outputs.publish == 'true'
+        env:
+          TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
+        run: |
+          if [ -z "${TCLI_AUTH_TOKEN:-}" ]; then
+            echo "::error::TCLI_AUTH_TOKEN is not set. Add a Thunderstore service account token as a secret in the 'production-main' environment."
+            exit 1
+          fi
+          echo "🚀 Publishing ${NAMESPACE}-${PACKAGE_NAME} v${VERSION} to Thunderstore..."
+          tcli publish \
+            --config-path "$TOML_FILE" \
+            --package-version "$VERSION" \
+            --file "dist/$ZIP_NAME"

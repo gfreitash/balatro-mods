@@ -8,11 +8,19 @@ Welcome to my Balatro mods collection! This repository houses all of my mods for
 
 ### Getting Started with Mods
 
-There are several ways to install and use these mods:
+The easiest way to install these mods is through [Thunderstore](https://thunderstore.io/c/balatro/):
 
-1.  **Balatro Mod Manager (Recommended)**: The easiest way to install mods from this repository is through the [Balatro Mod Manager](https://github.com/skyline69/balatro-mod-manager/). This tool provides a user-friendly interface for browsing, installing, and managing mods.
+1.  **Thunderstore Mod Manager / r2modman (Recommended)**: Install a mod manager from [get.thunderstore.io](https://get.thunderstore.io/), select Balatro, and search for `Riosodu`. Steamodded and Lovely are installed automatically as dependencies.
 
-2.  **Manual Installation**: You can also download mods directly from the releases tab of this repository. Each mod has its own folder with specific installation instructions in its README file.
+2.  **Manual Installation**: You can also download the latest package from the releases tab of this repository. Thunderstore packages are flat zips: extract the contents into a new folder inside your Balatro `Mods` directory (e.g. `Mods/QoL_Bundle`), and make sure [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector) are installed.
+
+### Mods
+
+| Mod | Thunderstore | Description |
+| --- | --- | --- |
+| QoL Bundle | [`Riosodu-QoL_Bundle`](https://thunderstore.io/c/balatro/p/Riosodu/QoL_Bundle/) | Balance and gameplay changes, configurable per feature |
+| Black Seal | [`Riosodu-Black_Seal`](https://thunderstore.io/c/balatro/p/Riosodu/Black_Seal/) | Adds a rare single use seal that adds negative to a random joker |
+| Rebalanced Stakes | [`Riosodu-Rebalanced_Stakes`](https://thunderstore.io/c/balatro/p/Riosodu/Rebalanced_Stakes/) | Reworks the higher stakes for a smoother difficulty curve |
 
 ### Important Notes for Players
 
@@ -61,15 +69,23 @@ This repository uses a CI/CD pipeline to automate versioning and releases. To co
 To test your changes locally before committing:
 
 1.  **Install Prerequisites**:
-    -   Ensure you have `rsync`, `jq` and `7zip` installed.
+    -   Ensure you have `rsync`, `jq`, `zip` and `7zip` installed.
     -   Install Balatro using Steam with compatibility mode (Proton).
 2.  **Setup Lovely Injector**:
     -   Install the Lovely Injector by copying the DLL to your Balatro game folder.
 3.  **Sync and Run**:
-    -   Run `./sync-mods.sh && steam steam://rungameid/2379780` to sync your local changes to the game's mod folder and launch Balatro.
+    -   Run `./sync-mods.sh && steam steam://rungameid/2379780` to sync your local changes to the game's mod folder and launch Balatro. Mods are installed under their Thunderstore package name (e.g. `Mods/QoL_Bundle`).
+
+To test the exact Thunderstore artifact (including the bundled shared library and lovely patches):
+
+```bash
+./scripts/build-thunderstore-package.sh qol-bundle
+# then install dist/qol-bundle__vX.Y.Z.zip via your mod manager's "Install from file" option,
+# or extract it into a new folder inside your Balatro Mods directory
+```
 
 ##### _Note: If you are on Windows, you can use WSL to run the above commands, or manually copy the files to your Balatro game folder. You can also contribute by creating a powershell script that performs the same actions._
 
 ---
 
-Check the releases tab for each mod download. Installation instructions can be found in each mod folder's README.
+Check the releases tab for each mod download, or install everything from [Thunderstore](https://thunderstore.io/c/balatro/). Installation instructions can be found in each mod folder's README.

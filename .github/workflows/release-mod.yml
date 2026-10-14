@@ -9,7 +9,7 @@ on:
 
 jobs:
   prepare-releases:
-    # This job MUST run in the production-main environment to access PAT_TOKEN
+    # Runs in the production-main environment for release gating/protection rules
     environment: production-main
     runs-on: ubuntu-latest
     # Permissions required for Git operations (fetch tags, create tags, push tags)
@@ -41,12 +41,12 @@ jobs:
           declare -A mods_for_release_map
           git fetch --tags --force # Ensure all remote tags are fetched
 
-          # Find all manifest.json files in top-level mod directories
-          MOD_DIRS=$(find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;)
+          # Find all smods.json files in top-level mod directories
+          MOD_DIRS=$(find . -maxdepth 2 -name "smods.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;)
 
           for manifest_path in $MOD_DIRS; do
             mod_dir=$(basename "$manifest_path")
-            version=$(jq -r '.version' "$manifest_path/manifest.json") # Corrected path here
+            version=$(jq -r '.version' "$manifest_path/smods.json")
 
             if [ -z "$version" ] || [ "$version" == "null" ]; then
               echo "⚠️ Could not read version for ${mod_dir}, from ${manifest_path}. Skipping."
@@ -119,15 +119,10 @@ jobs:
           VERSION="${{ matrix.mod_release.version }}"
           TAG_NAME="${{ matrix.mod_release.tag_name }}" # This is the versioned tag, e.g., qol-bundle__v1.1.1
 
-          # CRITICAL CHANGE: LATEST_TAG is now a simple mod name + __latest
-          LATEST_TAG="${MOD_NAME}__latest" # This will be e.g., qol-bundle__latest
-
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "MOD_NAME=$MOD_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV # Versioned zip
-          echo "LATEST_ZIP_NAME=${MOD_NAME}.zip" >> $GITHUB_ENV # Generic latest zip name
+          echo "ZIP_NAME=${MOD_NAME}__v${VERSION}.zip" >> $GITHUB_ENV # ThunderStore package zip
 
       - name: Check if mod folder exists
         run: |
@@ -136,40 +131,9 @@ jobs:
             exit 1
           fi
 
-      - name: Create _common folder if it doesn't exist
+      - name: Build ThunderStore package
         run: |
-          if [ ! -d "_common" ]; then
-            echo "Warning: _common folder does not exist, creating empty folder"
-            mkdir -p _common
-          fi
-
-      - name: Create temporary directory structure for zipping
-        run: |
-          mkdir -p temp/$MOD_NAME/common
-          cp -r $MOD_NAME/* temp/$MOD_NAME/
-          if [ -d "_common" ] && [ "$(ls -A _common)" ]; then
-            cp -r _common/* temp/$MOD_NAME/common/
-
-            # Copy lovely patches from common to mod's lovely directory with common_ prefix
-            if [ -d "_common/lovely" ]; then
-              mkdir -p temp/$MOD_NAME/lovely
-              for patch_file in _common/lovely/*.toml; do
-                if [ -f "$patch_file" ]; then
-                  base_name=$(basename "$patch_file")
-                  cp "$patch_file" "temp/$MOD_NAME/lovely/common_$base_name"
-                fi
-              done
-            fi
-          fi
-
-      - name: Create release zips
-        run: |
-          cd temp
-          # Create versioned zip (e.g., qol-bundle__v1.1.1.zip)
-          zip -r "../$ZIP_NAME" "$MOD_NAME"
-          # Create generic latest zip (e.g., qol-bundle.zip)
-          zip -r "../$LATEST_ZIP_NAME" "$MOD_NAME"
-          cd ..
+          ./scripts/build-thunderstore-package.sh "$MOD_NAME" "$ZIP_NAME"
 
       - name: Extract Changelog Entry for Release Notes
         id: extract_changelog
@@ -217,44 +181,24 @@ jobs:
             ${{ steps.extract_changelog.outputs.changelog_body }}
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use PAT_TOKEN for release creation via environment
-
-      - name: Create/Update (Generic) Latest GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.LATEST_TAG }} # CRITICAL CHANGE: This is now e.g. qol-bundle__latest
-          files: ${{ env.LATEST_ZIP_NAME }}
-          name: ${{ env.MOD_NAME }} (Latest)
-          body: |
-            **Latest Version:** v${{ env.VERSION }}
-
-            ---
-            **Changelog for v${{ env.VERSION }}:**
-            ${{ steps.extract_changelog.outputs.changelog_body }}
-
-            ---
-            For version-specific releases, see: [${{ env.MOD_NAME }} v${{ env.VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_NAME }})
-          prerelease: false
-        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Note: release creation uses the default GITHUB_TOKEN; no PAT is required.
 
       - name: Upload artifacts (for debugging/manual download)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.MOD_NAME }}-releases
-          path: |
-            ${{ env.ZIP_NAME }}
-            ${{ env.LATEST_ZIP_NAME }}
+          path: ${{ env.ZIP_NAME }}
 
-      - name: Dispatch Publish Mod to Mod Index Workflow
+      - name: Dispatch Publish to Thunderstore Workflow
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This needs to be PAT_TOKEN for cross-repo dispatch
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Same-repo dispatch only needs actions: write
           TAG_NAME: ${{ env.TAG_NAME }} # Pass the specific version tag
         run: |
-          echo "🚀 Dispatching 'Publish Mod' workflow for ${{ env.TAG_NAME }}..."
-          gh workflow run publish-mod.yml \
+          echo "🚀 Dispatching 'Publish to Thunderstore' workflow for ${{ env.TAG_NAME }}..."
+          gh workflow run publish-thunderstore.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
             -f tag_name="$TAG_NAME"
 
-          echo "✅ 'Publish Mod' workflow dispatched for ${{ env.TAG_NAME }}."
+          echo "✅ 'Publish to Thunderstore' workflow dispatched for ${{ env.TAG_NAME }}."

@@ -59,7 +59,7 @@ fi
 # Normalize: strip the leading "./" so paths match `git diff --name-only` output
 # (which never includes the "./" prefix).
 MOD_DIRS=$(
-	find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \; |
+	find . -maxdepth 2 -name "smods.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \; |
 		sed 's|^\./||'
 )
 

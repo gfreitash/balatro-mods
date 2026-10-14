@@ -34,9 +34,9 @@ Balance and gameplay changes that feels good, configurable per feature. Bad mod 
 
 ## Installation
 
-1.  **Requirements**: Download and install [Steamodded](https://github.com/Steamodded/smods)
-2.  **Download**: Get the latest version of QOL Bundle from the releases
-3.  **Install Location**: Extract to `%appdata%\Balatro\Mods` on Windows
+1.  **Requirements**: [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector) (mod managers install both automatically)
+2.  **Recommended**: Install from [Thunderstore](https://thunderstore.io/c/balatro/p/Riosodu/QoL_Bundle/) using the Thunderstore Mod Manager or r2modman
+3.  **Manual**: Download the latest release and extract its contents into a new folder inside your Balatro `Mods` directory (e.g. `Mods/QoL_Bundle` on Windows: `%appdata%\Balatro\Mods`) — do not extract directly into the `Mods` root
 
 ## Support
 

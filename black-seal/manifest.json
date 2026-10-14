@@ -1,13 +1,10 @@
 {
-  "id": "black_seal",
-  "name": "Black Seal",
-  "author": [
-    "Infarctus",
-    "Riosodu"
-  ],
+  "name": "Black_Seal",
+  "version_number": "3.4.1",
+  "website_url": "https://github.com/gfreitash/balatro-mods",
   "description": "Adds a rare single use seal that adds negative to a random joker",
-  "website": "https://www.nexusmods.com/balatro/mods/411",
-  "prefix": "blac",
-  "main_file": "src/init.lua",
-  "version": "3.4.0"
+  "dependencies": [
+    "Steamodded-Steamodded-26.829.0",
+    "Thunderstore-lovely-0.10.0"
+  ]
 }

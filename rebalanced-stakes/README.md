@@ -23,9 +23,9 @@ Instead of introducing entirely new harsh mechanics early on, this mod shifts ex
         - **Increased Run Length:** The Final Ante required to win is increased to **Ante 9** _(up from Ante 8)_
 
 ## Installation
-1. **Requirements**: Download and install [Steamodded](https://github.com/Steamodded/smods)
-2. **Download**: Get the latest version of Rebalanced Stakes from the releases
-3. **Install Location**: Extract to `%appdata%\Balatro\Mods` on Windows
+1. **Requirements**: [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector) (mod managers install both automatically)
+2. **Recommended**: Install from [Thunderstore](https://thunderstore.io/c/balatro/p/Riosodu/Rebalanced_Stakes/) using the Thunderstore Mod Manager or r2modman
+3. **Manual**: Download the latest release and extract its contents into a new folder inside your Balatro `Mods` directory (e.g. `Mods/Rebalanced_Stakes` on Windows: `%appdata%\Balatro\Mods`) — do not extract directly into the `Mods` root
 
 ## Design Notes
 The goal is a smoother ramp-up of difficulty, without limiting the hand types you can play while also having a challenging final stake that tests your economic management and run longevity rather than just adding more restrictions.

@@ -7,5 +7,6 @@ lib/
 .bmt.json
 misc/
 .summary*
+dist/
 CLAUDE.md
 GEMINI.md

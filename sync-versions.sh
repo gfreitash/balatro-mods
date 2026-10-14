@@ -30,6 +30,10 @@ command -v git >/dev/null 2>&1 || {
 	log_error "git is not installed."
 	exit 1
 }
+command -v file >/dev/null 2>&1 || {
+	log_error "file is not installed."
+	exit 1
+}
 
 # --- Helper Functions ---
 
@@ -244,17 +248,89 @@ create_new_version_entry() {
 	log_success "Created new v${new_version} entry in $changelog_file."
 }
 
-# Update manifest version only
-# Usage: update_manifest_version <manifest_file> <version>
-update_manifest_version() {
+# Update the version in a Steamodded metadata file (smods.json)
+# Usage: update_smods_version <smods_file> <version>
+update_smods_version() {
+	local smods_file="$1"
+	local version="$2"
+	local tmp_file="${smods_file}.$$"
+
+	log_debug "Updating smods.json version: ${smods_file} to ${version}"
+
+	jq --arg ver "$version" '.version = $ver' "$smods_file" >"$tmp_file" &&
+		mv "$tmp_file" "$smods_file"
+}
+
+# Update the version_number in a ThunderStore manifest.json
+# Usage: update_ts_manifest_version <manifest_file> <version>
+update_ts_manifest_version() {
 	local manifest_file="$1"
 	local version="$2"
 	local tmp_file="${manifest_file}.$$"
 
-	log_debug "Updating manifest version: ${manifest_file} to ${version}"
+	log_debug "Updating ThunderStore manifest version: ${manifest_file} to ${version}"
 
-	jq --arg ver "$version" '.version = $ver' "$manifest_file" >"$tmp_file" &&
+	jq --arg ver "$version" '.version_number = $ver' "$manifest_file" >"$tmp_file" &&
 		mv "$tmp_file" "$manifest_file"
+}
+
+# Read the package version from a thunderstore.toml
+# Usage: get_toml_version <toml_file>
+get_toml_version() {
+	local toml_file="$1"
+	sed -n 's/^versionNumber[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$toml_file" | head -n 1
+}
+
+# Update the versionNumber in a thunderstore.toml
+# Usage: update_thunderstore_toml_version <toml_file> <version>
+update_thunderstore_toml_version() {
+	local toml_file="$1"
+	local version="$2"
+	local tmp_file="${toml_file}.$$"
+
+	log_debug "Updating thunderstore.toml version: ${toml_file} to ${version}"
+
+	sed -E 's/^(versionNumber[[:space:]]*=[[:space:]]*")[^"]*(".*)$/\1'"$version"'\2/' "$toml_file" >"$tmp_file" &&
+		mv "$tmp_file" "$toml_file"
+}
+
+# Validate a ThunderStore manifest
+# Usage: validate_ts_manifest <manifest_file>
+# Returns: 0 if valid, 1 otherwise
+validate_ts_manifest() {
+	local manifest_file="$1"
+	local valid=true
+
+	if ! jq -e '
+		has("name") and has("version_number") and has("website_url") and
+		has("description") and has("dependencies") and
+		(.dependencies | type == "array")
+	' "$manifest_file" >/dev/null 2>&1; then
+		log_error "Invalid ThunderStore manifest (missing fields): ${manifest_file}"
+		return 1
+	fi
+
+	local ts_name ts_version ts_desc_len
+	ts_name=$(jq -r '.name' "$manifest_file")
+	ts_version=$(jq -r '.version_number' "$manifest_file")
+	ts_desc_len=$(jq -r '.description | length' "$manifest_file")
+
+	if ! [[ "$ts_name" =~ ^[A-Za-z0-9_]+$ ]]; then
+		log_error "Invalid package name '${ts_name}' in ${manifest_file}: only letters, numbers and underscores are allowed."
+		valid=false
+	fi
+
+	if [ "$ts_desc_len" -gt 250 ]; then
+		log_error "Description too long (${ts_desc_len} chars, max 250) in ${manifest_file}."
+		valid=false
+	fi
+
+	if ! [[ "$ts_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+		log_error "Invalid version_number '${ts_version}' in ${manifest_file}: must be Major.Minor.Patch."
+		valid=false
+	fi
+
+	[ "$valid" = true ]
 }
 
 # Check if version entry exists in changelog
@@ -310,95 +386,6 @@ note_exists_in_version() {
 	fi
 }
 
-# Check if index.meta.json needs updating
-# Usage: needs_index_meta_update <index_meta_file> <target_version> <mod_name>
-# Returns: 0 if needs update, 1 if up to date
-needs_index_meta_update() {
-	local index_meta_file="$1"
-	local target_version="$2"
-	local mod_name="$3"
-
-	if [ ! -f "$index_meta_file" ]; then
-		return 0 # Needs update (file missing)
-	fi
-
-	local index_meta_content
-	index_meta_content=$(cat "$index_meta_file")
-
-	# Check version field or downloadURL depending on type
-	if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
-		local current_version
-		current_version=$(echo "$index_meta_content" | jq -r '.version')
-		[ "$current_version" != "$target_version" ]
-	else
-		# For automatic-version-check, validate URL format
-		local current_url expected_url repo_path remote_url
-		current_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
-
-		# Handle both SSH and HTTPS URL formats
-		remote_url=$(git config --get remote.origin.url || true)
-		if [[ "$remote_url" =~ github\.com[/:]([^/]+/[^/.]+)(\.git)?$ ]]; then
-			repo_path="${BASH_REMATCH[1]}"
-		else
-			log_error "Could not determine GitHub repository path from URL: ${remote_url}"
-			return 1
-		fi
-
-		expected_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
-		[ "$current_url" != "$expected_url" ]
-	fi
-}
-
-# Update index.meta.json with version and download URL
-# Usage: update_index_meta_json <index_meta_file> <version> <mod_name>
-update_index_meta_json() {
-	local index_meta_file="$1"
-	local version="$2"
-	local mod_name="$3"
-	local tmp_file="${index_meta_file}.$$"
-
-	log_debug "Updating index.meta.json: ${index_meta_file} for version ${version}"
-
-	local repo_path
-	local remote_url
-	remote_url=$(git config --get remote.origin.url || true)
-
-	# Handle both SSH (git@github.com:user/repo.git) and HTTPS (https://github.com/user/repo.git) formats
-	# Also handle URLs with or without .git suffix
-	if [[ "$remote_url" =~ github\.com[/:]([^/]+/[^/.]+)(\.git)?$ ]]; then
-		repo_path="${BASH_REMATCH[1]}"
-	else
-		log_error "Could not determine GitHub repository path from URL: ${remote_url}"
-		log_error "Expected format: git@github.com:user/repo.git or https://github.com/user/repo.git"
-		return 1
-	fi
-
-	log_debug "Extracted repository path: ${repo_path} from URL: ${remote_url}"
-
-	local index_meta_content
-	index_meta_content=$(cat "$index_meta_file")
-
-	# Update based on field type
-	if echo "$index_meta_content" | jq -e 'has("version")' >/dev/null; then
-		log_debug "Updating 'version' and 'downloadURL' in ${index_meta_file}."
-		jq --arg ver "$version" \
-			--arg mod_name "$mod_name" \
-			--arg repo_path "$repo_path" \
-			'.version = $ver | .downloadURL = ("https://github.com/" + $repo_path + "/releases/download/" + $mod_name + "__v" + $ver + "/" + $mod_name + ".zip")' \
-			"$index_meta_file" >"$tmp_file" && mv "$tmp_file" "$index_meta_file"
-	elif echo "$index_meta_content" | jq -e 'has("automatic-version-check")' >/dev/null; then
-		local current_download_url expected_latest_url
-		current_download_url=$(echo "$index_meta_content" | jq -r '.downloadURL')
-		expected_latest_url="https://github.com/${repo_path}/releases/download/${mod_name}__latest/${mod_name}.zip"
-
-		if [[ "$current_download_url" != "$expected_latest_url" ]]; then
-			log_error "Error: Download url is not in the proper format for automatic version updates. It should be '${expected_latest_url}' for ${index_meta_file}."
-			return 1
-		fi
-		# No update needed for automatic-version-check if URL is correct
-	fi
-}
-
 # --- Phase 1: Pre-flight Validation ---
 log_info "Phase 1: Validating repository state..."
 
@@ -406,25 +393,46 @@ VALIDATION_FAILED=false
 
 # MOD_DIRS should contain all mod directories to validate all of them.
 MOD_DIRS=$(
-	find . -maxdepth 2 -name "manifest.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;
+	find . -maxdepth 2 -name "smods.json" ! -path "./_common/*" ! -path "./lib/*" -exec dirname {} \;
 )
 
 for mod_dir in $MOD_DIRS; do
 	mod_name=$(basename "$mod_dir")
 	changelog_file="$mod_dir/CHANGELOG.md"
+	smods_file="$mod_dir/smods.json"
 	manifest_file="$mod_dir/manifest.json"
-	index_meta_file="$mod_dir/index.meta.json"
+	icon_file="$mod_dir/icon.png"
+	readme_file="$mod_dir/README.md"
+	toml_file="thunderstore/${mod_name}.toml"
 
-	# If manifest doesn't exist fail validation
-	if [ ! -f "$manifest_file" ]; then
-		log_error "Manifest file not found for mod '${mod_name}'."
+	# Required package metadata files
+	for required_file in "$smods_file" "$manifest_file" "$icon_file" "$readme_file" "$toml_file"; do
+		if [ ! -f "$required_file" ]; then
+			log_error "Required file not found for mod '${mod_name}': ${required_file}"
+			VALIDATION_FAILED=true
+		fi
+	done
+
+	# Validate the ThunderStore manifest fields
+	if [ -f "$manifest_file" ] && ! validate_ts_manifest "$manifest_file"; then
 		VALIDATION_FAILED=true
 	fi
 
-	# If index.meta.json doesn't exist fail validation
-	if [ ! -f "$index_meta_file" ]; then
-		log_error "index.meta.json file not found for mod '${mod_name}'."
-		VALIDATION_FAILED=true
+	# Validate the Steamodded metadata is parseable
+	if [ -f "$smods_file" ]; then
+		if ! jq -e '.version and .id and .main_file' "$smods_file" >/dev/null 2>&1; then
+			log_error "Invalid SMods metadata (missing id/version/main_file): ${smods_file}"
+			VALIDATION_FAILED=true
+		fi
+	fi
+
+	# Validate the icon is exactly 256x256
+	if [ -f "$icon_file" ]; then
+		icon_dims=$(file -b "$icon_file" | grep -oE '[0-9]+ x [0-9]+' | head -n 1 || true)
+		if [ "$icon_dims" != "256 x 256" ]; then
+			log_error "Icon must be exactly 256x256: ${icon_file} (found: ${icon_dims:-unknown})"
+			VALIDATION_FAILED=true
+		fi
 	fi
 
 	# Skip if changelog doesn't exist
@@ -494,7 +502,9 @@ UPDATE_PLAN='{"shared_version":"'$SHARED_VERSION'","mods":[]}'
 
 for mod_dir in $MOD_DIRS; do
 	mod_name=$(basename "$mod_dir")
+	smods_file="$mod_dir/smods.json"
 	manifest_file="$mod_dir/manifest.json"
+	toml_file="thunderstore/${mod_name}.toml"
 	changelog_file="$mod_dir/CHANGELOG.md"
 
 	if [ ! -f "$changelog_file" ]; then continue; fi
@@ -507,8 +517,14 @@ for mod_dir in $MOD_DIRS; do
 		continue
 	fi
 
-	# Read current state
-	mod_manifest_version=$(jq -r '.version' "$manifest_file")
+	# Read current state (smods.json is the canonical Steamodded version)
+	mod_manifest_version=$(jq -r '.version' "$smods_file")
+
+	# All metadata files must carry the changelog version
+	metadata_in_sync=true
+	[ "$mod_manifest_version" = "$LATEST_VERSION" ] || metadata_in_sync=false
+	[ "$(jq -r '.version_number' "$manifest_file" 2>/dev/null || echo "")" = "$LATEST_VERSION" ] || metadata_in_sync=false
+	[ "$(get_toml_version "$toml_file")" = "$LATEST_VERSION" ] || metadata_in_sync=false
 
 	# Determine what needs to be done
 	needs_changelog=false
@@ -541,8 +557,8 @@ for mod_dir in $MOD_DIRS; do
 			needs_changelog=true
 		fi
 	else
-		# Check if manifest version needs syncing (without common updates)
-		if [ "$mod_manifest_version" != "$LATEST_VERSION" ]; then
+		# Sync metadata versions if any file drifted from the changelog
+		if [ "$metadata_in_sync" = "false" ]; then
 			needs_manifest=true
 		fi
 	fi
@@ -601,9 +617,10 @@ echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs
 	needs_changelog=$(echo "$mod_info" | jq -r '.needs_changelog')
 	needs_manifest=$(echo "$mod_info" | jq -r '.needs_manifest')
 
+	smods_file="$mod_name/smods.json"
 	manifest_file="$mod_name/manifest.json"
+	toml_file="thunderstore/${mod_name}.toml"
 	changelog_file="$mod_name/CHANGELOG.md"
-	index_meta_file="$mod_name/index.meta.json"
 
 	# Generate update note dynamically when needed
 	update_note="- Updated Riosodu Commons to v${SHARED_VERSION}."
@@ -632,25 +649,22 @@ echo "$UPDATE_PLAN" | jq -r '.mods[] | select(.needs_changelog == true or .needs
 		esac
 	fi
 
-	# Step 2: Update manifest version (idempotent)
+	# Step 2: Update metadata versions (idempotent)
 	if [ "$needs_manifest" = "true" ]; then
-		current_manifest_version=$(jq -r '.version' "$manifest_file")
-		if [ "$current_manifest_version" != "$target_version" ]; then
-			log_info "Updating manifest version: $current_manifest_version → $target_version"
-			update_manifest_version "$manifest_file" "$target_version"
-			log_success "Updated version in $manifest_file"
+		current_smods_version=$(jq -r '.version' "$smods_file")
+		current_ts_version=$(jq -r '.version_number' "$manifest_file")
+		current_toml_version=$(get_toml_version "$toml_file")
+		if [ "$current_smods_version" != "$target_version" ] ||
+			[ "$current_ts_version" != "$target_version" ] ||
+			[ "$current_toml_version" != "$target_version" ]; then
+			log_info "Updating metadata versions: smods ${current_smods_version}, thunderstore ${current_ts_version}, toml ${current_toml_version} → ${target_version}"
+			update_smods_version "$smods_file" "$target_version"
+			update_ts_manifest_version "$manifest_file" "$target_version"
+			update_thunderstore_toml_version "$toml_file" "$target_version"
+			log_success "Updated $smods_file, $manifest_file and $toml_file"
 		else
-			log_info "Manifest version already correct: $target_version ✓"
+			log_info "Metadata versions already correct: $target_version ✓"
 		fi
-	fi
-
-	# Step 3: Update index.meta.json (idempotent)
-	if needs_index_meta_update "$index_meta_file" "$target_version" "$mod_name"; then
-		log_info "Updating index.meta.json for version $target_version"
-		update_index_meta_json "$index_meta_file" "$target_version" "$mod_name"
-		log_success "Updated $index_meta_file"
-	else
-		log_info "index.meta.json already up to date ✓"
 	fi
 
 	log_success "Completed processing for mod '$mod_name'"

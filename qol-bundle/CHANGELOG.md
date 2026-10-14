@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.1] - 2026-10-13
+### Changed
+- Migrated distribution to ThunderStore (`Riosodu-QoL_Bundle`); GitHub releases now ship a ThunderStore-compatible package.
+- Added explicit Steamodded and Lovely dependencies to the mod metadata.
+
 ## [1.11.0] - 2026-09-03
 ### Added
 - Loyalty Card Rounds Mode: Loyalty Card now triggers by rounds instead of hands, becoming active for a whole round after every 3 rounds played. Skipping a blind counts twice toward the next activation, but raises the chance of the card being permanently disabled on that redeem (a clean redeem lowers it again).

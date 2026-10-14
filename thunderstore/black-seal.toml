@@ -1,0 +1,28 @@
+# Thunderstore CLI (tcli) publishing config.
+# Packages are built by scripts/build-thunderstore-package.sh; versionNumber is synced by sync-versions.sh.
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "Riosodu"
+name = "Black_Seal"
+versionNumber = "3.4.1"
+description = "Adds a rare single use seal that adds negative to a random joker"
+websiteUrl = "https://github.com/gfreitash/balatro-mods"
+containsNsfwContent = false
+
+[package.dependencies]
+"Steamodded-Steamodded" = "26.829.0"
+"Thunderstore-lovely" = "0.10.0"
+
+[build]
+icon = "../black-seal/icon.png"
+readme = "../black-seal/README.md"
+outdir = "../dist"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["balatro"]
+
+[publish.categories]
+balatro = ["content-mod", "mechanics"]

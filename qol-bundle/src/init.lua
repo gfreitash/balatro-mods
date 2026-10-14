@@ -41,12 +41,19 @@ QOL_BUNDLE.init = function(self)
   self.wheel_of_fortune_current_option = self.config.wheel_of_fortune_value
   self.wheel_of_fortune_current_option_val = self.config.wheel_of_fortune_value
 
-  -- eight_ball_joker_value is 4 by default
-  self.config.eight_ball_joker_value = self.config.eight_ball_joker_value or 4
+  -- eight_ball_joker_value is 3 by default
+  self.config.eight_ball_joker_value = self.config.eight_ball_joker_value or 3
   -- Since our values match their indices in the options array {1, 2, 3, 4},
   -- we can use the value directly as the index
   self.eight_ball_joker_current_option = self.config.eight_ball_joker_value
   self.eight_ball_joker_current_option_val = self.config.eight_ball_joker_value
+
+  -- space_joker_value is 3 by default
+  self.config.space_joker_value = self.config.space_joker_value or 3
+  -- Since our values match their indices in the options array {1, 2, 3, 4},
+  -- we can use the value directly as the index
+  self.space_joker_current_option = self.config.space_joker_value
+  self.space_joker_current_option_val = self.config.space_joker_value
 
   -- yorick_multiplier_value is 1.5 by default
   self.config.yorick_multiplier_value = self.config.yorick_multiplier_value or 1.5

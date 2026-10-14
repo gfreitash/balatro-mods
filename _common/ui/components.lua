@@ -28,18 +28,43 @@ function RIOSODU_SHARED.UIDEF.create_option_toggle(args)
     toggle_args.active_colour = args.active_colour or G.C.BLUE
     toggle_args.info = type(args.info) == 'string' and { args.info } or args.info
 
+    -- Badges (beta / requires_restart) render inside the info row, so make sure
+    -- create_toggle builds one even when no info text was provided
+    local has_badges = args.beta or args.requires_restart
+    if not toggle_args.info and has_badges then
+        toggle_args.info = {}
+    end
+
     local toggle = create_toggle(toggle_args)
 
     -- Create info text rows
-    if args.info then
+    if toggle_args.info then
         local info = {}
-        for _, v in ipairs(args.info) do
+        for _, v in ipairs(toggle_args.info) do
             table.insert(info, {
                 n = G.UIT.R,
                 config = { align = "cm", minh = 0.005 },
                 nodes = {{
                     n = G.UIT.T,
                     config = { text = v, scale = 0.3, colour = HEX("b8c7d4") },
+                }},
+            })
+        end
+
+        -- Add beta badge if specified
+        if args.beta then
+            local beta_text = "Beta"  -- Fallback text
+            -- Try to get localized text if available
+            if G and G.localization and G.localization.misc and G.localization.misc.dictionary then
+                beta_text = G.localization.misc.dictionary.beta or beta_text
+            end
+
+            table.insert(info, {
+                n = G.UIT.R,
+                config = { align = "cm", minh = 0.005 },
+                nodes = {{
+                    n = G.UIT.T,
+                    config = { text = beta_text, scale = 0.25, colour = HEX("ff9f43") }, -- Orange color for beta features
                 }},
             })
         end

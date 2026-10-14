@@ -19,6 +19,10 @@ return {
             qolb_unweighted_editions_info = 'Makes Foil, Holo, and Polychrome editions equally likely.',
             qolb_eight_ball_joker_label = 'Enable Configurable 8 Ball Joker',
             qolb_eight_ball_joker_info = 'Adjust chance of 8 Ball Joker spawning Tarot cards (1=100%, 4=25%).',
+            qolb_space_joker_label = 'Enable Configurable Space Joker',
+            qolb_space_joker_info = 'Adjust chance of Space Joker upgrading the played poker hand (1=100%, 4=25%).',
+            qolb_steel_joker_label = 'Enable Steel Joker Buff',
+            qolb_steel_joker_info = 'Steel Joker gives X0.25 Mult per Steel Card (was X0.2).',
             qolb_hit_the_road_joker_label = 'Enable Hit the Road Joker Rework',
             qolb_hit_the_road_joker_info = {
                 'When enabled, discarded Jacks are returned to the deck.',
@@ -26,7 +30,7 @@ return {
             },
             qolb_square_joker_label = 'Enable Square Joker Modification',
             qolb_square_joker_info = {
-                'Square Joker gives +4 Chips,',
+                'Square Joker gives +2 Chips,',
                 'each scoring card has 1 in 2 chance for +4 more.',
                 'Uncommon rarity.',
             },
@@ -46,6 +50,16 @@ return {
                 'Makes Mime joker Rare rarity',
                 '(cost $6 instead of $5)'
             },
+            qolb_dna_uncommon_label = 'Enable DNA Uncommon',
+            qolb_dna_uncommon_info = {
+                'Makes DNA joker Uncommon rarity',
+                '(cost $6 instead of $8)'
+            },
+            qolb_pareidolia_common_label = 'Enable Pareidolia Common',
+            qolb_pareidolia_common_info = {
+                'Makes Pareidolia joker Common rarity',
+                '(cost $4 instead of $5)'
+            },
             qolb_ceremonial_dagger_common_label = 'Enable Ceremonial Dagger Common',
             qolb_ceremonial_dagger_common_info = {
                 'Makes Ceremonial Dagger joker Common rarity',
@@ -64,7 +78,7 @@ return {
             qolb_erosion_xmult_label = 'Rework Erosion to X Mult',
             qolb_erosion_xmult_info = {
                 'Changes Erosion from +4 Mult per card',
-                'to X0.2 Mult per card below starting amount'
+                'to X0.175 Mult per card below starting amount'
             },
             qolb_nerf_hanging_chad_label = 'Enable Nerf Hanging Chad',
             qolb_nerf_hanging_chad_info = {
@@ -88,16 +102,22 @@ return {
                 'All cards in hand are converted to the',
                 'selected card\'s rank instead of random rank.'
             },
-            qolb_loyalty_card_rounds_label = 'Enable Loyalty Card Rounds Mode',
-            qolb_loyalty_card_rounds_info = {
-                'Loyalty Card triggers based on rounds',
-                'instead of hands played. Skipping counts twice,',
-                'but consecutive cheating raises the chance',
-                'of the card being permanently caught'
+            qolb_loyalty_card_scaling_label = 'Enable Loyalty Card Scaling Mode',
+            qolb_loyalty_card_scaling_info = {
+                'Loyalty Card starts at X1 Mult, gains X0.5 Mult',
+                'after finishing a blind, and redeems back to X2',
+                'after finishing a blind at X4'
             },
-            qolb_loyalty_cheated = 'Cheated!',
-            qolb_loyalty_active = 'Active',
-            qolb_loyalty_got_caught = 'Got caught!',
+            qolb_spectral_seal_clip_label = 'Spectral Created Cards Can Have Seals',
+            qolb_spectral_seal_clip_info = {
+                'Cards created by Familiar, Grim and Incantation',
+                'have a chance to come with a Seal'
+            },
+            qolb_spectral_seal_clip_info_paperback = {
+                'Cards created by Familiar, Grim and Incantation',
+                'have a chance to come with a Seal',
+                'or a paper clip (with Paperback)'
+            },
             qolb_splash_joker_retrigger_label = 'Enable Splash Joker Retrigger',
             qolb_splash_joker_retrigger_info = {
                 'Splash Joker additionally retriggers',
@@ -157,7 +177,7 @@ return {
                 "This Joker gains {C:chips}+#2#{} Chips",
                 "if played hand has exactly {C:attention}4{} cards",
                 "Each scoring card has {C:green}#3# in #4#{} chance",
-                "to give {C:chips}+#2#{} more Chips",
+                "to give {C:chips}+#5#{} more Chips",
                 "{C:inactive}(Currently {C:chips}+#1#{C:inactive} Chips)"
             },
             j_flower_pot_original = {
@@ -181,11 +201,6 @@ return {
                 "{C:attention}2{} levels of your highest poker hand",
                 "{C:inactive}(Currently {C:money}$#2#{C:inactive})"
             },
-            j_loyalty_card_original = {
-                "{X:red,C:white} X#1# {} Mult every",
-                "{C:attention}#2#{} hands played",
-                "{C:inactive}#3#",
-            },
             j_splash_original = {
                 "Every {C:attention}played card",
                 "counts in scoring",
@@ -208,6 +223,136 @@ return {
                 "card below {C:attention}#2#{}",
                 "in your full deck",
                 "{C:inactive}(Currently {X:mult,C:white}X#3#{C:inactive} Mult)",
+            },
+
+            -- Marble joker texts (from base game)
+            j_marble_original = {
+                "Adds one {C:attention}Stone{} card",
+                "to deck when",
+                "{C:attention}Blind{} is selected",
+            },
+            j_marble_modified = {
+                "Adds one {C:attention}Stone{} card to deck when",
+                "{C:attention}Blind{} is selected, and gains",
+                "{X:chips,C:white}X0.1{} Chips for each {C:attention}Stone{} card",
+                "added to deck",
+                "{C:inactive}(Currently {X:chips,C:white}X#1#{C:inactive} Chips)",
+            },
+
+            -- Stone joker texts (from base game)
+            j_stone_original = {
+                "Gives {C:chips}+#1#{} Chips for",
+                "each {C:attention}Stone Card",
+                "in your {C:attention}full deck",
+                "{C:inactive}(Currently {C:chips}+#2#{C:inactive} Chips)",
+            },
+            j_stone_modified = {
+                "Gives {C:mult}+#1#{} Mult for",
+                "each {C:attention}Stone Card",
+                "in your {C:attention}full deck",
+                "{C:inactive}(Currently {C:mult}+#2#{C:inactive} Mult)",
+            },
+
+            -- Seance joker texts (from base game)
+            j_seance_original = {
+                "If {C:attention}poker hand{} is a",
+                "{C:attention}#1#{}, create a",
+                "random {C:spectral}Spectral{} card",
+                "{C:inactive}(Must have room)",
+            },
+            j_seance_modified = {
+                "If {C:attention}poker hand{} is a",
+                "{C:attention}Straight Flush{} or a {C:attention}secret hand{},",
+                "create a random {C:spectral}Spectral{} card",
+                "{C:inactive}(Must have room)",
+            },
+
+            -- Canio joker texts (from base game)
+            j_caino_original = {
+                "This Joker gains {X:mult,C:white} X#1# {} Mult",
+                "when a {C:attention}face{} card",
+                "is destroyed",
+                "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
+            },
+            j_caino_modified = {
+                "Destroys scored {C:attention}face{} cards and",
+                "gains {X:mult,C:white} X#1# {} Mult per destroyed",
+                "{C:attention}face{} card",
+                "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
+            },
+
+            -- Onyx Agate joker texts (from base game)
+            j_onyx_agate_original = {
+                "Played cards with",
+                "{C:clubs}Club{} suit give",
+                "{C:mult}+#1#{} Mult when scored",
+            },
+            j_onyx_agate_modified = {
+                "Played cards with {C:clubs}Club{} suit",
+                "permanently gain {C:mult}+#1#{} Mult",
+                "when scored",
+            },
+
+            -- Familiar/Grim/Incantation texts (from base game)
+            c_familiar_original = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand, add",
+                "{C:attention}#1#{} random {C:attention}Enhanced face",
+                "{C:attention}cards{} to your hand",
+            },
+            c_familiar_upgraded = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand, add",
+                "{C:attention}#1#{} random {C:attention}Enhanced face",
+                "{C:attention}cards{} to your hand",
+                "{C:green}Chance{} to add a {C:attention}Seal",
+            },
+            c_familiar_upgraded_paperback = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand, add",
+                "{C:attention}#1#{} random {C:attention}Enhanced face",
+                "{C:attention}cards{} to your hand",
+                "{C:green}Chance{} to add a {C:attention}Seal{} or {C:attention}paper clip",
+            },
+            c_grim_original = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand,",
+                "add {C:attention}#1#{} random {C:attention}Enhanced",
+                "{C:attention}Aces{} to your hand",
+            },
+            c_grim_upgraded = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand,",
+                "add {C:attention}#1#{} random {C:attention}Enhanced",
+                "{C:attention}Aces{} to your hand",
+                "{C:green}Chance{} to add a {C:attention}Seal",
+            },
+            c_grim_upgraded_paperback = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand,",
+                "add {C:attention}#1#{} random {C:attention}Enhanced",
+                "{C:attention}Aces{} to your hand",
+                "{C:green}Chance{} to add a {C:attention}Seal{} or {C:attention}paper clip",
+            },
+            c_incantation_original = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand, add {C:attention}#1#",
+                "random {C:attention}Enhanced numbered",
+                "{C:attention}cards{} to your hand",
+            },
+            c_incantation_upgraded = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand, add {C:attention}#1#",
+                "random {C:attention}Enhanced numbered",
+                "{C:attention}cards{} to your hand",
+                "{C:green}Chance{} to add a {C:attention}Seal",
+            },
+            c_incantation_upgraded_paperback = {
+                "Destroy {C:attention}1{} random",
+                "card in your hand, add {C:attention}#1#",
+                "random {C:attention}Enhanced numbered",
+                "{C:attention}cards{} to your hand",
+                "{C:green}Chance{} to add a {C:attention}Seal{} or {C:attention}paper clip",
             },
 
             -- Enhanced voucher config labels
@@ -258,6 +403,34 @@ return {
                 'Clubs and Spades or Hearts and Diamonds.',
                 'The group follows the suits in your deck'
             },
+            qolb_marble_joker_xchips_label = 'Enable Marble Joker X Chips',
+            qolb_marble_joker_xchips_info = {
+                'Marble Joker gains X0.1 Chips for every',
+                'Stone card added to the deck,',
+                'on top of its original effect'
+            },
+            qolb_stone_joker_mult_label = 'Enable Stone Joker Mult',
+            qolb_stone_joker_mult_info = {
+                'Stone Joker gives +4 Mult for each',
+                'Stone Card in your full deck',
+                'instead of +25 Chips'
+            },
+            qolb_seance_rework_label = 'Enable Seance Rework',
+            qolb_seance_rework_info = {
+                'Seance triggers on Straight Flush',
+                'or any secret hand, and becomes Rare',
+                '(cost $8 instead of $6)'
+            },
+            qolb_caino_rework_label = 'Enable Canio Rework',
+            qolb_caino_rework_info = {
+                'Canio destroys scored face cards',
+                'and gains X0.25 Mult per destroyed face card'
+            },
+            qolb_onyx_agate_label = 'Enable Onyx Agate Rework',
+            qolb_onyx_agate_info = {
+                'Played Club cards permanently',
+                'gain +5 Mult when scored'
+            },
             qolb_yorick_multiplier_label = 'Enable Yorick Multiplier Configuration',
             qolb_yorick_multiplier_info = {
                 'Configure how much X Mult Yorick gains',
@@ -299,31 +472,18 @@ return {
             },
 
             requires_restart = "Requires restart",
-        },
-        v_dictionary = {
-            qolb_loyalty_status_remaining = '#1# rounds left',
+            beta = "Beta",
         },
     },
     descriptions = {
         Joker = {
-            j_loyalty_card_rounds = {
+            j_loyalty_card_scaling = {
                 text = {
-                    "{X:red,C:white} X#1# {} Mult every {C:attention}#2#{} rounds",
-                    "Skipping counts twice — it cheats to see you sooner",
-                    "{C:inactive}#3#{}",
-                },
-            },
-            j_loyalty_card_rounds_cheated = {
-                text = {
-                    "{X:red,C:white} X#1# {} Mult every {C:attention}#2#{} rounds",
-                    "Skipping counts twice — it cheats to see you sooner",
-                    "{C:inactive}#3#{}",
-                    "{C:red}Cheated:{} {C:green}#4# in #5#{} to get caught",
-                },
-            },
-            j_loyalty_card_caught = {
-                text = {
-                    "(got caught)",
+                    "{X:red,C:white} X#1# {} Mult",
+                    "Gains {X:red,C:white} X0.5 {} Mult after",
+                    "finishing a {C:attention}blind",
+                    "Resets to {X:red,C:white}X2{} after finishing",
+                    "a blind at {X:red,C:white}X4{}",
                 },
             },
         },

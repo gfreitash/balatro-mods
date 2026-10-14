@@ -6,25 +6,35 @@ Balance and gameplay changes that feels good, configurable per feature. Bad mod 
 - **Wildcard Fix**: Prevents Wildcard and Smeared Joker from being negatively affected by suit debuffs when they could match a non-debuffed suit. When Paperback mod is installed, Smeared Joker considers light suits and dark suits, respectively, as the same suit.
 - **Increased Shop Size**: Increases the base shop size by 1 (default is 2). This helps offset the dilution of the shop pool caused by other mods adding new cards and items.
 - **Unweighted Base Editions**: Makes Foil, Holo, and Polychrome editions equally likely when rolled, while preserving the original probability of Negative editions.
-- **Configurable 8 Ball Joker**: Adjust the chance of the 8 Ball Joker spawning Tarot cards (1 = 100% chance, 4 = vanilla 25% chance). Default is 4.
+- **Configurable 8 Ball Joker**: Adjust the chance of the 8 Ball Joker spawning Tarot cards (1 = 100% chance, 4 = vanilla 25% chance). Default is 3.
+- **Configurable Space Joker** (beta): Adjust the chance of the Space Joker upgrading the played poker hand (1 = 100% chance, 4 = vanilla 25% chance). Default is 3.
+- **Steel Joker Buff** (beta): Steel Joker gives X0.25 Mult per Steel Card in your deck (was X0.2).
 - **Reworked Hit the Road Joker**: When enabled, discarded Jacks are returned to the deck alongside the current effect.
-- **Square Joker Modification**: Reworks the Square Joker to give +4 chips if played hand has exactly 4 cards, with each scoring card having a 1 in 2 chance to add +4 more chips. Also changes rarity to Uncommon.
+- **Square Joker Modification**: Reworks the Square Joker to give +2 chips if played hand has exactly 4 cards, with each scoring card having a 1 in 2 chance to add +4 more chips. Also changes rarity to Uncommon.
 - **Flower Pot Wildcard Rework**: Flower Pot only appears in shop when Wildcard-enhanced cards exist in deck and triggers when scoring hand contains any Wildcard.
 - **Baron Uncommon**: Makes Baron joker Uncommon rarity with reduced cost ($5 instead of $8).
 - **Mime Rare**: Makes Mime joker Rare rarity with increased cost ($6 instead of $5).
+- **DNA Uncommon** (beta): Makes DNA joker Uncommon rarity with reduced cost ($6 instead of $8).
+- **Pareidolia Common** (beta): Makes Pareidolia joker Common rarity with reduced cost ($4 instead of $5).
 - **Satellite Joker Rework**: Satellite now gives gold equal to half the highest poker hand level (rounded up).
 - **Controlled Sigil**: Sigil now requires selecting a card first and converts all cards to selected card's suit instead of random suit.
 - **Controlled Ouija**: Ouija now requires selecting a card first and converts all cards to selected card's rank instead of random rank.
-- **Loyalty Card Rounds Mode**: Loyalty Card triggers based on rounds instead of hands, becoming active for a whole round after every 3 rounds. Skipping a blind counts twice, but raises the chance of the card being permanently disabled (a clean redeem lowers it again).
+- **Spectral Created Cards Can Have Seals** (beta): Cards created by Familiar, Grim and Incantation have a chance to come with a Seal (or a paper clip when Paperback is installed).
+- **Loyalty Card Scaling Mode** (beta): Loyalty Card starts at X1 Mult, gains X0.5 Mult after finishing a blind, and redeems back to X2 after finishing a blind at X4.
 - **Splash Joker Retrigger**: Splash Joker additionally retriggers two random scoring cards.
 - **Ceremonial Dagger Common**: Makes Ceremonial Dagger joker Common rarity with reduced cost ($3 instead of $6).
 - **Mail-In Rebate Uncommon**: Makes Mail-In Rebate joker Uncommon rarity (was Common rarity - makes it rarer).
 - **Fortune Teller Cheaper**: Makes Fortune Teller joker cheaper (cost $4 instead of $6).
-- **Erosion X Mult Rework**: Changes Erosion from +4 Mult per card to X0.15 Mult per card below starting amount.
+- **Erosion X Mult Rework**: Changes Erosion from +4 Mult per card to X0.175 Mult per card below starting amount.
 - **Interest on Skip**: Gain interest when skipping blinds, calculated and awarded before obtaining the tag.
 - **Paperback Compatibility**: Added compatibility for Paperback mod's Jester of Nihil joker and suit considerations for Smeared Joker.
 - **Nerf Hanging Chad**: Makes Hanging Chad joker Uncommon rarity and more expensive (cost $7 instead of $6).
 - **Castle Checkered Reliability**: Castle now counts either Clubs and Spades or Hearts and Diamonds. The suit group follows your deck composition, so suit fixing makes Castle more reliable and the checkered deck always counts the same group. If Paperback mod is installed, light suits or dark suits will be used instead.
+- **Marble Joker X Chips**: Marble Joker keeps its original effect and also gains X0.1 Chips for every Stone card added to the deck (from any source, but not from in-place transformations).
+- **Stone Joker Mult**: Stone Joker gives +4 Mult for each Stone Card in your full deck instead of +25 Chips.
+- **Seance Rework** (beta): Seance triggers on Straight Flush or any secret hand (including modded ones) and is Rare ($8 instead of $6).
+- **Canio Rework** (beta): Canio destroys scored face cards and gains X0.25 Mult per destroyed face card (the destroying is not blueprint compatible).
+- **Onyx Agate Rework** (beta): Played Club cards permanently gain +5 Mult when scored.
 - **Yorick Enhancement**: Yorick now gains a configurable amount (+1.5x for each 23 cards instead of +1x).
 - **Reworked Magic Trick and Illusion Vouchers**: 
     - Magic Trick is now a "better" Illusion voucher with playing cards in shop appearing with enhancements, editions and seals (actually spawn instead of the bugged vanilla). 

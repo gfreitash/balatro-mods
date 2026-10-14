@@ -7,6 +7,12 @@ QOL_BUNDLE.UI.last_viewed_config_page = 1
 
 -- Helper function to get all config options, pre-wrapped in their intended option_boxes
 function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
+    -- Paper clips are only mentioned when Paperback is installed
+    local spectral_seal_clip_info = G.localization.misc.dictionary.qolb_spectral_seal_clip_info
+    if PB_UTIL and G.localization.misc.dictionary.qolb_spectral_seal_clip_info_paperback then
+        spectral_seal_clip_info = G.localization.misc.dictionary.qolb_spectral_seal_clip_info_paperback
+    end
+
     return {
         RIOSODU_SHARED.UIDEF.create_option_box({
             -- Joker Max Config
@@ -71,6 +77,36 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Space Joker Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'space_joker_enabled',
+                label = G.localization.misc.dictionary.qolb_space_joker_label,
+                info = G.localization.misc.dictionary.qolb_space_joker_info,
+                requires_restart = true,
+                beta = true
+            }),
+            create_option_cycle({
+                colour = G.C.RED,
+                options = {1, 2, 3, 4},
+                opt_callback = 'qol_bundle_space_joker_callback',
+                current_option = QOL_BUNDLE.space_joker_current_option,
+                current_option_val = QOL_BUNDLE.space_joker_current_option_val,
+                scale = 0.75,
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Steel Joker Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'steel_joker_enabled',
+                label = G.localization.misc.dictionary.qolb_steel_joker_label,
+                info = G.localization.misc.dictionary.qolb_steel_joker_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             -- Unweighted Editions Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,
@@ -127,6 +163,28 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
                 label = G.localization.misc.dictionary.qolb_mime_rare_label,
                 info = G.localization.misc.dictionary.qolb_mime_rare_info,
                 requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- DNA Uncommon Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'dna_uncommon_enabled',
+                label = G.localization.misc.dictionary.qolb_dna_uncommon_label,
+                info = G.localization.misc.dictionary.qolb_dna_uncommon_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Pareidolia Common Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'pareidolia_common_enabled',
+                label = G.localization.misc.dictionary.qolb_pareidolia_common_label,
+                info = G.localization.misc.dictionary.qolb_pareidolia_common_info,
+                requires_restart = true,
+                beta = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
@@ -190,6 +248,17 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Spectral Seal and Paperclip Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'spectral_seal_clip_enabled',
+                label = G.localization.misc.dictionary.qolb_spectral_seal_clip_label,
+                info = spectral_seal_clip_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             -- Splash Joker Retrigger Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,
@@ -221,13 +290,67 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Marble Joker X Chips Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'marble_joker_xchips_enabled',
+                label = G.localization.misc.dictionary.qolb_marble_joker_xchips_label,
+                info = G.localization.misc.dictionary.qolb_marble_joker_xchips_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Stone Joker Mult Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'stone_joker_mult_enabled',
+                label = G.localization.misc.dictionary.qolb_stone_joker_mult_label,
+                info = G.localization.misc.dictionary.qolb_stone_joker_mult_info,
+                requires_restart = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             -- Loyalty Card Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,
-                ref_value = 'loyalty_card_rounds_enabled',
-                label = G.localization.misc.dictionary.qolb_loyalty_card_rounds_label,
-                info = G.localization.misc.dictionary.qolb_loyalty_card_rounds_info,
-                requires_restart = true
+                ref_value = 'loyalty_card_scaling_enabled',
+                label = G.localization.misc.dictionary.qolb_loyalty_card_scaling_label,
+                info = G.localization.misc.dictionary.qolb_loyalty_card_scaling_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Seance Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'seance_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_seance_rework_label,
+                info = G.localization.misc.dictionary.qolb_seance_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Canio Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'caino_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_caino_rework_label,
+                info = G.localization.misc.dictionary.qolb_caino_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Onyx Agate Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'onyx_agate_enabled',
+                label = G.localization.misc.dictionary.qolb_onyx_agate_label,
+                info = G.localization.misc.dictionary.qolb_onyx_agate_info,
+                requires_restart = true,
+                beta = true
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({

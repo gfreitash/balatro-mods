@@ -9,8 +9,9 @@ function QOL_BUNDLE.funcs.get_ownership_joker_square()
         config = {
             extra = {
                 chips = 0,
-                chip_mod = 4,  -- Base +4 chips
-                odds = 2       -- 1 in 2 chance for bonus
+                chip_mod = 2,       -- Base +2 chips
+                bonus_chip_mod = 4, -- +4 chips per successful roll
+                odds = 2            -- 1 in 2 chance for bonus
             }
         },
         loc_vars = function(self, info_queue, center)
@@ -20,14 +21,15 @@ function QOL_BUNDLE.funcs.get_ownership_joker_square()
                     center.ability.extra.chips,
                     center.ability.extra.chip_mod,
                     num,
-                    denom
+                    denom,
+                    center.ability.extra.bonus_chip_mod
                 }
             }
         end,
         calculate = function(self, card, context)
             -- Handle the scaling when hand is played (before scoring)
             if context.before and #context.full_hand == 4 and not context.blueprint then
-                local bonus_chips = 4  -- Base +4 chips
+                local bonus_chips = card.ability.extra.chip_mod  -- Base +2 chips
                 local bonus_count = 0  -- Track how many cards triggered
 
                 delay_amount = 0.4
@@ -35,8 +37,8 @@ function QOL_BUNDLE.funcs.get_ownership_joker_square()
                 if context.scoring_hand then
                     for i, scoring_card in ipairs(context.scoring_hand) do
                         -- Each scoring card has 1/2 chance to add +4 more chips
-                        if SMODS.pseudorandom_probability(card, 'square_joker_' .. scoring_card.unique_val, 1, 2) then
-                            bonus_chips = bonus_chips + 4
+                        if SMODS.pseudorandom_probability(card, 'square_joker_' .. scoring_card.unique_val, 1, card.ability.extra.odds) then
+                            bonus_chips = bonus_chips + card.ability.extra.bonus_chip_mod
                             bonus_count = bonus_count + 1
                             -- Add visual effect on the scoring card with delay
                             G.E_MANAGER:add_event(Event({

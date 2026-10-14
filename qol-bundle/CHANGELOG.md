@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-10-14
+### Added
+- Beta features: options can now be marked as beta, appearing in orange in the config menu and shipping disabled by default.
+- Configurable Space Joker (beta): its level-up chance is now adjustable, defaulting to 1 in 3.
+- Steel Joker buff (beta): now gives X0.25 Mult per Steel Card (was X0.2).
+- Spectral created cards can have seals (beta): cards created by Familiar, Grim and Incantation have a chance to come with a Seal, and with a paper clip when Paperback is installed.
+- Marble Joker now also gains X0.1 Chips for every Stone card added to the deck (any source, including its own effect, shops, packs and DNA, but not in-place transformations).
+- Seance rework (beta): triggers on Straight Flush or any secret hand (including modded ones) and is now Rare ($8 instead of $6).
+- Canio rework (beta): destroys scored face cards and gains X0.25 Mult per destroyed face card (the destroying is not blueprint compatible).
+- Onyx Agate rework (beta): played Club cards permanently gain +5 Mult when scored.
+
+### Changed
+- 8 Ball Joker now defaults to a 1 in 3 chance (was 1 in 4).
+- Square Joker now gives +2 Chips on 4-card hands (was +4); each scoring card still has a 1 in 2 chance to give +4 more Chips.
+- Loyalty Card rework (third iteration, beta): now a scaling Joker that starts at X1 Mult, gains X0.5 Mult after finishing a blind, and redeems back to X2 after finishing a blind at X4. The rounds mode and cheat-on-skip mechanics were removed.
+- Stone Joker now gives +4 Mult for each Stone Card in the full deck instead of +25 Chips.
+- Erosion now scales at X0.175 Mult per card below starting amount (was X0.15).
+- DNA is now Uncommon rarity ($6 instead of $8) and Pareidolia is now Common rarity ($4 instead of $5) (both beta, disabled by default).
+- Updated Erosion's documentation and config info to match its scaling value.
+
 ## [1.11.2] - 2026-10-14
 ### Fixed
 - Fixed a crash on run start with Paperback 0.9.0+ when the Castle rework was enabled: Paperback removed `PB_UTIL.is_suit`, so suit shade checks now use Steamodded's suit shade metadata (`SMODS.Suits`) with Paperback fallbacks.

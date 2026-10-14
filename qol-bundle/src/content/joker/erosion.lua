@@ -6,7 +6,7 @@ function QOL_BUNDLE.funcs.get_ownership_joker_erosion()
 
     QOL_BUNDLE.state.erosion = SMODS.Joker:take_ownership('j_erosion', {
         config = {
-            extra = 0.15
+            extra = 0.175
         },
         loc_vars = function(self, info_queue, center)
             local cards_below = math.max(0, (G.GAME and G.GAME.starting_deck_size or 52) - (G.playing_cards and #G.playing_cards or 52))

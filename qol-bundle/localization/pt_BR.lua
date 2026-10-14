@@ -19,6 +19,10 @@ return {
             qolb_unweighted_editions_info = 'Torna edições Laminado, Holográfico e Policromático igualmente prováveis.',
             qolb_eight_ball_joker_label = 'Ativar Bola 8 configurável',
             qolb_eight_ball_joker_info = 'Ajustar chance da Bola 8 gerar cartas Tarô (1=100%, 4=25%).',
+            qolb_space_joker_label = 'Ativar Curinga Espacial configurável',
+            qolb_space_joker_info = 'Ajustar chance do Curinga Espacial de aprimorar a mão de pôquer jogada (1=100%, 4=25%).',
+            qolb_steel_joker_label = 'Ativar melhoria do Curinga de Aço',
+            qolb_steel_joker_info = 'Curinga de Aço dá X0.25 de Multi por Carta de Aço (era X0.2).',
             qolb_hit_the_road_joker_label = 'Ativar reformulação do Pé na Estrada',
             qolb_hit_the_road_joker_info = { 
                 'Quando ativado, Valetes descartados retornam ao baralho.',
@@ -26,7 +30,7 @@ return {
             },
             qolb_square_joker_label = 'Ativar modificação do Curinga Quadrado',
             qolb_square_joker_info = {
-                'Curinga Quadrado dá +4 Fichas,', 
+                'Curinga Quadrado dá +2 Fichas,', 
                 'cada carta pontuando tem 1 em 2 chance de dar +4 mais.',
                 'Raridade Incomum.',
             },
@@ -46,6 +50,16 @@ return {
                 'Torna o curinga Mímico de raridade Rara.',
                 '(custa $6 ao invés de $5)'
             },
+            qolb_dna_uncommon_label = 'Ativar DNA Incomum',
+            qolb_dna_uncommon_info = {
+                'Torna o curinga DNA de raridade Incomum',
+                '(custa $6 ao invés de $8)'
+            },
+            qolb_pareidolia_common_label = 'Ativar Pareidolia Comum',
+            qolb_pareidolia_common_info = {
+                'Torna o curinga Pareidolia de raridade Comum',
+                '(custa $4 ao invés de $5)'
+            },
             qolb_ceremonial_dagger_common_label = 'Ativar Adaga Cerimonial Comum',
             qolb_ceremonial_dagger_common_info = {
                 'Torna a Adaga Cerimonial de raridade Comum',
@@ -64,7 +78,7 @@ return {
             qolb_erosion_xmult_label = 'Reformular Erosão para X Multi',
             qolb_erosion_xmult_info = {
                 'Muda Erosão de +4 Multi por carta',
-                'para X0.2 Multi por carta abaixo da quantidade inicial'
+                'para X0.175 Multi por carta abaixo da quantidade inicial'
             },
             qolb_nerf_hanging_chad_label = 'Ativar nerf do Comprovante',
             qolb_nerf_hanging_chad_info = {
@@ -88,16 +102,22 @@ return {
                 'Todas as cartas na mão são convertidas para a',
                 'classe da carta selecionada ao invés de classe aleatória.'
             },
-            qolb_loyalty_card_rounds_label = 'Habilitar Modo Rodadas do Carta de Lealdade',
-            qolb_loyalty_card_rounds_info = {
-                'O Carta de Lealdade ativa com base em rodadas',
-                'em vez de mãos jogadas. Pular conta em dobro,',
-                'mas trapacear seguido aumenta a chance',
-                'de a carta ser pega permanentemente'
+            qolb_loyalty_card_scaling_label = 'Ativar Modo Escala da Carta de Lealdade',
+            qolb_loyalty_card_scaling_info = {
+                'Carta de Lealdade começa em X1 de Multi, ganha',
+                'X0.5 de Multi ao terminar um blind, e volta',
+                'para X2 após terminar um blind em X4'
             },
-            qolb_loyalty_cheated = 'Trapaceou!',
-            qolb_loyalty_active = 'Ativo',
-            qolb_loyalty_got_caught = 'Foi pego!',
+            qolb_spectral_seal_clip_label = 'Cartas criadas por Espectrais podem ter Selos',
+            qolb_spectral_seal_clip_info = {
+                'Cartas criadas por Familiar, Sombrio e Encantamento',
+                'têm chance de vir com um Selo'
+            },
+            qolb_spectral_seal_clip_info_paperback = {
+                'Cartas criadas por Familiar, Sombrio e Encantamento',
+                'têm chance de vir com um Selo',
+                'ou um clipe de papel (com Paperback)'
+            },
             qolb_splash_joker_retrigger_label = 'Habilitar Reativação do Splash',
             qolb_splash_joker_retrigger_info = {
                 'O Splash Joker adicionalmente reativa',
@@ -157,7 +177,7 @@ return {
                 "Este Curinga ganha {C:chips}+#2#{} Fichas",
                 "se a mão jogada tem exatamente {C:attention}4{} cartas.",
                 "Cada carta pontuando tem {C:green}#3# em #4#{} chance",
-                "de dar {C:chips}+#2#{} Fichas a mais.",
+                "de dar {C:chips}+#5#{} Fichas a mais.",
                 "{C:inactive}(No momento, {C:chips}+#1#{C:inactive} Fichas)"
             },
             j_flower_pot_original = {
@@ -181,11 +201,6 @@ return {
                 "{C:attention}2{} níveis da sua mão de pôquer mais alta",
                 "{C:inactive}(No momento {C:money}$#2#{C:inactive})"
             },
-            j_loyalty_card_original = {
-                "{X:red,C:white} X#1# {} Multi a cada",
-                "{C:attention}#2#{} mãos jogadas",
-                "{C:inactive}#3#",
-            },
             j_splash_original = {
                 "Toda {C:attention}carta jogada",
                 "conta na pontuação",
@@ -208,6 +223,136 @@ return {
                 "carta abaixo de {C:attention}#2#{}",
                 "no seu baralho completo",
                 "{C:inactive}(No momento {X:mult,C:white}X#3#{C:inactive} Multi)",
+            },
+
+            -- Textos do Curinga de Mármore (do jogo base)
+            j_marble_original = {
+                "Adiciona uma carta de {C:attention}Pedra{}",
+                "ao seu baralho quando",
+                "o {C:attention}Blind{} é selecionado",
+            },
+            j_marble_modified = {
+                "Adiciona uma carta de {C:attention}Pedra{} ao seu",
+                "baralho quando o {C:attention}Blind{} é selecionado,",
+                "e ganha {X:chips,C:white}X0.1{} Fichas por cada carta",
+                "de {C:attention}Pedra{} adicionada ao baralho",
+                "{C:inactive}(No momento {X:chips,C:white}X#1#{C:inactive} Fichas)",
+            },
+
+            -- Textos do Curinga de Pedra (do jogo base)
+            j_stone_original = {
+                "Dá {C:chips}+#1#{} Fichas para",
+                "cada {C:attention}Carta de Pedra",
+                "do seu {C:attention}baralho completo",
+                "{C:inactive}(No momento, {C:chips}+#2#{C:inactive} Fichas)",
+            },
+            j_stone_modified = {
+                "Dá {C:mult}+#1#{} Multi para",
+                "cada {C:attention}Carta de Pedra",
+                "do seu {C:attention}baralho completo",
+                "{C:inactive}(No momento, {C:mult}+#2#{C:inactive} Multi)",
+            },
+
+            -- Textos da Sessão Mediúnica (do jogo base)
+            j_seance_original = {
+                "Se a {C:attention}mão de pôquer{} for",
+                "{C:attention}#1#{}, cria um(a)",
+                "carta {C:spectral}Espectral{} aleatória",
+                "{C:inactive}(Deve ter espaço)",
+            },
+            j_seance_modified = {
+                "Se a {C:attention}mão de pôquer{} for",
+                "um {C:attention}Straight Flush{} ou uma {C:attention}mão secreta{},",
+                "cria uma carta {C:spectral}Espectral{} aleatória",
+                "{C:inactive}(Deve ter espaço)",
+            },
+
+            -- Textos do Caino (do jogo base)
+            j_caino_original = {
+                "Este Curinga ganha {X:mult,C:white} X#1# {} Multi",
+                "quando uma carta de {C:attention}realeza{}",
+                "é destruída",
+                "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)",
+            },
+            j_caino_modified = {
+                "Destrói cartas de {C:attention}realeza{} pontuadas e",
+                "ganha {X:mult,C:white} X#1# {} Multi por carta de",
+                "{C:attention}realeza{} destruída",
+                "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)",
+            },
+
+            -- Textos da Ágata Ônix (do jogo base)
+            j_onyx_agate_original = {
+                "Cartas jogadas com",
+                "naipe de {C:clubs}Paus{} dão",
+                "{C:mult}+#1#{} Multi quando pontuadas",
+            },
+            j_onyx_agate_modified = {
+                "Cartas jogadas de {C:clubs}Paus{} ganham",
+                "permanentemente {C:mult}+#1#{} Multi",
+                "quando pontuadas",
+            },
+
+            -- Textos de Familiar/Sombrio/Encantamento (do jogo base)
+            c_familiar_original = {
+                "Destrói {C:attention}1{} carta",
+                "na sua mão, adiciona",
+                "{C:attention}#1#{} {C:attention}realeza Aprimorada",
+                "{C:attention}aleatórias{} na sua mão",
+            },
+            c_familiar_upgraded = {
+                "Destrói {C:attention}1{} carta",
+                "na sua mão, adiciona",
+                "{C:attention}#1#{} {C:attention}realeza Aprimorada",
+                "{C:attention}aleatórias{} na sua mão",
+                "{C:green}Chance{} de vir com um {C:attention}Selo",
+            },
+            c_familiar_upgraded_paperback = {
+                "Destrói {C:attention}1{} carta",
+                "na sua mão, adiciona",
+                "{C:attention}#1#{} {C:attention}realeza Aprimorada",
+                "{C:attention}aleatórias{} na sua mão",
+                "{C:green}Chance{} de vir com um {C:attention}Selo{} ou {C:attention}clipe de papel",
+            },
+            c_grim_original = {
+                "Destrói {C:attention}1{} carta",
+                "aleatória na sua mão,",
+                "adiciona {C:attention}#1#{}  {C:attention}Ases",
+                "{C:attention}aprimorado(s){} aleatório(s) na sua mão",
+            },
+            c_grim_upgraded = {
+                "Destrói {C:attention}1{} carta",
+                "aleatória na sua mão,",
+                "adiciona {C:attention}#1#{}  {C:attention}Ases",
+                "{C:attention}aprimorado(s){} aleatório(s) na sua mão",
+                "{C:green}Chance{} de vir com um {C:attention}Selo",
+            },
+            c_grim_upgraded_paperback = {
+                "Destrói {C:attention}1{} carta",
+                "aleatória na sua mão,",
+                "adiciona {C:attention}#1#{}  {C:attention}Ases",
+                "{C:attention}aprimorado(s){} aleatório(s) na sua mão",
+                "{C:green}Chance{} de vir com um {C:attention}Selo{} ou {C:attention}clipe de papel",
+            },
+            c_incantation_original = {
+                "Destrói {C:attention}1{} carta",
+                "na sua mão, adiciona {C:attention}#1#",
+                "{C:attention}cartas Aprimoradas e numeradas",
+                "{C:attention}aleatórias{} na sua mão",
+            },
+            c_incantation_upgraded = {
+                "Destrói {C:attention}1{} carta",
+                "na sua mão, adiciona {C:attention}#1#",
+                "{C:attention}cartas Aprimoradas e numeradas",
+                "{C:attention}aleatórias{} na sua mão",
+                "{C:green}Chance{} de vir com um {C:attention}Selo",
+            },
+            c_incantation_upgraded_paperback = {
+                "Destrói {C:attention}1{} carta",
+                "na sua mão, adiciona {C:attention}#1#",
+                "{C:attention}cartas Aprimoradas e numeradas",
+                "{C:attention}aleatórias{} na sua mão",
+                "{C:green}Chance{} de vir com um {C:attention}Selo{} ou {C:attention}clipe de papel",
             },
 
             -- Enhanced voucher config labels
@@ -259,6 +404,34 @@ return {
                 'Paus e Espadas ou Copas e Ouros.',
                 'O grupo acompanha os naipes do seu baralho'
             },
+            qolb_marble_joker_xchips_label = 'Ativar X Fichas do Curinga de Mármore',
+            qolb_marble_joker_xchips_info = {
+                'Curinga de Mármore ganha X0.1 Fichas por cada',
+                'carta de Pedra adicionada ao baralho,',
+                'além do seu efeito original'
+            },
+            qolb_stone_joker_mult_label = 'Ativar Multi do Curinga de Pedra',
+            qolb_stone_joker_mult_info = {
+                'Curinga de Pedra dá +4 de Multi por cada',
+                'Carta de Pedra no baralho completo',
+                'ao invés de +25 Fichas'
+            },
+            qolb_seance_rework_label = 'Ativar reformulação da Sessão Mediúnica',
+            qolb_seance_rework_info = {
+                'Sessão Mediúnica ativa em Straight Flush',
+                'ou qualquer mão secreta, e vira Rara',
+                '(custa $8 ao invés de $6)'
+            },
+            qolb_caino_rework_label = 'Ativar reformulação do Caino',
+            qolb_caino_rework_info = {
+                'Caino destrói cartas de realeza pontuadas',
+                'e ganha X0.25 de Multi por carta destruída'
+            },
+            qolb_onyx_agate_label = 'Ativar reformulação da Ágata Ônix',
+            qolb_onyx_agate_info = {
+                'Cartas de Paus jogadas ganham',
+                'permanentemente +5 de Multi ao pontuar'
+            },
             qolb_yorick_multiplier_label = 'Ativar Configuração do Multiplicador do Yorick',
             qolb_yorick_multiplier_info = {
                 'Configure quanto XMulti Yorick ganha',
@@ -300,31 +473,23 @@ return {
             },
 
             requires_restart = "Requer reinicialização",
+            beta = "Beta",
         },
         v_dictionary = {
-            qolb_loyalty_status_remaining = '#1# rodadas restantes',
+            -- Fallback for keys Steamodded does not ship in pt_BR (used by the Marble Joker float)
+            a_xchips = "X#1# Fichas",
+            a_xchips_minus = "-X#1# Fichas",
         },
     },
     descriptions = {
         Joker = {
-            j_loyalty_card_rounds = {
+            j_loyalty_card_scaling = {
                 text = {
-                    "{X:red,C:white} X#1# {} de Mult a cada {C:attention}#2#{} rodadas",
-                    "Pular conta em dobro — ele trapaceia para te ver antes",
-                    "{C:inactive}#3#{}",
-                },
-            },
-            j_loyalty_card_rounds_cheated = {
-                text = {
-                    "{X:red,C:white} X#1# {} de Mult a cada {C:attention}#2#{} rodadas",
-                    "Pular conta em dobro — ele trapaceia para te ver antes",
-                    "{C:inactive}#3#{}",
-                    "{C:red}Trapaceou:{} {C:green}#4# em #5#{} de ser pego",
-                },
-            },
-            j_loyalty_card_caught = {
-                text = {
-                    "(foi pego)",
+                    "{X:red,C:white} X#1# {} de Multi",
+                    "Ganha {X:red,C:white} X0.5 {} de Multi ao terminar",
+                    "um {C:attention}blind",
+                    "Volta para {X:red,C:white}X2{} após terminar",
+                    "um blind em {X:red,C:white}X4{}",
                 },
             },
         },

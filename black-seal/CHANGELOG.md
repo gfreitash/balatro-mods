@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.2] - 2026-10-14
+### Changed
+- Relaxed the required Lovely Injector version to v0.9.0 (the mod uses no 0.10.0-only features).
+
 ## [3.4.1] - 2026-10-13
 ### Changed
 - Migrated distribution to ThunderStore (`Riosodu-Black_Seal`); GitHub releases now ship a ThunderStore-compatible package.

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.9] - 2026-10-14
+### Changed
+- Relaxed the required Lovely Injector version to v0.9.0 (the mod uses no 0.10.0-only features).
+
 ## [1.3.8] - 2026-10-13
 ### Changed
 - Migrated distribution to ThunderStore (`Riosodu-Rebalanced_Stakes`); GitHub releases now ship a ThunderStore-compatible package.

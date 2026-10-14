@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-10-14
+### Changed
+- Relaxed the required Lovely Injector version to v0.9.0 (the mod uses no 0.10.0-only features).
+
 ## [1.12.0] - 2026-10-14
 ### Added
 - Beta features: options can now be marked as beta, appearing in orange in the config menu and shipping disabled by default.

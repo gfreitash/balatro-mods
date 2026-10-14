@@ -1,10 +1,10 @@
 {
   "name": "Black_Seal",
-  "version_number": "3.4.1",
+  "version_number": "3.4.2",
   "website_url": "https://github.com/gfreitash/balatro-mods",
   "description": "Adds a rare single use seal that adds negative to a random joker",
   "dependencies": [
     "Steamodded-Steamodded-26.829.0",
-    "Thunderstore-lovely-0.10.0"
+    "Thunderstore-lovely-0.9.0"
   ]
 }

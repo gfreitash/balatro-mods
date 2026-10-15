@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.2] - 2026-10-14
+### Fixed
+- Fixed a crash in the Onyx Agate beta rework when a Club scored: the effect returned the Joker center instead of the card, causing a `juice_up` error during scoring.
+- Fixed the same latent crash in the Seance beta rework when it triggered on a secret hand.
+
 ## [1.12.1] - 2026-10-14
 ### Changed
 - Relaxed the required Lovely Injector version to v0.9.0 (the mod uses no 0.10.0-only features).

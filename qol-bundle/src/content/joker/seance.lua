@@ -45,7 +45,7 @@ function QOL_BUNDLE.funcs.get_ownership_joker_seance()
                             return true
                         end)
                     }))
-                    return { message = localize('k_plus_spectral'), colour = G.C.SECONDARY_SET.Spectral, card = self }
+                    return { message = localize('k_plus_spectral'), colour = G.C.SECONDARY_SET.Spectral, card = card }
                 end
             end
 

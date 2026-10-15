@@ -24,9 +24,9 @@ function QOL_BUNDLE.funcs.get_ownership_joker_onyx_agate()
 
                 context.other_card.ability.perma_mult = (context.other_card.ability.perma_mult or 0) + card.ability.extra
                 return {
-                    extra = { message = localize('k_upgrade_ex'), colour = G.C.MULT },
+                    message = localize('k_upgrade_ex'),
                     colour = G.C.MULT,
-                    card = self
+                    card = card
                 }
             end
             return nil

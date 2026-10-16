@@ -7,6 +7,10 @@ log_info() { echo -e "${C_BLUE}INFO: $1${C_NC}"; }
 log_success() { echo -e "${C_GREEN}SUCCESS: $1${C_NC}"; }
 log_error() { echo -e "${C_RED}ERROR: $1${C_NC}"; }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/mods.sh
+source "$SCRIPT_DIR/scripts/lib/mods.sh"
+
 # --- Prerequisite Check ---
 check_prerequisites() {
     if ! command -v rsync >/dev/null 2>&1; then
@@ -60,29 +64,14 @@ sync_all_mods() {
         # Install under the ThunderStore package name so local testing matches
         # ThunderStore-manager installs (Mods/<PackageName>/).
         local dest_name
-        dest_name=$(jq -r '.name // empty' "$dir/manifest.json" 2>/dev/null || true)
-        if [ -z "$dest_name" ]; then
-            dest_name="$mod_name"
-        fi
+        dest_name="$(mods_manifest_name "$dir")"
         echo -e "  · Syncing ${C_YELLOW}${mod_name}${C_NC} → ${dest_name}"
 
         # Sync the mod directory itself
         rsync -a --delete --exclude='*.tmp' "$dir/" "$dest_path/$dest_name/"
 
-        # Sync the common library into the mod's destination folder
-        if [ -d "_common" ]; then
-            rsync -a --delete "_common/" "$dest_path/$dest_name/common/"
-            # Copy lovely patches from common to mod's lovely directory with common_ prefix
-            if [ -d "_common/lovely" ]; then
-                mkdir -p "$dest_path/$dest_name/lovely"
-                for patch_file in _common/lovely/*.toml; do
-                    if [ -f "$patch_file" ]; then
-                        base_name=$(basename "$patch_file")
-                        cp "$patch_file" "$dest_path/$dest_name/lovely/common_$base_name"
-                    fi
-                done
-            fi
-        fi
+        # Bundle the shared library (same recipe as the test harness installer).
+        mods_bundle_common "$SCRIPT_DIR" "$dest_path/$dest_name"
     done
 }
 

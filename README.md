@@ -84,6 +84,27 @@ To test the exact Thunderstore artifact (including the bundled shared library an
 # or extract it into a new folder inside your Balatro Mods directory
 ```
 
+#### Integration Test Runs
+
+The repository ships an end-to-end test harness that runs [BalatroIntegration](https://github.com/V-rtualized/BalatroIntegration) suites inside a real Balatro session (190 main tests + 13 Paperback-mode tests). Every launch builds a **clean Mods folder**: it backs up what it will wipe (Mods entries + your `config/`) to `lib/mod_folder_snapshots/`, wipes everything except `lovely/`, and installs exactly the declared mods plus the test infrastructure.
+
+```bash
+./scripts/run-integration-tests.sh --keep-open riosodu                          # full suite (PB-free)
+./scripts/run-integration-tests.sh --keep-open --pb                             # Paperback-mode suite
+./scripts/run-integration-tests.sh --dry-run                                    # show what a run would install/wipe
+./scripts/run-integration-tests.sh --attach "riosodu/qol_bundle/hit_the_road"  # fast re-run in the live session
+./scripts/run-integration-tests.sh --teardown                                   # run, then restore the pre-session state
+./scripts/test-mods.sh teardown                                                 # restore the pending backup (game closed)
+```
+
+Mods are declared as parameters, for example:
+
+```bash
+--mods "local:qol-bundle,thunderstore:PaperbackedProjects-Paperback@0.9.1,github:gfreitash/balatro-mods::qol-bundle/"
+```
+
+Specs: `local:<dir>`, `thunderstore:<ns>-<name>[@<ver>]`, `github:<owner>/<repo>[@<ref>][::<subdir>]`, `github-release:<owner>/<repo>@<tag>#<asset>`. Run `scripts/test-mods.sh --help` for the plan/setup/clean/status/prune commands.
+
 ##### _Note: If you are on Windows, you can use WSL to run the above commands, or manually copy the files to your Balatro game folder. You can also contribute by creating a powershell script that performs the same actions._
 
 ## Thanks

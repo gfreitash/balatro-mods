@@ -8,6 +8,10 @@ log_success() { echo -e "${C_GREEN}SUCCESS: $1${C_NC}"; }
 log_warn() { echo -e "${C_YELLOW}WARN: $1${C_NC}"; }
 log_error() { echo -e "${C_RED}ERROR: $1${C_NC}"; }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/mods.sh
+source "$SCRIPT_DIR/scripts/lib/mods.sh"
+
 # --- Prerequisite Check ---
 check_prerequisites() {
     log_info "Checking for required tools..."
@@ -144,58 +148,16 @@ setup_smods() {
     log_success "SMods release setup complete."
 }
 
-setup_smods_in_mods() {
-    echo ""
-    log_info "Syncing SMods to the Balatro Mods folder..."
-    local link_name="$LIB_DIR/mod_folder"
-
-    if [ ! -d "$link_name" ]; then
-        log_warn "Balatro Mods folder not found at $link_name."
-        log_warn "Skipping SMods sync. Please run setup_symlink or Balatro at least once."
-        return
-    fi
-
-    rsync -a --delete "$LIB_DIR/smods/" "$link_name/smods/"
-    log_success "SMods synced to $link_name/smods."
-}
-
 setup_paperback() {
     echo ""
-    log_info "Setting up test-only Paperback library..."
+    log_info "Setting up test-only Paperback library (mods cache)..."
 
-    local version="${PAPERBACK_VERSION:-0.9.1}"
-    local download_url="https://thunderstore.io/package/download/PaperbackedProjects/Paperback/${version}/"
-    local zip_file="$LIB_DIR/paperback.zip"
-    local target_dir="$LIB_DIR/paperback"
-
-    log_info "Downloading Paperback ${version} from ${download_url}..."
-    curl -L "$download_url" -o "$zip_file"
-
-    log_info "Extracting release into ${target_dir}..."
-    rm -rf "$target_dir"
-    mkdir -p "$target_dir"
-    unzip -oq "$zip_file" -d "$target_dir"
-    rm "$zip_file"
-
-    if [ -f "$target_dir/manifest.json" ]; then
-        log_info "Installed Paperback version: $(jq -r '.version_number // .version // empty' "$target_dir/manifest.json")"
+    local spec="thunderstore:PaperbackedProjects-Paperback@${PAPERBACK_VERSION:-0.9.1}"
+    if ! mods_fetch_spec "$spec"; then
+        log_error "Paperback fetch failed: $MODS_SPEC_ERROR"
+        exit 1
     fi
-    log_success "Paperback setup complete."
-}
-
-setup_paperback_in_mods() {
-    echo ""
-    log_info "Syncing test-only Paperback to the Balatro Mods folder..."
-    local link_name="$LIB_DIR/mod_folder"
-
-    if [ ! -d "$link_name" ]; then
-        log_warn "Balatro Mods folder not found at $link_name."
-        log_warn "Skipping Paperback sync. Please run setup_symlink or Balatro at least once."
-        return
-    fi
-
-    rsync -a --delete "$LIB_DIR/paperback/" "$link_name/Paperback/"
-    log_success "Paperback synced to $link_name/Paperback."
+    log_success "Paperback ready in the mods cache ($MODS_RESOLVED_SRC)."
 }
 
 setup_integration() {
@@ -240,11 +202,7 @@ main() {
 
     setup_smods
 
-    setup_smods_in_mods
-
     setup_paperback
-
-    setup_paperback_in_mods
 
     setup_integration
 

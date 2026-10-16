@@ -515,8 +515,11 @@ main() {
         elif ! session_fingerprints_match "$mods_dir"; then
             log_warn "Test evidence not recorded: the working tree changed since this session was launched (relaunch to record evidence)."
         else
-            local ev_mode="main"
-            if [ "$PB_MODE" = 1 ]; then
+            # The session stamp records the launch mode (attach runs cannot pass
+            # --pb, so the CLI flag alone would mislabel a PB session).
+            local ev_mode="main" stamp_pb
+            stamp_pb="$(awk -F= '$1 == "pb" { print $2; exit }' "$mods_dir/integration_runner/session.txt" 2>/dev/null || true)"
+            if [ "$stamp_pb" = "1" ]; then
                 ev_mode="pb"
             fi
             local ev_out=""

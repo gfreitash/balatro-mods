@@ -86,6 +86,11 @@ To test the exact Thunderstore artifact (including the bundled shared library an
 
 ##### _Note: If you are on Windows, you can use WSL to run the above commands, or manually copy the files to your Balatro game folder. You can also contribute by creating a powershell script that performs the same actions._
 
+## Thanks
+
+- **infarctus** for creating the original Black Seal mod (ported and maintained here as [Black Seal](black-seal)).
+- [**V-rtualized**](https://github.com/V-rtualized) for creating [BalatroIntegration](https://github.com/V-rtualized/BalatroIntegration), the integration testing framework that powers this repository's test suites.
+
 ---
 
 Check the releases tab for each mod download, or install everything from [Thunderstore](https://thunderstore.io/c/balatro/). Installation instructions can be found in each mod folder's README.

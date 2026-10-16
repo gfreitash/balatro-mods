@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-16
 ### Added
 - New debug feature: swap the first card on the shop for a joker (keybind `q`, gated behind debug features). Opens a text prompt for a joker key (with or without the `j_` prefix); leaving it empty swaps in a random joker. The card is replaced in the first slot using the base game's shop reroll pattern, so cost, editions, and shop stickers are applied correctly.
 

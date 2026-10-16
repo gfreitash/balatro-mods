@@ -18,3 +18,34 @@ jobs:
 
       - name: Run changelog hygiene check
         run: ./scripts/check-changelogs.sh "origin/${{ github.base_ref }}"
+
+  test-evidence:
+    name: Test evidence for changed mods
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base ref
+        run: git fetch origin "${{ github.base_ref }}"
+
+      - name: Check test evidence
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          CHANGED="$(git diff --name-only "$BASE"...HEAD)"
+          MODS=""
+          for manifest in $(find . -maxdepth 2 -name smods.json ! -path './_common/*' ! -path './lib/*'); do
+            mod="${manifest#./}"
+            mod="${mod%/smods.json}"
+            if printf '%s\n' "$CHANGED" | grep -qE "^(${mod}/|_common/)"; then
+              MODS="$MODS $mod"
+            fi
+          done
+          if [ -z "$MODS" ]; then
+            echo "No mod source changes in this PR; test evidence not required."
+            exit 0
+          fi
+          echo "Checking test evidence for:${MODS}"
+          ./scripts/check-test-evidence.sh $MODS

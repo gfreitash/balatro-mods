@@ -62,6 +62,15 @@ jobs:
               # Optionally, you could add logic here to re-release if a "force" input was given
             else
               echo "🆕 Tag ${tag_name} does not exist. This mod needs a new release."
+
+              # Release gate: require passing local test evidence for this exact
+              # content (see scripts/check-test-evidence.sh). A failed check
+              # aborts before any tag is created or pushed.
+              if ! ./scripts/check-test-evidence.sh "$mod_dir"; then
+                echo "::error::Missing or stale test evidence for ${mod_dir} v${version}. Run the suite locally (scripts/run-integration-tests.sh) and commit test-reports/, then push again."
+                exit 1
+              fi
+
               # Create the local tag on the current HEAD
               git tag "$tag_name"
               # Add to map for later JSON output

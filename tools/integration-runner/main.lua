@@ -8,6 +8,10 @@
 --   quit=1              -- quit the game once the suite finishes (0 = stay open)
 --   token=run-...       -- optional run handshake: echoed into the results file
 --
+-- For marker-initiated runs the harness also appends per-test results
+-- ("test=<name>\t<pass|fail>") to results/latest.txt, which the runner script
+-- turns into machine-readable test evidence (see scripts/lib/test-evidence.sh).
+--
 -- The marker is polled continuously: a fresh launch picks it up on boot, and
 -- while the game is running new markers re-trigger suites in the live session
 -- (used by the runner script's --attach mode for fast iteration). A pending
@@ -87,6 +91,7 @@ end
 local pending = nil        -- { pattern = string|nil, quit = boolean, token = string|nil }
 local current_quit = false -- marker's quit flag for the running/finished suite
 local current_token = nil  -- marker's run token, echoed into the results file
+local current_tests = nil  -- per-test results for the current marker-initiated run
 local quit_requested = false
 local quit_deadline = nil
 local poll_timer = 0
@@ -101,9 +106,26 @@ do
 	end
 end
 
--- Echo the run token into the results file (BInt writes it just before this
--- event fires) so the runner script can tell this suite's results apart from a
--- stale suite finishing late (e.g. an interrupted attach run).
+-- Collect per-test results for marker-initiated runs so the runner script can
+-- record machine-readable test evidence.
+BInt.on("suite_start", function()
+	if current_token then current_tests = {} end
+end)
+BInt.on("test_pass", function(name)
+	if current_tests then
+		current_tests[#current_tests + 1] = { name = name, passed = true }
+	end
+end)
+BInt.on("test_fail", function(name)
+	if current_tests then
+		current_tests[#current_tests + 1] = { name = name, passed = false }
+	end
+end)
+
+-- Append the per-test results and the run token to the results file (BInt
+-- writes it just before this event fires) so the runner script can tell this
+-- suite's results apart from a stale suite finishing late (e.g. an interrupted
+-- attach run).
 local function echo_run_token()
 	if not current_token then return end
 	local results_path = BInt._MOD_METADATA.path .. "results/latest.txt"
@@ -114,6 +136,12 @@ local function echo_run_token()
 		file:write(contents)
 		if contents ~= "" and contents:sub(-1) ~= "\n" then
 			file:write("\n")
+		end
+		if current_tests then
+			for _, result in ipairs(current_tests) do
+				file:write("test=" .. result.name .. "\t" .. (result.passed and "pass" or "fail") .. "\n")
+			end
+			current_tests = nil
 		end
 		file:write("run_token=" .. current_token .. "\n")
 		file:close()

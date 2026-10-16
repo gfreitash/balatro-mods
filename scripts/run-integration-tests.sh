@@ -85,6 +85,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # shellcheck source=lib/mods.sh
 source "$SCRIPT_DIR/lib/mods.sh"
+# shellcheck source=lib/test-evidence.sh
+source "$SCRIPT_DIR/lib/test-evidence.sh"
 
 INTEGRATION_SRC="$REPO_ROOT/lib/BalatroIntegration"
 HARNESS_SRC="$REPO_ROOT/tools/integration-runner"
@@ -308,6 +310,71 @@ request_game_close() {
     wmctrl -i -c "$gw" 2>/dev/null || true
 }
 
+# --- Test evidence helpers ---------------------------------------------------
+
+local_mods_for_evidence() {
+    mods_default_specs | sed 's/^local://'
+}
+
+# record_launch_fingerprints MODS_DIR
+#   Stores the content fingerprints of everything the session installs into the
+#   session stamp, so attach runs can tell whether the working tree still
+#   matches what was loaded (and therefore whether evidence may be recorded).
+record_launch_fingerprints() {
+    local mods_dir="$1" stamp="$mods_dir/integration_runner/session.txt" mod fp
+    [ -f "$stamp" ] || return 1
+    {
+        for mod in $(local_mods_for_evidence); do
+            if ! fp="$(evidence_mod_fingerprint "$mod")"; then
+                return 1
+            fi
+            printf 'evhash.%s=%s\n' "$mod" "$fp"
+        done
+        if ! fp="$(evidence_harness_fingerprint)"; then
+            return 1
+        fi
+        printf 'evhash.harness=%s\n' "$fp"
+    } >> "$stamp"
+}
+
+# session_fingerprints_match MODS_DIR
+#   True when the working tree still matches what this session was launched
+#   with (all local mods + the test harness).
+session_fingerprints_match() {
+    local mods_dir="$1" stamp="$mods_dir/integration_runner/session.txt" mod want got
+    [ -f "$stamp" ] || return 1
+    for mod in $(local_mods_for_evidence); do
+        want="$(awk -F= -v k="evhash.$mod" '$1 == k { print $2; exit }' "$stamp")"
+        [ -n "$want" ] || return 1
+        if ! got="$(evidence_mod_fingerprint "$mod")"; then
+            return 1
+        fi
+        [ "$want" = "$got" ] || return 1
+    done
+    want="$(awk -F= '$1 == "evhash.harness" { print $2; exit }' "$stamp")"
+    [ -n "$want" ] || return 1
+    if ! got="$(evidence_harness_fingerprint)"; then
+        return 1
+    fi
+    [ "$want" = "$got" ] || return 1
+    return 0
+}
+
+# run_covers_any_suite PATTERN
+#   True when the run pattern covers every test of at least one required suite.
+run_covers_any_suite() {
+    local pattern="$1" mod mode suite
+    for mod in $(local_mods_for_evidence); do
+        while IFS=$'\t' read -r mode suite; do
+            [ -n "$mode" ] || continue
+            if evidence_pattern_covers_suite "$mod" "$pattern" "$suite"; then
+                return 0
+            fi
+        done < <(evidence_required_evidence "$mod" || true)
+    done
+    return 1
+}
+
 # --- Main flow ---
 main() {
     check_prerequisites
@@ -371,6 +438,9 @@ main() {
             else
                 [ ! -e "$mods_dir/Paperback" ] || { log_error "Main run must stay PB-free but Mods/Paperback exists after setup."; exit 1; }
             fi
+            if ! record_launch_fingerprints "$mods_dir"; then
+                log_warn "Could not record launch fingerprints; this session will not produce test evidence."
+            fi
         fi
     fi
 
@@ -433,6 +503,30 @@ main() {
     local passed failed
     passed=$(awk -F': ' '/^Passed:/{print $2; exit}' "$results")
     failed=$(awk -F': ' '/^Failed:/{print $2; exit}' "$results")
+
+    # --- Test evidence (input for the release gate) --------------------------
+    # A report is only written when the run passed, covers a full suite, and
+    # the working tree still matches what this session was launched with.
+    if [ "$DO_SYNC" = 1 ] && [ "${failed:-1}" = "0" ] && [ -n "${passed:-}" ] && [ "${passed:-0}" -gt 0 ]; then
+        if ! run_covers_any_suite "$PATTERN"; then
+            log_info "Test evidence not recorded (pattern '${PATTERN}' does not cover a full suite)."
+        elif [ ! -f "$mods_dir/integration_runner/session.txt" ] || ! grep -q '^evhash\.' "$mods_dir/integration_runner/session.txt" 2>/dev/null; then
+            log_info "Test evidence not recorded (no launch fingerprints for this session; use a launch run)."
+        elif ! session_fingerprints_match "$mods_dir"; then
+            log_warn "Test evidence not recorded: the working tree changed since this session was launched (relaunch to record evidence)."
+        else
+            local ev_mode="main"
+            if [ "$PB_MODE" = 1 ]; then
+                ev_mode="pb"
+            fi
+            local ev_out=""
+            if ev_out="$(evidence_write_report "$ev_mode" "$PATTERN" "$results" "$REPO_ROOT/test-reports" $(local_mods_for_evidence))"; then
+                log_success "Test evidence written: ${ev_out#"$REPO_ROOT"/} (commit it before releasing)."
+            else
+                log_warn "Could not write test evidence (see messages above)."
+            fi
+        fi
+    fi
 
     local wait_for_quit=0
     if [ "$want_close" = 1 ] || { [ "$ATTACH" = 0 ] && [ "$KEEP_OPEN" = 0 ]; }; then

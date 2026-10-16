@@ -12,7 +12,7 @@ log_error() { echo -e "${C_RED}ERROR: $1${C_NC}"; }
 check_prerequisites() {
     log_info "Checking for required tools..."
     local missing_tools=0
-    for tool in curl unzip 7z rsync jq; do
+    for tool in curl unzip 7z rsync jq git; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             log_error "Required tool '$tool' is not installed."
             missing_tools=$((missing_tools + 1))
@@ -159,6 +159,69 @@ setup_smods_in_mods() {
     log_success "SMods synced to $link_name/smods."
 }
 
+setup_paperback() {
+    echo ""
+    log_info "Setting up test-only Paperback library..."
+
+    local version="${PAPERBACK_VERSION:-0.9.1}"
+    local download_url="https://thunderstore.io/package/download/PaperbackedProjects/Paperback/${version}/"
+    local zip_file="$LIB_DIR/paperback.zip"
+    local target_dir="$LIB_DIR/paperback"
+
+    log_info "Downloading Paperback ${version} from ${download_url}..."
+    curl -L "$download_url" -o "$zip_file"
+
+    log_info "Extracting release into ${target_dir}..."
+    rm -rf "$target_dir"
+    mkdir -p "$target_dir"
+    unzip -oq "$zip_file" -d "$target_dir"
+    rm "$zip_file"
+
+    if [ -f "$target_dir/manifest.json" ]; then
+        log_info "Installed Paperback version: $(jq -r '.version_number // .version // empty' "$target_dir/manifest.json")"
+    fi
+    log_success "Paperback setup complete."
+}
+
+setup_paperback_in_mods() {
+    echo ""
+    log_info "Syncing test-only Paperback to the Balatro Mods folder..."
+    local link_name="$LIB_DIR/mod_folder"
+
+    if [ ! -d "$link_name" ]; then
+        log_warn "Balatro Mods folder not found at $link_name."
+        log_warn "Skipping Paperback sync. Please run setup_symlink or Balatro at least once."
+        return
+    fi
+
+    rsync -a --delete "$LIB_DIR/paperback/" "$link_name/Paperback/"
+    log_success "Paperback synced to $link_name/Paperback."
+}
+
+setup_integration() {
+    echo ""
+    log_info "Setting up BalatroIntegration (test framework fork)..."
+    local repo="${INTEGRATION_REPO:-https://github.com/gfreitash/BalatroIntegration.git}"
+    local ref="${INTEGRATION_REF:-main}"
+    local target_dir="$LIB_DIR/BalatroIntegration"
+
+    if [ -d "$target_dir/.git" ]; then
+        log_info "Updating existing checkout in $target_dir (ref: $ref)..."
+        git -C "$target_dir" fetch -q --depth 1 origin "$ref"
+        git -C "$target_dir" checkout -q -f FETCH_HEAD
+    else
+        log_info "Cloning $repo (ref: $ref)..."
+        rm -rf "$target_dir"
+        git clone -q --depth 1 "$repo" "$target_dir"
+        git -C "$target_dir" fetch -q --depth 1 origin "$ref"
+        git -C "$target_dir" checkout -q -f FETCH_HEAD
+    fi
+
+    local commit
+    commit=$(git -C "$target_dir" rev-parse --short HEAD)
+    log_success "BalatroIntegration ready at $target_dir ($commit)."
+}
+
 # --- Main Execution ---
 main() {
     check_prerequisites
@@ -178,6 +241,12 @@ main() {
     setup_smods
 
     setup_smods_in_mods
+
+    setup_paperback
+
+    setup_paperback_in_mods
+
+    setup_integration
 
     setup_zip_lib "SMods Wiki" \
         "https://github.com/Steamodded/Wiki/archive/refs/heads/master.zip" \

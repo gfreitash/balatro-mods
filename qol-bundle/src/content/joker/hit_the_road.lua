@@ -23,26 +23,32 @@ function QOL_BUNDLE.funcs.get_ownership_joker_hit_the_road()
                     blockable = true,
                     func = function()
                         local jack_count = 0
-                        for index, value in ipairs(jacks_to_move) do
-                            print("ID: " ..  (value.ID or "nil"))
-                        end
-
                         for i, jack_card in ipairs(jacks_to_move) do
                             jack_count = jack_count + 1
                             local animation_progress = (jack_count * 100) / #jacks_to_move
-                            print("Drawing jack: " .. tostring(jack_card.ID))
                             draw_card(G.discard, G.deck, animation_progress, 'up', true, jack_card)
                         end
                         jacks_to_move = {}
 
-                        G.deck:shuffle(
-                            'j_hit_the_road_shuffle_'
-                            ..G.GAME.hands_played
-                            ..'_'
-                            ..G.GAME.current_round.hands_left
-                            ..'_'
-                            ..G.GAME.current_round.discards_left
-                        )
+                        -- draw_card only queues its events, so the shuffle must be
+                        -- queued too: this event runs after the returns have moved
+                        -- the Jacks back into the deck and shuffles them with it.
+                        G.E_MANAGER:add_event(Event({
+                            trigger = 'after',
+                            blocking = true,
+                            blockable = true,
+                            func = function()
+                                G.deck:shuffle(
+                                    'j_hit_the_road_shuffle_'
+                                    ..G.GAME.hands_played
+                                    ..'_'
+                                    ..G.GAME.current_round.hands_left
+                                    ..'_'
+                                    ..G.GAME.current_round.discards_left
+                                )
+                                return true
+                            end
+                        }))
                         return true
                     end
                 }))

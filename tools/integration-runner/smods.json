@@ -1,0 +1,17 @@
+{
+  "id": "integration_runner",
+  "name": "Integration Runner",
+  "author": [
+    "Riosodu"
+  ],
+  "description": "Local-only harness that auto-runs BalatroIntegration suites from a marker file. Not for distribution.",
+  "prefix": "integration_runner",
+  "main_file": "main.lua",
+  "priority": 999999,
+  "badge_colour": "4A90D9",
+  "badge_text_colour": "FFFFFF",
+  "version": "0.1.0",
+  "dependencies": [
+    "Integration (>=0.1.0)"
+  ]
+}

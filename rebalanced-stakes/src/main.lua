@@ -34,6 +34,9 @@ function Card:calculate_perishable()
         if self.ability.perish_tally == 1 then
             self.ability.perish_tally = 0
             card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_disabled_ex'),colour = G.C.FILTER, delay = 0.45})
+            -- Debuff on expiry like vanilla (without this the joker would still
+            -- pay its end-of-round dollar bonus on the round it expires)
+            self:set_debuff()
             -- Make the joker negative when it expires
             if self.area == G.jokers then
                 self:set_edition({negative = true}, true)

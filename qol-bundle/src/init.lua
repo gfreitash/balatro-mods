@@ -114,4 +114,12 @@ end
 
 
 QOL_BUNDLE.debug.register_debug_keybinds()
+
+-- Integration tests, loaded only when the BalatroIntegration framework is
+-- installed (development/local only; never shipped to users)
+if next(SMODS.find_mod("Integration")) then
+  local tests_chunk = SMODS.load_file("tests.lua", QOL_BUNDLE.mod_id)
+  if tests_chunk then tests_chunk() end
+end
+
 RIOSODU_SHARED.utils.sendDebugMessage("QoL Bundle initialization complete.")

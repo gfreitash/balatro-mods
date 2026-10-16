@@ -25,7 +25,11 @@ QOL_BUNDLE.callbacks.space_joker_callback_handler = function(e)
     -- Save the config
     SMODS.save_mod_config(QOL_BUNDLE.mod)
 
-    QOL_BUNDLE.state.space_joker.config.extra = e.to_val
+    -- The feature can be disabled at load: take_ownership may never have run,
+    -- so there may be no state object to update.
+    if QOL_BUNDLE.state.space_joker then
+        QOL_BUNDLE.state.space_joker.config.extra = e.to_val
+    end
 
     RIOSODU_SHARED.utils.sendDebugMessage("Space Joker value set to: " .. e.to_val)
 end

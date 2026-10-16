@@ -11,7 +11,7 @@ function QOL_BUNDLE.funcs.get_ownership_joker_castle()
             -- Check Paperback compatibility for custom light/dark suits
             if PB_UTIL and PB_UTIL.light_suits and PB_UTIL.dark_suits then
                 -- Use Paperback's light/dark suit terminology
-                tooltip = chosen_group == 'light' and PB_UTIL.suit_tooltip('light') or PB_UTIL.suit_tooltip('dark')
+                local tooltip = chosen_group == 'light' and PB_UTIL.suit_tooltip('light') or PB_UTIL.suit_tooltip('dark')
                 info_queue[#info_queue + 1] = tooltip
 
                 local group_name = chosen_group == 'light' and localize({
@@ -19,8 +19,7 @@ function QOL_BUNDLE.funcs.get_ownership_joker_castle()
                 }) or localize({
                     type = 'name_text', set='Other', key='paperback_dark_suits'
                 })
-                color = chosen_group == 'light' and G.C.PAPERBACK_LIGHT_SUIT or G.C.PAPERBACK_DARK_SUIT
-
+                local color = chosen_group == 'light' and G.C.PAPERBACK_LIGHT_SUIT or G.C.PAPERBACK_DARK_SUIT
                 return {
                     vars = {
                         center.ability.extra.chip_mod, -- #1# - chip increment

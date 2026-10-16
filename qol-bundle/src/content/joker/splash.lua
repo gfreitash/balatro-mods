@@ -1,4 +1,7 @@
 -- Override Splash Joker to add random card retriggering
+-- File-local picks, shared between the initial_scoring_step call and the
+-- repetition calls of the same scoring. (Previously leaked as _G globals.)
+local random_splash_retrigger_1, random_splash_retrigger_2
 function QOL_BUNDLE.funcs.get_ownership_joker_splash()
     if not QOL_BUNDLE.config.splash_joker_retrigger_enabled then
         return

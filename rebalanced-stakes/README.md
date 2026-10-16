@@ -6,18 +6,20 @@ This mod aims to provide a more engaging and balanced difficulty curve for Balat
 Instead of introducing entirely new harsh mechanics early on, this mod shifts existing shop Joker limitations (Perishable, Rental) to earlier Stakes (Blue and Orange, respectively). The Gold Stake is then redesigned to offer a distinct economic and endurance challenge.
 
 ## Key Features
+Stakes are cumulative (each Stake applies all previous effects), so each
+restriction below is *introduced* one Stake earlier and then keeps applying
+from there on.
 - **Blue Stake (Stake 5):**
     - Removes the `-1 Discard` penalty
-    - Introduces Perishable Jokers to the shop pool *(effect moved from vanilla Orange Stake)*
+    - Perishable Jokers now start appearing in the shop pool *(effect moved from vanilla Orange Stake)*
     - Perishable Jokers become negative when they expire alongside being debuffed
 
 - **Orange Stake (Stake 7):**
-    - Removes the Perishable Joker effect
-    - Introduces Rental Jokers to the shop pool *(effect moved from vanilla Gold Stake)*
+    - Rental Jokers now start appearing in the shop pool *(effect moved from vanilla Gold Stake; Perishable Jokers keep applying from Blue Stake)*
 
 - **Gold Stake (Stake 8):**
-    - Removes the Rental Joker effect
-    - Introduces two significant new challenges:
+    - Adds the economy rework instead of a new shop Joker restriction *(Rental Jokers keep applying from Orange Stake)*:
+    - Two significant new challenges:
         - **Increased Interest Threshold:** You now need **_$6_** (up from **_$5_**) to earn each dollar of interest.
         The interest cap scales accordingly (_$30_ -> _$60_ -> _$120_) so you can still gain up to _$5_, _$10_ _(Seed Money)_ and _$20_ _(Money Tree)_
         - **Increased Run Length:** The Final Ante required to win is increased to **Ante 9** _(up from Ante 8)_

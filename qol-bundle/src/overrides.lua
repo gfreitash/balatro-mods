@@ -30,13 +30,29 @@ function Card:is_suit(suit, bypass_debuff, flush_calc, trying_to_debuff)
     end
 
     -- While a boss is evaluating a suit-based debuff, Wild Cards and cards
-    -- under Smeared Joker resist matching a specific suit
-    if trying_to_debuff or QOL_BUNDLE.wildcard_debuff_check then
+    -- under Smeared Joker resist matching a specific suit. Scope the resist to
+    -- the boss's own suit: other callers inside the same window (notably
+    -- Paperback's Da Capo joker, which debuffs cards NOT matching its rotating
+    -- suit) must get normal suit matching, or wild/smeared cards get wrongly
+    -- debuffed by Da Capo's pass. Known edge: when Da Capo's suit equals the
+    -- boss's suit, the two callers are indistinguishable and the resist still
+    -- applies to Da Capo's check.
+    if trying_to_debuff then
         if self.ability.name == "Wild Card" then
             return false
         end
         if next(find_joker('Smeared Joker')) then
             return false
+        end
+    elseif QOL_BUNDLE.wildcard_debuff_check then
+        local boss_suit = G.GAME and G.GAME.blind and G.GAME.blind.debuff and G.GAME.blind.debuff.suit
+        if boss_suit and suit == boss_suit then
+            if self.ability.name == "Wild Card" then
+                return false
+            end
+            if next(find_joker('Smeared Joker')) then
+                return false
+            end
         end
     end
 

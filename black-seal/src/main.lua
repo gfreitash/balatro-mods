@@ -62,28 +62,30 @@ function BSM.utils.calculate_and_set_seal_weights()
   local percentage = math.max(0, math.min(100, math.floor(BSM.config.black_seal_percentage)))
   local default_weight = 5 -- Default weight for seals without a defined weight. Check SMODS.poll_seal() implementation.
 
-  -- Calculate the sum of current weights for all *other* seals in G.P_SEALS
+  -- Capture the base weights once so repeated recalculations stay idempotent:
+  -- after a recalculation the live weights no longer hold the original
+  -- proportions and can legitimately be 0 (e.g. after 100%).
+  BSM.state.base_seal_weights = BSM.state.base_seal_weights or {}
+  local base_weights = BSM.state.base_seal_weights
+
   local total_weight = 0
-  local weights = {}
   for key, seal_data in pairs(G.P_SEALS) do
       if key ~= BSM.black_seal_id_full then
-          local weight = tonumber(seal_data.weight) or default_weight
-          if weight > 0 then
-              weights[key] = weight
-              total_weight = total_weight + weight
+          if base_weights[key] == nil then
+              base_weights[key] = tonumber(seal_data.weight) or default_weight
           end
+          total_weight = total_weight + base_weights[key]
       end
   end
 
-  -- Apply the new weights, scaling the other seals accordingly to their original relative weights
+  -- Apply the new weights, scaling the other seals according to their base
+  -- relative weights.
   for key, seal_data in pairs(G.P_SEALS) do
-      RIOSODU_SHARED.utils.sendDebugMessage(string.format("G.P_SEALS[%s].weight = %.2f (original weight)", key, seal_data.weight or 5))
       local new_weight = 0
       if key == BSM.black_seal_id_full then
           new_weight = percentage
-      else
-          new_weight = (100 - percentage) *
-              (weights[key] / total_weight) -- Scale other seals to the remaining percentage
+      elseif total_weight > 0 then
+          new_weight = (100 - percentage) * (base_weights[key] / total_weight)
       end
       seal_data.weight = new_weight
       RIOSODU_SHARED.utils.sendDebugMessage(string.format("G.P_SEALS[%s].weight = %.2f (new weight)", key, new_weight))

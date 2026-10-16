@@ -41,3 +41,10 @@ if common_chunk then common_chunk() end
 -- Include other core modules
 RIOSODU_SHARED.include_mod_file(RSM.mod_id, "src/main.lua") -- Includes the main logic
 RIOSODU_SHARED.utils.sendDebugMessage("Rebalanced Stakes mod initialized", RSM.mod_id)
+
+-- Integration tests, loaded only when the BalatroIntegration framework is
+-- installed (development/local only; never shipped to users)
+if next(SMODS.find_mod("Integration")) then
+  local tests_chunk = SMODS.load_file("tests.lua", RSM.mod_id)
+  if tests_chunk then tests_chunk() end
+end

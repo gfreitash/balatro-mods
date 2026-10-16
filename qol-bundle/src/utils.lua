@@ -43,7 +43,7 @@ function QOL_BUNDLE.utils.try_apply_enhancement(card, seed_key)
     })
 
     -- Check if card has enhancements with  SMODS.get_enhancements, if table not empty it has
-    has_enhancements = #SMODS.get_enhancements(card) > 0
+    local has_enhancements = #SMODS.get_enhancements(card) > 0
 
     if enhancement_key and not has_enhancements then
         card:set_ability(G.P_CENTERS[enhancement_key])
@@ -85,7 +85,7 @@ function QOL_BUNDLE.utils.try_apply_clip(card, seed_key)
         return
     end
 
-    has_paperclip = PB_UTIL.has_paperclip(card)
+    local has_paperclip = PB_UTIL.has_paperclip(card)
     -- Use 20% chance (same as seals), guaranteed if already has paperclip
     local clip_chance = has_paperclip and 1 or pseudorandom(pseudoseed(seed_key))
     if clip_chance > 0.8 then -- 20% chance

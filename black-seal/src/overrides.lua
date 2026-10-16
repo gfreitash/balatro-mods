@@ -35,10 +35,16 @@ BSM.original.Card_use_consumeable = Card.use_consumeable
 BSM.original.Card_can_use_consumeable = Card.can_use_consumeable
 BSM.original.generate_card_ui = generate_card_ui
 
-BSM.original.P_CENTERS_c_ectoplasm = G.P_CENTERS.c_ectoplasm
-local ectoplasm = BSM.utils.copy_table(G.P_CENTERS.c_ectoplasm)
-ectoplasm.config = {extra = BSM.black_seal_id_full, max_highlighted = 1}
-G.P_CENTERS.c_ectoplasm = ectoplasm
+-- Ectoplasm center override: applied through SMODS take_ownership (not a raw
+-- G.P_CENTERS swap) so it is re-injected whenever the game rebuilds the
+-- prototype tables (Game:init_item_prototypes). A raw swap silently reverts to
+-- the vanilla config after any prototype rebuild (e.g. BalatroIntegration
+-- test-suite teardown), losing `extra`/`max_highlighted` on new Ectoplasm
+-- cards. Note: take_ownership mutates the vanilla center in place, so there is
+-- no pristine original to keep around.
+SMODS.Consumable:take_ownership('c_ectoplasm', {
+    config = {extra = BSM.black_seal_id_full, max_highlighted = 1},
+})
 
 -----------------------------------------------------------------------------
 -- Overridden Card:use_consumeable

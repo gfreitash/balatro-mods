@@ -100,6 +100,8 @@ rsync -a \
 	--exclude='.DS_Store' \
 	--exclude='Thumbs.db' \
 	--exclude='*.tmp' \
+	--exclude='tests.lua' \
+	--exclude='tests/' \
 	"$MOD_DIR/" "$STAGING/"
 
 # Bundle the shared library as common/

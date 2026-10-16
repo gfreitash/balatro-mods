@@ -57,6 +57,12 @@ BSM.include("src/overrides.lua") -- Includes the overrides for original function
 -- UI components come from the bundled Riosodu Commons library (bootstrap above)
 BSM.include("src/ui/tabs.lua") -- Includes UI definitions
 
+-- Integration tests, loaded only when the BalatroIntegration framework is
+-- installed (development/local only; never shipped to users)
+if next(SMODS.find_mod("Integration")) then
+  BSM.include("tests.lua")
+end
+
 -- --- SMODS Hooks ---
 
 SMODS.current_mod.config_tab = function() return BSM.UI.createConfigTabDefinition() end

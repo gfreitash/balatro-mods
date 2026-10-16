@@ -1,6 +1,6 @@
 {
   "name": "QoL_Bundle",
-  "version_number": "1.12.2",
+  "version_number": "1.12.3",
   "website_url": "https://github.com/gfreitash/balatro-mods",
   "description": "Balance and gameplay changes that feels good, configurable per feature. Bad mod name, too late now.",
   "dependencies": [

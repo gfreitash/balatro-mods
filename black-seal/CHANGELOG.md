@@ -5,8 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.4.3] - 2026-10-16
 ### Fixed
 - The Ectoplasm center override now survives prototype rebuilds (`Game:init_item_prototypes`): it is applied via SMODS `take_ownership` instead of a raw `G.P_CENTERS` swap, so the modded `extra`/`max_highlighted` config no longer reverts to vanilla after a rebuild.
+
+### Changed
+- Updated Riosodu Commons to v2.2.0.
+- Riosodu Commons 2.2.0 adds a debug feature to swap the first card in the shop for a joker (keybind Q, debug features only).
 
 ## [3.4.2] - 2026-10-14
 ### Changed

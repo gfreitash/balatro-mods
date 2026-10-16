@@ -40,6 +40,19 @@ mode_flags() { # MODE -> extra runner flags for that mode
     return 0
 }
 
+check_prerequisites() {
+    local missing=0 tool
+    for tool in git jq sha256sum; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            log_error "Required tool '$tool' is not installed."
+            missing=1
+        fi
+    done
+    if [ "$missing" = 1 ]; then
+        exit 1
+    fi
+}
+
 VERBOSE=0
 REPORTS_DIR=""
 MODS=()
@@ -56,6 +69,8 @@ if [ "${#MODS[@]}" -eq 0 ]; then
     usage >&2
     exit 2
 fi
+
+check_prerequisites
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [ -z "$REPO_ROOT" ]; then

@@ -12,6 +12,8 @@
 # sources, tests, or the harness invalidates the report until the suite is
 # re-run.
 #
+# Callers must ensure `git`, `jq` and `sha256sum` are available.
+#
 # No side effects on source.
 
 # --- logging fallbacks (callers usually define colored versions) -------------

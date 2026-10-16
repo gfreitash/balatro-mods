@@ -46,6 +46,19 @@ usage() {
     sed -n '2,/^set -euo/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed '$d'
 }
 
+check_prerequisites() {
+    local missing=0 tool
+    for tool in rsync curl unzip jq; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            log_error "Required tool '$tool' is not installed."
+            missing=1
+        fi
+    done
+    if [ "$missing" = 1 ]; then
+        exit 1
+    fi
+}
+
 game_running() {
     pgrep -f 'Balatro\.exe' >/dev/null 2>&1
 }
@@ -93,6 +106,8 @@ if [ -z "$COMMAND" ]; then
     usage >&2
     exit 2
 fi
+
+check_prerequisites
 
 SCRATCH=0
 if [ -n "$DEST" ]; then

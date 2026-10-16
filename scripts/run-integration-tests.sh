@@ -172,7 +172,7 @@ fi
 # --- Prerequisite checks ---
 check_prerequisites() {
     local missing=0
-    local tools=(rsync curl unzip jq python3 wmctrl xprop)
+    local tools=(rsync curl unzip jq git python3 wmctrl xprop)
     [ "$ATTACH" = 0 ] && tools+=(steam)
     for tool in "${tools[@]}"; do
         command -v "$tool" >/dev/null 2>&1 || { log_error "Required tool '$tool' is not installed."; missing=1; }

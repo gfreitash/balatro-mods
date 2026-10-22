@@ -117,7 +117,7 @@ check_ne "harness change invalidates" "$(evidence_harness_fingerprint)" "$HARNES
 printf -- '-- harness\n' > tools/integration-runner/main.lua
 check "harness restore matches again" "$(evidence_harness_fingerprint)" "$HARNESS_BASE"
 
-# --- expected tests / pattern coverage / slugs --------------------------------
+# --- expected tests / pattern coverage / run targets -------------------------
 check "expected main tests" \
     "$(evidence_expected_tests qol-bundle riosodu/qol_bundle | paste -sd, -)" \
     "riosodu/qol_bundle/alpha,riosodu/qol_bundle/beta,riosodu/qol_bundle/beta2"
@@ -125,6 +125,9 @@ check "expected pb tests" \
     "$(evidence_expected_tests qol-bundle riosodu/pb | paste -sd, -)" \
     "riosodu/pb/compat_alpha"
 check "expected unknown suite" "$(evidence_expected_tests qol-bundle riosodu/nope)" ""
+check "expected tests for a whole mode" \
+    "$(evidence_mode_expected_tests qol-bundle main | paste -sd, -)" \
+    "riosodu/qol_bundle/alpha,riosodu/qol_bundle/beta,riosodu/qol_bundle/beta2"
 
 check_exit "pattern covers exact suite"  0 evidence_pattern_covers_suite qol-bundle riosodu/qol_bundle riosodu/qol_bundle
 check_exit "pattern covers all suites"   0 evidence_pattern_covers_suite qol-bundle riosodu riosodu/qol_bundle
@@ -132,10 +135,6 @@ check_exit "pattern covers prefix"       0 evidence_pattern_covers_suite qol-bun
 check_exit "empty pattern covers"        0 evidence_pattern_covers_suite qol-bundle "" riosodu/qol_bundle
 check_exit "narrow pattern does not"     1 evidence_pattern_covers_suite qol-bundle riosodu/qol_bundle/alpha riosodu/qol_bundle
 check_exit "other suite pattern does not" 1 evidence_pattern_covers_suite qol-bundle riosodu/pb riosodu/qol_bundle
-
-check "slug simple" "$(evidence_pattern_slug riosodu)" "riosodu"
-check "slug with slash" "$(evidence_pattern_slug riosodu/qol_bundle)" "riosodu-qol_bundle"
-check "slug empty" "$(evidence_pattern_slug "")" "all"
 
 # --- release gate ------------------------------------------------------------
 check_exit "gate fails with no reports" 1 "$CHECKER" qol-bundle
@@ -145,7 +144,18 @@ printf 'test=riosodu/qol_bundle/alpha\tpass\n' >> results-main.txt
 printf 'test=riosodu/qol_bundle/beta\tpass\n' >> results-main.txt
 printf 'test=riosodu/qol_bundle/beta2\tpass\n' >> results-main.txt
 MAIN_REPORT="$(evidence_write_report main riosodu/qol_bundle results-main.txt test-reports qol-bundle)"
-check "main report name" "$(basename "$MAIN_REPORT")" "$(printf '%.12s' "$(git rev-parse HEAD)")-main-riosodu-qol_bundle.json"
+check "main report name" "$(basename "$MAIN_REPORT")" "qol-bundle.json"
+check "report schema" "$(jq -r '.schema' "$MAIN_REPORT")" "balatro-test-evidence/2"
+check "report mod" "$(jq -r '.mod' "$MAIN_REPORT")" "qol-bundle"
+check "main block mode" "$(jq -r '.runs.main.mode' "$MAIN_REPORT")" "main"
+check "main block totals" "$(jq -c '.runs.main.totals' "$MAIN_REPORT")" '{"total":3,"passed":3,"failed":0}'
+check "main block has only its own mod hash" "$(jq -r '.runs.main.hashes.mods | keys | join(",")' "$MAIN_REPORT")" "qol-bundle"
+check "main block filtered to the qol suite" "$(jq -r '.runs.main.tests[].name' "$MAIN_REPORT" | paste -sd, -)" "riosodu/qol_bundle/alpha,riosodu/qol_bundle/beta,riosodu/qol_bundle/beta2"
+check "main write leaves pb absent" "$(jq -r '.runs.pb // "absent"' "$MAIN_REPORT")" "absent"
+
+check "covered mods for the qol suite" "$(evidence_covered_mods main riosodu/qol_bundle qol-bundle black-seal | paste -sd, -)" "qol-bundle"
+check "covered mods for the full main pattern" "$(evidence_covered_mods main riosodu qol-bundle black-seal | paste -sd, -)" "qol-bundle,black-seal"
+check "covered mods for a narrow pattern" "$(evidence_covered_mods main riosodu/qol_bundle/alpha qol-bundle | paste -sd, -)" ""
 
 # qol-bundle also requires PB evidence.
 check_exit "gate requires pb evidence for qol-bundle" 1 "$CHECKER" qol-bundle
@@ -153,7 +163,9 @@ check_exit "gate requires pb evidence for qol-bundle" 1 "$CHECKER" qol-bundle
 printf 'Integration Test Results\n========================\n\nTotal: 1\nPassed: 1\nFailed: 0\nDuration: 0.5s\n\n' > results-pb.txt
 printf 'test=riosodu/pb/compat_alpha\tpass\n' >> results-pb.txt
 PB_REPORT="$(evidence_write_report pb riosodu/pb results-pb.txt test-reports qol-bundle)"
-check "pb report written" "$(basename "$PB_REPORT")" "$(printf '%.12s' "$(git rev-parse HEAD)")-pb-riosodu-pb.json"
+check "pb write reuses the mod file" "$PB_REPORT" "$MAIN_REPORT"
+check "pb block totals" "$(jq -c '.runs.pb.totals' "$MAIN_REPORT")" '{"total":1,"passed":1,"failed":0}'
+check "pb write preserves main" "$(jq -c '.runs.main.totals' "$MAIN_REPORT")" '{"total":3,"passed":3,"failed":0}'
 check_exit "gate passes with main+pb evidence" 0 "$CHECKER" qol-bundle
 
 # Content change invalidates until the suite is re-run.
@@ -172,20 +184,28 @@ check_exit "gate passes after harness restore" 0 "$CHECKER" qol-bundle
 check_exit "gate fails for black-seal without evidence" 1 "$CHECKER" black-seal
 printf 'Integration Test Results\n========================\n\nTotal: 1\nPassed: 1\nFailed: 0\nDuration: 0.5s\n\n' > results-bs.txt
 printf 'test=riosodu/black_seal/x\tpass\n' >> results-bs.txt
-evidence_write_report main riosodu/black_seal results-bs.txt test-reports black-seal >/dev/null
+BS_REPORT="$(evidence_write_report main riosodu/black_seal results-bs.txt test-reports black-seal)"
+check "black-seal report name" "$(basename "$BS_REPORT")" "black-seal.json"
 check_exit "gate passes for black-seal" 0 "$CHECKER" black-seal
 
-# A report with failures or missing tests must not satisfy the gate.
+# A failing or partial run must not replace valid evidence.
+BEFORE="$(jq -c . "$MAIN_REPORT")"
 mkdir -p reports-fail
 printf 'Integration Test Results\n========================\n\nTotal: 1\nPassed: 0\nFailed: 1\nDuration: 0.5s\n\n' > results-fail.txt
-printf 'test=riosodu/black_seal/x\tfail\n' >> results-fail.txt
-evidence_write_report main riosodu/black_seal results-fail.txt reports-fail black-seal >/dev/null
-check_exit "failing report rejected" 1 "$CHECKER" --reports-dir reports-fail black-seal
+printf 'test=riosodu/qol_bundle/alpha\tfail\n' >> results-fail.txt
+check_exit "failing run refuses to write" 1 evidence_write_report main riosodu/qol_bundle results-fail.txt reports-fail qol-bundle
+check "failing run writes nothing" "$(test -e reports-fail/qol-bundle.json && echo yes || echo no)" "no"
+check "valid evidence unchanged after failing run" "$(jq -c . "$MAIN_REPORT")" "$BEFORE"
 
-mkdir -p reports-partial
-printf 'Integration Test Results\n========================\n\nTotal: 0\nPassed: 0\nFailed: 0\nDuration: 0.5s\n\n' > results-partial.txt
-evidence_write_report main riosodu/black_seal results-partial.txt reports-partial black-seal >/dev/null
-check_exit "report without the expected tests rejected" 1 "$CHECKER" --reports-dir reports-partial black-seal
+printf 'Integration Test Results\n========================\n\nTotal: 1\nPassed: 1\nFailed: 0\nDuration: 0.5s\n\n' > results-partial.txt
+printf 'test=riosodu/qol_bundle/alpha\tpass\n' >> results-partial.txt
+check_exit "partial run refuses to write" 1 evidence_write_report main riosodu/qol_bundle results-partial.txt test-reports qol-bundle
+check "valid evidence unchanged after partial run" "$(jq -c . "$MAIN_REPORT")" "$BEFORE"
+
+# Legacy per-run reports are ignored: the gate only reads <mod>.json.
+mkdir -p reports-legacy
+printf '{}\n' > "reports-legacy/$(printf '%.12s' "$(git rev-parse HEAD)")-main-riosodu-qol_bundle.json"
+check_exit "legacy per-run report ignored" 1 "$CHECKER" --reports-dir reports-legacy qol-bundle
 
 # Unknown mods are rejected loudly.
 check_exit "unknown mod rejected" 1 "$CHECKER" not-a-mod

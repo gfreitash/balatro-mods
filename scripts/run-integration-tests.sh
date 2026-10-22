@@ -360,21 +360,6 @@ session_fingerprints_match() {
     return 0
 }
 
-# run_covers_any_suite PATTERN
-#   True when the run pattern covers every test of at least one required suite.
-run_covers_any_suite() {
-    local pattern="$1" mod mode suite
-    for mod in $(local_mods_for_evidence); do
-        while IFS=$'\t' read -r mode suite; do
-            [ -n "$mode" ] || continue
-            if evidence_pattern_covers_suite "$mod" "$pattern" "$suite"; then
-                return 0
-            fi
-        done < <(evidence_required_evidence "$mod" || true)
-    done
-    return 1
-}
-
 # --- Main flow ---
 main() {
     check_prerequisites
@@ -505,12 +490,11 @@ main() {
     failed=$(awk -F': ' '/^Failed:/{print $2; exit}' "$results")
 
     # --- Test evidence (input for the release gate) --------------------------
-    # A report is only written when the run passed, covers a full suite, and
-    # the working tree still matches what this session was launched with.
+    # Each mod's report is updated only when the run passed, covers a full
+    # required suite for that mod, and the working tree still matches the
+    # launch state. A run updates only the mode block it covers.
     if [ "$DO_SYNC" = 1 ] && [ "${failed:-1}" = "0" ] && [ -n "${passed:-}" ] && [ "${passed:-0}" -gt 0 ]; then
-        if ! run_covers_any_suite "$PATTERN"; then
-            log_info "Test evidence not recorded (pattern '${PATTERN}' does not cover a full suite)."
-        elif [ ! -f "$mods_dir/integration_runner/session.txt" ] || ! grep -q '^evhash\.' "$mods_dir/integration_runner/session.txt" 2>/dev/null; then
+        if [ ! -f "$mods_dir/integration_runner/session.txt" ] || ! grep -q '^evhash\.' "$mods_dir/integration_runner/session.txt" 2>/dev/null; then
             log_info "Test evidence not recorded (no launch fingerprints for this session; use a launch run)."
         elif ! session_fingerprints_match "$mods_dir"; then
             log_warn "Test evidence not recorded: the working tree changed since this session was launched (relaunch to record evidence)."
@@ -522,11 +506,19 @@ main() {
             if [ "$stamp_pb" = "1" ]; then
                 ev_mode="pb"
             fi
-            local ev_out=""
-            if ev_out="$(evidence_write_report "$ev_mode" "$PATTERN" "$results" "$REPO_ROOT/test-reports" $(local_mods_for_evidence))"; then
-                log_success "Test evidence written: ${ev_out#"$REPO_ROOT"/} (commit it before releasing)."
+            local -a ev_mods=()
+            mapfile -t ev_mods < <(evidence_covered_mods "$ev_mode" "$PATTERN" $(local_mods_for_evidence))
+            if [ "${#ev_mods[@]}" -eq 0 ]; then
+                log_info "Test evidence not recorded (pattern '${PATTERN}' does not cover a full required suite)."
             else
-                log_warn "Could not write test evidence (see messages above)."
+                local ev_mod ev_out
+                for ev_mod in "${ev_mods[@]}"; do
+                    if ev_out="$(evidence_write_report "$ev_mode" "$PATTERN" "$results" "$REPO_ROOT/test-reports" "$ev_mod")"; then
+                        log_success "Test evidence written: ${ev_out#"$REPO_ROOT"/} (commit it before releasing)."
+                    else
+                        log_warn "Could not record test evidence for $ev_mod (see messages above)."
+                    fi
+                done
             fi
         fi
     fi

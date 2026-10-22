@@ -1,0 +1,138 @@
+{
+  "schema": "balatro-test-evidence/2",
+  "mod": "black-seal",
+  "runs": {
+    "main": {
+      "mode": "main",
+      "pattern": "riosodu",
+      "generated_at": "2026-10-22T16:10:28Z",
+      "git_head": "3a12888ec9711d1ef365c472be680ac12a0a1da2",
+      "worktree_dirty": true,
+      "hashes": {
+        "mods": {
+          "black-seal": "953ab96c6021f84f52ae59e574cd8dc7e1c09b65f5827af27e9b99935c47d820"
+        },
+        "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
+      },
+      "totals": {
+        "total": 28,
+        "passed": 28,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "name": "riosodu/black_seal/solo_proc_grants_negative",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/no_proc_when_playing_multiple_cards",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/no_eligible_joker_preserves_seal",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/editioned_joker_not_eligible",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/solo_proc_targets_exactly_one_of_many_jokers",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/proc_removes_deck_and_played_seals",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/hand_seals_kept_when_keep_enabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/hand_seals_removed_when_keep_disabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/debuffed_card_does_not_proc",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/solo_unsealed_card_no_proc",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/all_jokers_already_negative_preserves_seal",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/retrigger_enabled_multi_proc",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/retrigger_disabled_single_proc",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/retrigger_enabled_single_eligible_target",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/weights_at_0",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/weights_at_50",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/weights_at_100",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/weights_scale_other_seals_proportionally",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/runtime_config_change_applies_weights",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_override_applies_seal",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_override_reduces_hand_when_enabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_override_reduces_hand_when_disabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_vanilla_when_override_disabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_override_requires_single_highlight",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ecto_minus_stacks_on_second_use",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_survives_prototype_rebuild",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/black_seal_description_matches_keep_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/black_seal/ectoplasm_description_hand_line_toggles",
+          "passed": true
+        }
+      ]
+    }
+  }
+}

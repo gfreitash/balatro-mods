@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # scripts/check-test-evidence.sh — release gate: verify local test evidence.
 #
-# A mod can only be released when the repository contains a passing
-# test-evidence report whose content fingerprint still matches the code being
-# released (see scripts/lib/test-evidence.sh). Reports are written by
-# scripts/run-integration-tests.sh on every fully passing run that covers a
+# A mod can only be released when test-reports/<mod>.json contains a passing
+# block for every required run mode whose content fingerprint still matches the
+# code being released (see scripts/lib/test-evidence.sh). Reports are written
+# by scripts/run-integration-tests.sh on every fully passing run that covers a
 # full suite; commit them with your changes.
 #
 # Usage:
@@ -82,7 +82,7 @@ if [ -z "$REPORTS_DIR" ]; then
 fi
 if [ ! -d "$REPORTS_DIR" ]; then
     log_error "no test reports found at $REPORTS_DIR"
-    log_error "run the suite locally (scripts/run-integration-tests.sh) and commit test-reports/"
+    log_error "run the suite locally (scripts/run-integration-tests.sh) and commit test-reports/<mod>.json"
     exit 1
 fi
 
@@ -90,29 +90,19 @@ rel() { # PATH -> path relative to the repo root when possible
     printf '%s' "${1#"$REPO_ROOT"/}"
 }
 
-# list_reports_newest_first -> report paths, newest generated_at first
-list_reports_newest_first() {
-    local file
-    for file in "$REPORTS_DIR"/*.json; do
-        [ -f "$file" ] || continue
-        printf '%s\t%s\n' \
-            "$(jq -r '.generated_at // "1970-01-01T00:00:00Z"' "$file" 2>/dev/null || printf '1970-01-01T00:00:00Z')" \
-            "$file"
-    done | LC_ALL=C sort -r | cut -f2-
-}
-
 # report_matches REPORT MOD MODE EXPECTED MOD_FP HARNESS_FP -> 0 when valid
 report_matches() {
     local report="$1" mod="$2" mode="$3" expected="$4" mod_fp="$5" harness_fp="$6"
-    [ "$(jq -r '.schema // empty' "$report" 2>/dev/null || true)" = "balatro-test-evidence/1" ] || return 1
-    [ "$(jq -r '.mode // empty' "$report" 2>/dev/null || true)" = "$mode" ] || return 1
-    [ "$(jq -r --arg k "$mod" '.hashes.mods[$k] // empty' "$report" 2>/dev/null || true)" = "$mod_fp" ] || return 1
-    [ "$(jq -r '.hashes.harness // empty' "$report" 2>/dev/null || true)" = "$harness_fp" ] || return 1
-    [ "$(jq -r '.totals.failed // 1' "$report" 2>/dev/null || true)" = "0" ] || return 1
+    [ "$(jq -r '.schema // empty' "$report" 2>/dev/null || true)" = "balatro-test-evidence/2" ] || return 1
+    [ "$(jq -r '.mod // empty' "$report" 2>/dev/null || true)" = "$mod" ] || return 1
+    [ "$(jq -r --arg mode "$mode" '.runs[$mode].mode // empty' "$report" 2>/dev/null || true)" = "$mode" ] || return 1
+    [ "$(jq -r --arg mode "$mode" --arg k "$mod" '.runs[$mode].hashes.mods[$k] // empty' "$report" 2>/dev/null || true)" = "$mod_fp" ] || return 1
+    [ "$(jq -r --arg mode "$mode" '.runs[$mode].hashes.harness // empty' "$report" 2>/dev/null || true)" = "$harness_fp" ] || return 1
+    [ "$(jq -r --arg mode "$mode" '.runs[$mode].totals.failed // 1' "$report" 2>/dev/null || true)" = "0" ] || return 1
     local missing
     missing="$(comm -23 \
         <(printf '%s\n' "$expected" | LC_ALL=C sort -u) \
-        <(jq -r '.tests[] | select(.passed) | .name' "$report" 2>/dev/null | LC_ALL=C sort -u || true) \
+        <(jq -r --arg mode "$mode" '.runs[$mode].tests[]? | select(.passed) | .name' "$report" 2>/dev/null | LC_ALL=C sort -u || true) \
         || true)"
     [ -z "$missing" ]
 }
@@ -120,27 +110,32 @@ report_matches() {
 # diagnose_report REPORT MOD MODE EXPECTED MOD_FP HARNESS_FP -> first reason
 diagnose_report() {
     local report="$1" mod="$2" mode="$3" expected="$4" mod_fp="$5" harness_fp="$6"
-    local schema rmode rmod rharness rfailed missing
+    local schema rmod rmode rmodhash rharness rfailed missing
     schema="$(jq -r '.schema // empty' "$report" 2>/dev/null || true)"
-    rmode="$(jq -r '.mode // empty' "$report" 2>/dev/null || true)"
-    rmod="$(jq -r --arg k "$mod" '.hashes.mods[$k] // empty' "$report" 2>/dev/null || true)"
-    rharness="$(jq -r '.hashes.harness // empty' "$report" 2>/dev/null || true)"
-    rfailed="$(jq -r '.totals.failed // empty' "$report" 2>/dev/null || true)"
+    rmod="$(jq -r '.mod // empty' "$report" 2>/dev/null || true)"
+    rmode="$(jq -r --arg mode "$mode" '.runs[$mode].mode // empty' "$report" 2>/dev/null || true)"
+    rmodhash="$(jq -r --arg mode "$mode" --arg k "$mod" '.runs[$mode].hashes.mods[$k] // empty' "$report" 2>/dev/null || true)"
+    rharness="$(jq -r --arg mode "$mode" '.runs[$mode].hashes.harness // empty' "$report" 2>/dev/null || true)"
+    rfailed="$(jq -r --arg mode "$mode" '.runs[$mode].totals.failed // empty' "$report" 2>/dev/null || true)"
 
-    if [ "$schema" != "balatro-test-evidence/1" ]; then
-        printf 'unknown schema'
+    if [ "$schema" != "balatro-test-evidence/2" ]; then
+        printf 'unknown or legacy schema'
         return 0
     fi
-    if [ "$rmode" != "$mode" ]; then
-        printf "mode is '%s'" "$rmode"
+    if [ "$rmod" != "$mod" ]; then
+        printf "report is for mod '%s'" "$rmod"
         return 0
     fi
-    if [ "$rmod" != "$mod_fp" ]; then
-        printf 'mod content changed since this report was recorded'
+    if [ -z "$rmode" ]; then
+        printf "no '%s' run recorded" "$mode"
+        return 0
+    fi
+    if [ "$rmodhash" != "$mod_fp" ]; then
+        printf 'mod content changed since this run was recorded'
         return 0
     fi
     if [ "$rharness" != "$harness_fp" ]; then
-        printf 'test harness changed since this report was recorded'
+        printf 'test harness changed since this run was recorded'
         return 0
     fi
     if [ "$rfailed" != "0" ]; then
@@ -149,26 +144,13 @@ diagnose_report() {
     fi
     missing="$(comm -23 \
         <(printf '%s\n' "$expected" | LC_ALL=C sort -u) \
-        <(jq -r '.tests[] | select(.passed) | .name' "$report" 2>/dev/null | LC_ALL=C sort -u || true) \
+        <(jq -r --arg mode "$mode" '.runs[$mode].tests[]? | select(.passed) | .name' "$report" 2>/dev/null | LC_ALL=C sort -u || true) \
         || true)"
     if [ -n "$missing" ]; then
         printf '%s expected test(s) not recorded as passed' "$(printf '%s\n' "$missing" | wc -l | tr -d ' ')"
         return 0
     fi
     printf 'unknown mismatch'
-}
-
-# find_newest_report_of_mode MODE -> newest report path with that mode
-find_newest_report_of_mode() {
-    local mode="$1" report
-    while IFS= read -r report; do
-        [ -n "$report" ] || continue
-        if [ "$(jq -r '.mode // empty' "$report" 2>/dev/null || true)" = "$mode" ]; then
-            printf '%s' "$report"
-            return 0
-        fi
-    done < <(list_reports_newest_first)
-    return 1
 }
 
 check_mod() {
@@ -179,7 +161,7 @@ check_mod() {
         return 1
     fi
 
-    local mod_fp harness_fp
+    local mod_fp harness_fp report
     if ! mod_fp="$(evidence_mod_fingerprint "$mod")"; then
         log_error "$mod: could not fingerprint the mod content"
         return 1
@@ -188,8 +170,9 @@ check_mod() {
         log_error "$mod: could not fingerprint the test harness"
         return 1
     fi
+    report="$(evidence_report_file "$REPORTS_DIR" "$mod")"
 
-    local ok=0 mode suite expected match report
+    local ok=0 mode suite expected generated pattern
     while IFS=$'\t' read -r mode suite; do
         [ -n "$mode" ] || continue
         expected="$(evidence_expected_tests "$mod" "$suite")"
@@ -199,31 +182,25 @@ check_mod() {
             continue
         fi
 
-        match=""
-        while IFS= read -r report; do
-            [ -n "$report" ] || continue
-            if [ "$VERBOSE" = 1 ]; then
-                log_info "  considering $(rel "$report")"
-            fi
-            if report_matches "$report" "$mod" "$mode" "$expected" "$mod_fp" "$harness_fp"; then
-                match="$report"
-                break
-            fi
-        done < <(list_reports_newest_first)
+        if [ ! -f "$report" ]; then
+            ok=1
+            log_error "$mod: missing $mode evidence (no $(rel "$report"))"
+            log_error "  fix: run ./scripts/run-integration-tests.sh$(mode_flags "$mode") and commit test-reports/$mod.json"
+            continue
+        fi
 
-        if [ -n "$match" ]; then
-            log_success "$mod: $mode evidence OK ($(rel "$match"))"
+        if report_matches "$report" "$mod" "$mode" "$expected" "$mod_fp" "$harness_fp"; then
+            log_success "$mod: $mode evidence OK ($(rel "$report"))"
+            if [ "$VERBOSE" = 1 ]; then
+                generated="$(jq -r --arg mode "$mode" '.runs[$mode].generated_at // "unknown"' "$report" 2>/dev/null || printf 'unknown')"
+                pattern="$(jq -r --arg mode "$mode" '.runs[$mode].pattern // ""' "$report" 2>/dev/null || true)"
+                log_info "  recorded $generated (pattern '${pattern}')"
+            fi
         else
             ok=1
-            log_error "$mod: missing or stale $mode evidence for '$suite'"
-            local diag_report
-            diag_report="$(find_newest_report_of_mode "$mode" || true)"
-            if [ -n "$diag_report" ]; then
-                log_error "  newest $mode report ($(rel "$diag_report")): $(diagnose_report "$diag_report" "$mod" "$mode" "$expected" "$mod_fp" "$harness_fp")"
-            else
-                log_error "  no $mode report found in $REPORTS_DIR"
-            fi
-            log_error "  fix: run ./scripts/run-integration-tests.sh$(mode_flags "$mode") and commit the new test-reports/*.json"
+            log_error "$mod: missing or stale $mode evidence in $(rel "$report")"
+            log_error "  $(diagnose_report "$report" "$mod" "$mode" "$expected" "$mod_fp" "$harness_fp")"
+            log_error "  fix: run ./scripts/run-integration-tests.sh$(mode_flags "$mode") and commit test-reports/$mod.json"
         fi
     done <<<"$required"
     return "$ok"

@@ -4,13 +4,17 @@
 # Test-evidence helpers shared by the runner (scripts/run-integration-tests.sh)
 # and the release gate (scripts/check-test-evidence.sh).
 #
-# Model (deliberately crypto-free): a report is valid evidence for a mod when
-# the sha256 fingerprint of the tested content still matches the content being
-# released. The fingerprint covers the mod dir + _common/ (minus version
-# metadata, so version bumps and changelog edits don't invalidate a report)
-# plus the in-game test harness (tools/integration-runner/). Any change to mod
-# sources, tests, or the harness invalidates the report until the suite is
-# re-run.
+# Model (deliberately crypto-free): each mod owns a single report at
+# test-reports/<mod>.json. The report holds one block per run mode under
+# `runs`; each verified run replaces only the block for the mode it covers, so
+# the file always describes the latest verified state of that mod.
+#
+# A block is valid evidence when the sha256 fingerprint of the tested content
+# still matches the content being released. The fingerprint covers the mod dir
+# + _common/ (minus version metadata, so version bumps and changelog edits
+# don't invalidate a report) plus the in-game test harness
+# (tools/integration-runner/). Any change to mod sources, tests, or the harness
+# invalidates the report until the suite is re-run.
 #
 # Callers must ensure `git`, `jq` and `sha256sum` are available.
 #
@@ -118,83 +122,155 @@ evidence_tests_json() {
         | jq -Rn '[inputs | select(length > 0) | split("\t") | {name: .[0], passed: (.[1] == "pass")}]'
 }
 
-# evidence_pattern_slug PATTERN
-#   Filesystem-safe slug for a run pattern ("all" when empty).
-evidence_pattern_slug() {
-    local slug
-    slug="$(printf '%s' "$1" | sed 's/[^A-Za-z0-9._-]/-/g; s/--*/-/g; s/^-//; s/-$//')"
-    if [ -z "$slug" ]; then
-        slug="all"
-    fi
-    printf '%s' "$slug"
+# evidence_suites_for_mode MOD_DIR MODE
+#   Suites required for MOD_DIR in MODE (one per line).
+evidence_suites_for_mode() {
+    local mod_dir="${1%/}" run_mode="$2" mode suite
+    while IFS=$'\t' read -r mode suite; do
+        [ -n "$mode" ] || continue
+        [ "$mode" = "$run_mode" ] || continue
+        printf '%s\n' "$suite"
+    done < <(evidence_required_evidence "$mod_dir" || true)
 }
 
-# evidence_write_report MODE PATTERN RESULTS_FILE OUT_DIR MOD_DIR...
-#   Writes a balatro-test-evidence/1 JSON report and echoes its path.
-#   Fingerprints come from the current working tree; callers are responsible
-#   for checking that it still matches what the session was launched with.
-evidence_write_report() {
-    local mode="$1" pattern="$2" results="$3" out_dir="$4"
-    shift 4
-    local -a mod_dirs=("$@")
-    mkdir -p "$out_dir" || return 1
+# evidence_mode_expected_tests MOD_DIR MODE
+#   Test names statically expected for every suite required in MODE.
+evidence_mode_expected_tests() {
+    local mod_dir="${1%/}" run_mode="$2" suite
+    while IFS= read -r suite; do
+        [ -n "$suite" ] || continue
+        evidence_expected_tests "$mod_dir" "$suite"
+    done < <(evidence_suites_for_mode "$mod_dir" "$run_mode") \
+        | LC_ALL=C sort -u
+}
 
-    local totals tests_json
+# evidence_covered_mods MODE PATTERN MOD_DIR...
+#   Prints the mods whose required evidence for MODE is fully covered by
+#   PATTERN. Mods without required suites in MODE are not printed.
+evidence_covered_mods() {
+    local run_mode="$1" pattern="$2"
+    shift 2
+    local mod mode suite any all_covered
+    for mod in "$@"; do
+        any=0
+        all_covered=1
+        while IFS=$'\t' read -r mode suite; do
+            [ -n "$mode" ] || continue
+            [ "$mode" = "$run_mode" ] || continue
+            any=1
+            if ! evidence_pattern_covers_suite "$mod" "$pattern" "$suite"; then
+                all_covered=0
+                break
+            fi
+        done < <(evidence_required_evidence "$mod" || true)
+        if [ "$any" = 1 ] && [ "$all_covered" = 1 ]; then
+            printf '%s\n' "$mod"
+        fi
+    done
+}
+
+# evidence_report_file OUT_DIR MOD_DIR
+#   Canonical report path for a mod.
+evidence_report_file() {
+    printf '%s/%s.json' "${1%/}" "${2%/}"
+}
+
+# evidence_write_report MODE PATTERN RESULTS_FILE OUT_DIR MOD_DIR
+#   Records a passing run for one mod in its canonical report, merging
+#   `runs[MODE]` into the existing file (other modes are preserved). Echoes the
+#   report path. Refuses to write when the run has failures or when any test
+#   expected for the mod/mode is missing or failed, so a partial run can never
+#   replace valid evidence.
+evidence_write_report() {
+    local mode="$1" pattern="$2" results="$3" out_dir="$4" mod="${5%/}"
+    [ -n "$mod" ] || return 1
+
+    local totals run_failed
     if ! totals="$(evidence_results_totals_json "$results")"; then
         log_error "test-evidence: could not parse totals from $results"
         return 1
     fi
-    tests_json="$(evidence_tests_json "$results")" || return 1
+    run_failed="$(jq -r '.failed' <<<"$totals")"
+    if [ "$run_failed" != "0" ]; then
+        log_error "test-evidence: refusing to record $mod $mode evidence from a run with $run_failed failure(s)"
+        return 1
+    fi
 
-    local mods_json="{}" mod fp
-    for mod in "${mod_dirs[@]}"; do
-        if ! fp="$(evidence_mod_fingerprint "$mod")"; then
-            log_error "test-evidence: could not fingerprint $mod"
-            return 1
-        fi
-        mods_json="$(jq -c --arg k "$mod" --arg v "$fp" '. + {($k): $v}' <<<"$mods_json")"
-    done
+    local expected expected_json all_tests filtered missing
+    expected="$(evidence_mode_expected_tests "$mod" "$mode")"
+    if [ -z "$expected" ]; then
+        log_error "test-evidence: no tests found for $mod ($mode)"
+        return 1
+    fi
+    expected_json="$(printf '%s\n' "$expected" | jq -R . | jq -s .)"
+    all_tests="$(evidence_tests_json "$results")" || return 1
+    filtered="$(jq -c --argjson names "$expected_json" \
+        'map(select(.name as $n | $names | index($n)))' <<<"$all_tests")"
+    missing="$(comm -23 \
+        <(printf '%s\n' "$expected" | LC_ALL=C sort -u) \
+        <(jq -r '.[] | select(.passed) | .name' <<<"$filtered" | LC_ALL=C sort -u) \
+        || true)"
+    if [ -n "$missing" ]; then
+        log_error "test-evidence: refusing to record $mod $mode evidence; expected test(s) missing or failed:"
+        printf '%s\n' "$missing" | sed 's/^/  /' >&2
+        return 1
+    fi
 
-    local harness_fp
+    local filtered_totals mod_fp harness_fp head dirty generated run_json out tmp
+    filtered_totals="$(jq -c '{total: length, passed: (map(select(.passed)) | length), failed: (map(select(.passed | not)) | length)}' <<<"$filtered")"
+    if ! mod_fp="$(evidence_mod_fingerprint "$mod")"; then
+        log_error "test-evidence: could not fingerprint $mod"
+        return 1
+    fi
     if ! harness_fp="$(evidence_harness_fingerprint)"; then
         log_error "test-evidence: could not fingerprint the test harness"
         return 1
     fi
-
-    local head dirty generated out
     head="$(git rev-parse HEAD 2>/dev/null || printf 'unknown')"
     dirty=false
     if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
         dirty=true
     fi
     generated="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    out="$out_dir/$(printf '%.12s' "$head")-${mode}-$(evidence_pattern_slug "$pattern").json"
 
-    if ! jq -n \
-        --arg schema "balatro-test-evidence/1" \
+    if ! run_json="$(jq -n \
         --arg mode "$mode" \
         --arg pattern "$pattern" \
         --arg generated_at "$generated" \
         --arg git_head "$head" \
         --argjson worktree_dirty "$dirty" \
-        --argjson mods "$mods_json" \
-        --arg harness "$harness_fp" \
-        --argjson totals "$totals" \
-        --argjson tests "$tests_json" \
+        --arg mod "$mod" \
+        --arg mod_fp "$mod_fp" \
+        --arg harness_fp "$harness_fp" \
+        --argjson totals "$filtered_totals" \
+        --argjson tests "$filtered" \
         '{
-            schema: $schema,
             mode: $mode,
             pattern: $pattern,
             generated_at: $generated_at,
             git_head: $git_head,
             worktree_dirty: $worktree_dirty,
-            hashes: { mods: $mods, harness: $harness },
+            hashes: { mods: { ($mod): $mod_fp }, harness: $harness_fp },
             totals: $totals,
             tests: $tests
-        }' > "$out"; then
-        rm -f "$out"
+        }')"; then
+        log_error "test-evidence: could not build the $mod $mode report"
         return 1
     fi
+
+    mkdir -p "$out_dir" || return 1
+    out="$(evidence_report_file "$out_dir" "$mod")"
+    tmp="$(mktemp "$out_dir/.${mod}.XXXXXX")" || return 1
+    if [ -f "$out" ] && jq -e '.schema == "balatro-test-evidence/2" and (.runs | type == "object")' "$out" >/dev/null 2>&1; then
+        jq --arg mode "$mode" --arg mod "$mod" --argjson run "$run_json" \
+            '.mod = $mod | .runs[$mode] = $run' "$out" > "$tmp" \
+            || { rm -f "$tmp"; return 1; }
+    else
+        jq -n --arg mode "$mode" --arg mod "$mod" --argjson run "$run_json" \
+            '{schema: "balatro-test-evidence/2", mod: $mod, runs: {($mode): $run}}' > "$tmp" \
+            || { rm -f "$tmp"; return 1; }
+    fi
+    mv "$tmp" "$out" || { rm -f "$tmp"; return 1; }
     printf '%s' "$out"
 }
 

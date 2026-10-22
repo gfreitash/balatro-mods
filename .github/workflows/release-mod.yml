@@ -67,7 +67,7 @@ jobs:
               # content (see scripts/check-test-evidence.sh). A failed check
               # aborts before any tag is created or pushed.
               if ! ./scripts/check-test-evidence.sh "$mod_dir"; then
-                echo "::error::Missing or stale test evidence for ${mod_dir} v${version}. Run the suite locally (scripts/run-integration-tests.sh) and commit test-reports/, then push again."
+                echo "::error::Missing or stale test evidence for ${mod_dir} v${version}. Run the suite locally (scripts/run-integration-tests.sh) and commit test-reports/${mod_dir}.json, then push again."
                 exit 1
               fi
 

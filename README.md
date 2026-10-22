@@ -106,7 +106,7 @@ Mods are declared as parameters, for example:
 
 Specs: `local:<dir>`, `thunderstore:<ns>-<name>[@<ver>]`, `github:<owner>/<repo>[@<ref>][::<subdir>]`, `github-release:<owner>/<repo>@<tag>#<asset>`. Run `scripts/test-mods.sh --help` for the plan/setup/clean/status/prune commands.
 
-Successful runs that cover a full suite also write a machine-readable report to `test-reports/`. Releases are gated on it: CI (and `./scripts/check-test-evidence.sh <mod>...`) verifies that a passing report exists whose content fingerprint still matches the code being released. Version bumps and changelog edits don't invalidate a report, but any change to mod code, tests, or the harness does — so commit a fresh report with your changes.
+Successful runs that cover a full suite update that mod's machine-readable report at `test-reports/<mod>.json` (one block per run mode, e.g. main and PB). Releases are gated on it: CI (and `./scripts/check-test-evidence.sh <mod>...`) verifies that every required mode has a passing block whose content fingerprint still matches the code being released. Version bumps and changelog edits don't invalidate a report, but any change to mod code, tests, or the harness does — so commit the updated report with your changes.
 
 ##### _Note: If you are on Windows, you can use WSL to run the above commands, or manually copy the files to your Balatro game folder. You can also contribute by creating a powershell script that performs the same actions._
 

@@ -1,0 +1,750 @@
+{
+  "schema": "balatro-test-evidence/2",
+  "mod": "qol-bundle",
+  "runs": {
+    "main": {
+      "mode": "main",
+      "pattern": "riosodu",
+      "generated_at": "2026-10-22T16:10:28Z",
+      "git_head": "3a12888ec9711d1ef365c472be680ac12a0a1da2",
+      "worktree_dirty": true,
+      "hashes": {
+        "mods": {
+          "qol-bundle": "3902b2c897b09b0409e4b38a05ed6baf4b71cda40e8490e7cae42784cf46e1ca"
+        },
+        "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
+      },
+      "totals": {
+        "total": 163,
+        "passed": 163,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "name": "riosodu/qol_bundle/loader_globals",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loader_config_baseline",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loader_default_on_takeovers",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loader_default_off_gating",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loader_gfuncs",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loader_interest_installed",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_basic_rate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_cap_25",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_below_5",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_debt_guard",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_no_interest_modifier",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_runtime_disable",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_re_enable_idempotent",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/interest_via_action_with_neutral_tag",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/shop_size_default_is_3",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/shop_size_cards_generated",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/shop_size_restart_required",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/shop_size_custom_value",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_baron",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_mime",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_ceremonial_dagger",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_mail_in_rebate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_fortune_teller",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_hanging_chad",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_dna_when_enabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_pareidolia_when_enabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_spawned_cost",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/rarity_hanging_chad_no_behavior_change",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/square_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/square_four_cards_all_bonus",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/square_four_cards_no_bonus",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/square_five_cards_ignored",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/square_joker_main_chips",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/erosion_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/erosion_xmult_direct",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/erosion_full_deck_nil",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/erosion_score_smoke",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/erosion_loc_vars",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/yorick_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/yorick_discard_tick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/yorick_callback_and_respawn",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loyalty_config_when_enabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loyalty_end_of_round_ladder",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loyalty_guard_subcontexts",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loyalty_joker_main",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/loyalty_integration_single_tick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/satellite_dollar_direct",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/satellite_round_dollars",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/satellite_text_rounding",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_htr_xmult_gain",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_htr_two_jacks_gain",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_htr_debuffed_jack_no_tick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_htr_xmult_resets_end_of_round",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_htr_return_identity_and_debuff_tick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_htr_second_discard_re_returns",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_castle_reset_group_follows_pick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_castle_matching_shade_gain",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_castle_off_shade_no_gain",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_castle_disabled_reset_keeps_group_nil",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_castle_checkered_deck_group",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_marble_added_stone_ticks",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_marble_non_stone_adds_no_tick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_marble_joker_main_xchips",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_marble_blind_stone_preserved",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_stone_config_and_loc_vars",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_stone_joker_main_mult",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_stone_no_stones_empty",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_steel_config_extra",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_steel_joker_main_xmult",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/econ_steel_edition_does_not_change_math",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_splash_calculate_installed",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_splash_picks_two_distinct",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_splash_single_card_reset",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_splash_no_globals",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_splash_repetition_area_guard",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_splash_config_off_gating",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_eight_ball_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_eight_ball_tarot_guaranteed",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_eight_ball_zero_odds",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_eight_ball_consumables_full",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_eight_ball_two_eights",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_eight_ball_callback_nil_state_safe",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_space_default_off",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_space_config_when_enabled",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_space_level_up_roll",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_space_level_up_integration",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/scoring_space_callback_nil_state_safe",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_flower_pot_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_flower_pot_wild_scoring",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_flower_pot_no_wild_inert",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_flower_pot_vanilla_fallback",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_flower_pot_pool_gate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_seance_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_seance_secret_hand_spawns_spectral",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_seance_straight_flush_single_trigger",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_seance_visible_hand_ignored",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_seance_full_consumables_gate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_destroying_card",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_remove_playing_cards_scaling",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_blueprint_no_op",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_joker_main",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_integration_destroy",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_onyx_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_onyx_club_perma_mult",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_onyx_non_club_inert",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_onyx_blueprint_claims",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_onyx_integration_persists",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_matador_pays_per_boss_hand",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_matador_suppresses_vanilla_payout",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_red_card_open_and_skip",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_bull_three_chips_per_dollar",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_mr_bones_always_saves_and_cripples",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_sigil_config_and_gate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_sigil_controlled_conversion",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_sigil_wild_reference",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_sigil_disabled_vanilla_random",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_sigil_disabled_no_single_gate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_ouija_config_and_gate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_ouija_controlled_conversion",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_ouija_stone_reference",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/spec_control_ouija_disabled_vanilla_random",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_spectrals_vanilla_adds_no_seals_or_editions",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_wraith_duplicates_and_perishables",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_wraith_single_joker",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_ankh_strips_stickers_and_eternals_two",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_ankh_fewer_than_two_jokers",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_hex_polychrome_and_sticker_on_one_joker",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_hex_never_perishable_on_eternal",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_lovers_two_cards_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_lovers_enhances_two_cards",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_lovers_single_card_still_works",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_merchant_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_merchant_redeem_replaces_shop_rate",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_merchant_quarter_odds",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_tycoon_half_odds",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_tycoon_replaces_merchant",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_merchant_oops_modifier",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_merchant_needs_space",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_planet_merchant_context_and_planet_lookup",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/hit_the_road_cycles_repeat",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/hit_the_road_mixed_deck",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/hit_the_road_more_jacks",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/hit_the_road_multi_discard",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_onyx_effect_card_is_juiceable",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_seance_effect_card_is_juiceable",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_seance_standard_hands_never_trigger",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_seance_top_marker_ignored",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_seance_straight_flush_still_triggers",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_seance_matched_hidden_hand_still_triggers",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_smeared_shade_matching",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_wildcard_boss_suit_debuff_resist",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_smeared_boss_suit_debuff_resist",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_wildcard_fix_runtime_toggle",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_blind_debuff_pipeline_preserved",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_htr_blueprint_queues_no_events",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_castle_group_derived_from_pick",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_unweighted_editions_live_toggle",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_magic_trick_seal_applies",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_shop_playing_card_pricing",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_wheel_config_live_update",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_wheel_config_disabled_at_load_nil_safe",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/regr_game_obj_interest_props",
+          "passed": true
+        }
+      ]
+    },
+    "pb": {
+      "mode": "pb",
+      "pattern": "riosodu/pb",
+      "generated_at": "2026-10-22T16:10:55Z",
+      "git_head": "3a12888ec9711d1ef365c472be680ac12a0a1da2",
+      "worktree_dirty": true,
+      "hashes": {
+        "mods": {
+          "qol-bundle": "3902b2c897b09b0409e4b38a05ed6baf4b71cda40e8490e7cae42784cf46e1ca"
+        },
+        "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
+      },
+      "totals": {
+        "total": 13,
+        "passed": 13,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "name": "riosodu/pb/pb_loaded_sanity",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_castle_shade_via_card_is_shade",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_castle_reset_group_pb",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_castle_loc_vars_paperback",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_smeared_tooltips_and_text",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_smeared_is_suit_shades",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_paperclip_apply",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_jester_of_nihil_rework",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_da_capo_baseline_debuff",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_da_capo_wildcard_matches_all",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_da_capo_smeared_shade",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_smeared_custom_suit_shade",
+          "passed": true
+        },
+        {
+          "name": "riosodu/pb/pb_spectral_and_voucher_texts",
+          "passed": true
+        }
+      ]
+    }
+  }
+}

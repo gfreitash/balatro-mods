@@ -1,0 +1,130 @@
+{
+  "schema": "balatro-test-evidence/2",
+  "mod": "rebalanced-stakes",
+  "runs": {
+    "main": {
+      "mode": "main",
+      "pattern": "riosodu",
+      "generated_at": "2026-10-22T16:10:28Z",
+      "git_head": "3a12888ec9711d1ef365c472be680ac12a0a1da2",
+      "worktree_dirty": true,
+      "hashes": {
+        "mods": {
+          "rebalanced-stakes": "5681ed2be7857fd9ae762c16a9dd25523cc4cc7a9be2e091ef7b3eb2bef10578"
+        },
+        "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
+      },
+      "totals": {
+        "total": 26,
+        "passed": 26,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "name": "riosodu/rebalanced_stakes/white_baseline",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/red_no_small_blind_reward",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/black_eternals_only",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/blue_perishables_no_discard_penalty",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/purple_scaling_inherits_perishables",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/orange_rentals_inherits_perishables",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_economy_and_inheritance",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/base_stake_interest_matches_vanilla",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_interest_requires_6",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_interest_cap_5",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_seed_money_cap_60",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_money_tree_cap_120",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/perishable_countdown_decrements",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/expired_perishable_negative_and_debuffed",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/expired_perishable_pays_no_final_bonus",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/vanilla_expiry_suppresses_final_bonus",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/expired_perishable_stays_debuffed_next_blind",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/shop_joker_perishable_at_blue",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/shop_joker_rental_at_orange",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/shop_joker_plain_below_blue",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_does_not_win_at_ante_8",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_wins_at_ante_9",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/base_stake_wins_at_ante_8",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/blue_stake_description",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/orange_stake_description",
+          "passed": true
+        },
+        {
+          "name": "riosodu/rebalanced_stakes/gold_stake_description",
+          "passed": true
+        }
+      ]
+    }
+  }
+}

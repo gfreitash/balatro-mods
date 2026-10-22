@@ -5,18 +5,18 @@
     "main": {
       "mode": "main",
       "pattern": "riosodu",
-      "generated_at": "2026-10-22T16:10:28Z",
-      "git_head": "3a12888ec9711d1ef365c472be680ac12a0a1da2",
+      "generated_at": "2026-10-22T22:40:06Z",
+      "git_head": "907688f830cef984bac1a1f8129d1b964065cef2",
       "worktree_dirty": true,
       "hashes": {
         "mods": {
-          "qol-bundle": "a1ad1bb8593de33120604a3660edbc73c72520b5ae881421457b456ea04e0950"
+          "qol-bundle": "d6373b6d51571c54b0f64ce33fd2c4df6368073c0d793a5c26a0d95d0d637cf8"
         },
         "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
       },
       "totals": {
-        "total": 163,
-        "passed": 163,
+        "total": 168,
+        "passed": 168,
         "failed": 0
       },
       "tests": [
@@ -413,7 +413,7 @@
           "passed": true
         },
         {
-          "name": "riosodu/qol_bundle/beta_caino_destroying_card",
+          "name": "riosodu/qol_bundle/beta_caino_destroys_played_faces",
           "passed": true
         },
         {
@@ -429,7 +429,11 @@
           "passed": true
         },
         {
-          "name": "riosodu/qol_bundle/beta_caino_integration_destroy",
+          "name": "riosodu/qol_bundle/beta_caino_integration_destroy_scored_face",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_caino_integration_destroy_unscored_faces",
           "passed": true
         },
         {
@@ -546,6 +550,22 @@
         },
         {
           "name": "riosodu/qol_bundle/beta_lovers_single_card_still_works",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_strength_two_cards_config",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_strength_raises_lower_rank",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_strength_ace_is_highest",
+          "passed": true
+        },
+        {
+          "name": "riosodu/qol_bundle/beta_strength_requires_two_selected",
           "passed": true
         },
         {
@@ -677,12 +697,12 @@
     "pb": {
       "mode": "pb",
       "pattern": "riosodu/pb",
-      "generated_at": "2026-10-22T16:10:55Z",
-      "git_head": "3a12888ec9711d1ef365c472be680ac12a0a1da2",
+      "generated_at": "2026-10-22T22:40:32Z",
+      "git_head": "907688f830cef984bac1a1f8129d1b964065cef2",
       "worktree_dirty": true,
       "hashes": {
         "mods": {
-          "qol-bundle": "a1ad1bb8593de33120604a3660edbc73c72520b5ae881421457b456ea04e0950"
+          "qol-bundle": "d6373b6d51571c54b0f64ce33fd2c4df6368073c0d793a5c26a0d95d0d637cf8"
         },
         "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
       },

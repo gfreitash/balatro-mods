@@ -398,6 +398,17 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Strength Two-Card Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'strength_two_cards_enabled',
+                label = G.localization.misc.dictionary.qolb_strength_two_cards_label,
+                info = G.localization.misc.dictionary.qolb_strength_two_cards_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             -- Hex Rework Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,

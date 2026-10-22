@@ -121,7 +121,7 @@ return {
             qolb_splash_joker_retrigger_label = 'Enable Splash Joker Retrigger',
             qolb_splash_joker_retrigger_info = {
                 'Splash Joker additionally retriggers',
-                'a random scoring card'
+                'two random scoring cards'
             },
             qolb_interest_on_skip_label = 'Enable Interest on Skip',
             qolb_interest_on_skip_info = {
@@ -208,8 +208,7 @@ return {
             j_splash_retrigger = {
                 "Every {C:attention}played card",
                 "counts in scoring",
-                "{C:green}Two random scoring cards",
-                "{C:green}are retriggered"
+                "{C:green}Retrigger two of them",
             },
 
             j_erosion_original = {
@@ -275,7 +274,7 @@ return {
                 "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
             },
             j_caino_modified = {
-                "Destroys scored {C:attention}face{} cards and",
+                "Destroys played {C:attention}face{} cards and",
                 "gains {X:mult,C:white} X#1# {} Mult per destroyed",
                 "{C:attention}face{} card",
                 "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
@@ -456,6 +455,16 @@ return {
                 "cards into a",
                 "{C:attention}#2#",
             },
+            c_strength_original = {
+                "Increases rank of",
+                "up to {C:attention}#1#{} selected",
+                "cards by {C:attention}1",
+            },
+            c_strength_modified = {
+                "Select {C:attention}2{} cards",
+                "The lower rank becomes",
+                "the {C:attention}higher{} rank",
+            },
             j_matador_original = {
                 "Earn {C:money}$#1#{} if played",
                 "hand triggers the",
@@ -464,7 +473,7 @@ return {
             j_matador_modified = {
                 "Earn {C:money}$#1#{} for each hand",
                 "played during a {C:attention}Boss Blind{}",
-                "{C:inactive}(paid at end of round)",
+                "by end of the round",
             },
             j_red_card_original = {
                 "This Joker gains",
@@ -487,9 +496,9 @@ return {
             },
             j_mr_bones_modified = {
                 "Prevents Death, then",
-                "{S:1.1,C:red,E:2}self destructs{} and your",
-                "run becomes {C:attention}Crippled{}",
-                "{C:inactive}(see the Crippled tooltip)",
+                "{S:1.1,C:red,E:2}self destructs{} and you",
+                "go back {C:red}-1{} Ante;",
+                "your run gets {C:attention}Crippled{}",
             },
             k_crippled_ex = "Crippled!",
 
@@ -520,8 +529,8 @@ return {
             },
             qolb_caino_rework_label = 'Enable Canio Rework',
             qolb_caino_rework_info = {
-                'Canio destroys scored face cards',
-                'and gains X0.25 Mult per destroyed face card'
+                'Canio destroys played face cards',
+                'and gains X0.5 Mult per destroyed face card'
             },
             qolb_onyx_agate_label = 'Enable Onyx Agate Rework',
             qolb_onyx_agate_info = {
@@ -549,6 +558,11 @@ return {
                 'The Lovers can enhance up to',
                 '2 selected cards at once'
             },
+            qolb_strength_two_cards_label = 'Enable Strength Two-Card Rework',
+            qolb_strength_two_cards_info = {
+                'Strength requires selecting 2 cards:',
+                'the lower rank becomes the higher rank'
+            },
             qolb_hex_rework_label = 'Enable Hex Rework',
             qolb_hex_rework_info = {
                 'Hex adds Polychrome and a random sticker',
@@ -570,15 +584,15 @@ return {
             },
             qolb_mr_bones_rework_label = 'Enable Mr. Bones Rework',
             qolb_mr_bones_rework_info = {
-                'Mr. Bones always prevents Death but self-destructs',
-                'and Cripples the run: money set to $0, -1 Ante,',
-                '-1 hand, -1 hand size and -1 discard; costs $10'
+                'Mr. Bones always prevents Death, self-destructs,',
+                'sends you back -1 Ante and Cripples the run:',
+                'money set to $0, -1 hand, -1 hand size and -1 discard; costs $10'
             },
             qolb_yorick_multiplier_label = 'Enable Yorick Multiplier Configuration',
             qolb_yorick_multiplier_info = {
                 'Configure how much X Mult Yorick gains',
                 'per 23 cards discarded.',
-                'Default: 1.5X',
+                'Default: 1.23X',
             },
 
             -- Smeared joker texts (from base game)
@@ -622,21 +636,19 @@ return {
         Joker = {
             j_loyalty_card_scaling = {
                 text = {
-                    "{X:red,C:white} X#1# {} Mult",
                     "Gains {X:red,C:white} X0.5 {} Mult after",
                     "finishing a {C:attention}blind",
-                    "Resets to {X:red,C:white}X2{} after finishing",
-                    "a blind at {X:red,C:white}X4{}",
+                    "When {X:red,C:white}X4{} resets to {X:red,C:white}X2{}",
+                    "{C:inactive}(Currently {X:mult,C:white} X#1# {C:inactive} Mult)",
                 },
             },
         },
         Other = {
             crippled = {
                 text = {
-                    "Your run is {C:attention}Crippled{}:",
-                    "money set to {C:money}$0{},",
-                    "{C:attention}-1{} Ante, {C:attention}-1{} hand,",
-                    "{C:attention}-1{} hand size, {C:attention}-1{} discard",
+                    "Money set to {C:money}$0{},",
+                    "{C:red}-1{} hand, {C:red}-1{} hand size,",
+                    "{C:red}-1{} discard",
                 },
             },
         },

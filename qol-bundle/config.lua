@@ -33,18 +33,19 @@
 --- @field new_illusion_enabled boolean Enable/disable new Illusion voucher (deck-based with reroll logic)
 --- @field castle_checkered_enabled boolean Enable/disable Castle joker checkered deck enhancement
 --- @field yorick_multiplier_enabled boolean Enable/disable Yorick multiplier modification
---- @field yorick_multiplier_value number Multiplier value per 23 cards discarded (default 1.5)
+--- @field yorick_multiplier_value number Multiplier value per 23 cards discarded (default 1.23)
 --- @field dna_uncommon_enabled boolean Enable/disable making DNA Uncommon with cheaper price
 --- @field pareidolia_common_enabled boolean Enable/disable making Pareidolia Common with cheaper price
 --- @field marble_joker_xchips_enabled boolean Enable/disable Marble Joker gaining X Chips per Stone card added to deck
 --- @field stone_joker_mult_enabled boolean Enable/disable Stone Joker giving Mult per Stone card in deck
 --- @field seance_rework_enabled boolean Enable/disable Seance triggering on secret hands and being Rare
---- @field caino_rework_enabled boolean Enable/disable Canio destroying scored face cards and scaling per destroyed face card
+--- @field caino_rework_enabled boolean Enable/disable Canio destroying played face cards and scaling per destroyed face card
 --- @field onyx_agate_enabled boolean Enable/disable Onyx Agate making Club cards permanently gain Mult when scored
 --- @field planet_merchant_rework_enabled boolean Enable/disable Planet Merchant/Tycoon creating the played hand's Planet card
 --- @field wraith_rework_enabled boolean Enable/disable Wraith duplicating a Joker and making the others Perishable
 --- @field ankh_rework_enabled boolean Enable/disable Ankh removing all stickers and making two Jokers Eternal
 --- @field lovers_two_cards_enabled boolean Enable/disable The Lovers enhancing up to two cards
+--- @field strength_two_cards_enabled boolean Enable/disable Strength requiring two cards and equalizing their ranks
 --- @field hex_rework_enabled boolean Enable/disable Hex adding Polychrome and a sticker to one Joker
 --- @field matador_rework_enabled boolean Enable/disable Matador paying $5 per hand during a Boss Blind
 --- @field red_card_rework_enabled boolean Enable/disable Red Card gaining Mult from opened and skipped Booster Packs
@@ -114,12 +115,13 @@ return {
 
   -- Beta features (disabled by default, marked in the config menu)
   seance_rework_enabled = false, -- Enable/disable Seance triggering on secret hands and being Rare (beta)
-  caino_rework_enabled = false,  -- Enable/disable Canio destroying scored face cards and scaling per destroyed face card (beta)
+  caino_rework_enabled = false,  -- Enable/disable Canio destroying played face cards and scaling per destroyed face card (beta)
   onyx_agate_enabled = false,    -- Enable/disable Onyx Agate making Club cards permanently gain Mult when scored (beta)
   planet_merchant_rework_enabled = false, -- Enable/disable Planet Merchant/Tycoon creating the played hand's Planet card (beta)
   wraith_rework_enabled = false, -- Enable/disable Wraith duplicating a Joker and making the others Perishable (beta)
   ankh_rework_enabled = false, -- Enable/disable Ankh removing all stickers and making two Jokers Eternal (beta)
   lovers_two_cards_enabled = false, -- Enable/disable The Lovers enhancing up to two cards (beta)
+  strength_two_cards_enabled = false, -- Enable/disable Strength requiring two cards and equalizing their ranks (beta)
   hex_rework_enabled = false, -- Enable/disable Hex adding Polychrome and a sticker to one Joker (beta)
   matador_rework_enabled = false, -- Enable/disable Matador paying $5 per hand during a Boss Blind (beta)
   red_card_rework_enabled = false, -- Enable/disable Red Card gaining Mult from opened and skipped Booster Packs (beta)
@@ -127,5 +129,5 @@ return {
   mr_bones_rework_enabled = false, -- Enable/disable Mr. Bones always saving and crippling the run (beta)
 
   yorick_multiplier_enabled = true, -- Enable/disable Yorick multiplier modification
-  yorick_multiplier_value = 1.5,   -- Multiplier value per 23 cards discarded (default 1.5)
+  yorick_multiplier_value = 1.23,   -- Multiplier value per 23 cards discarded (default 1.23)
 }

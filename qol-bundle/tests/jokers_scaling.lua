@@ -144,7 +144,7 @@ return function(T)
 
 	BInt.register_test("riosodu/qol_bundle/yorick_config", function(test)
 		local g = T.apply_feature("yorick_multiplier_enabled", "j_yorick", F.get_ownership_joker_yorick)
-		test:assert_eq(g.config.extra.xmult, 1.5, "default multiplier is X1.5")
+		test:assert_eq(g.config.extra.xmult, 1.23, "default multiplier is X1.23")
 		test:assert_eq(g.config.extra.discards, 23, "still ticks every 23 discards")
 	end)
 
@@ -158,7 +158,7 @@ return function(T)
 		card.ability.yorick_discards = 1
 		T.calc(card, { discard = true, full_hand = { G.hand.cards[1] }, other_card = G.hand.cards[1] })
 
-		test:assert_true(math.abs(card.ability.x_mult - 2.5) < 1e-9, "one tick should add X1.5 to the base X1")
+		test:assert_true(math.abs(card.ability.x_mult - 2.23) < 1e-9, "one tick should add X1.23 to the base X1")
 		test:assert_eq(card.ability.yorick_discards, 23, "the counter should reset for the next cycle")
 	end)
 

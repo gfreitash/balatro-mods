@@ -7,7 +7,7 @@ function QOL_BUNDLE.funcs.get_ownership_joker_yorick()
     QOL_BUNDLE.state.yorick = SMODS.Joker:take_ownership('j_yorick', {
         config = {
             extra = {
-                xmult = QOL_BUNDLE.config.yorick_multiplier_value or 1.5,
+                xmult = QOL_BUNDLE.config.yorick_multiplier_value or 1.23,
                 discards = 23
             }
         }

@@ -55,10 +55,10 @@ QOL_BUNDLE.init = function(self)
   self.space_joker_current_option = self.config.space_joker_value
   self.space_joker_current_option_val = self.config.space_joker_value
 
-  -- yorick_multiplier_value is 1.5 by default
-  self.config.yorick_multiplier_value = self.config.yorick_multiplier_value or 1.5
-  -- Map the multiplier value to the option index in the options array {1, 1.25, 1.5, 1.75, 2}
-  local yorick_options = {1, 1.25, 1.5, 1.75, 2, 2.5, 3}
+  -- yorick_multiplier_value is 1.23 by default
+  self.config.yorick_multiplier_value = self.config.yorick_multiplier_value or 1.23
+  -- Map the multiplier value to the option index in the options array
+  local yorick_options = {1, 1.23, 1.25, 1.5, 1.75, 2, 2.5, 3}
   for i, value in ipairs(yorick_options) do
     if value == self.config.yorick_multiplier_value then
       self.yorick_current_option = i
@@ -68,8 +68,8 @@ QOL_BUNDLE.init = function(self)
   end
   -- Fallback if value not found in options
   if not self.yorick_current_option then
-    self.yorick_current_option = 3  -- Default to 1.5
-    self.yorick_current_option_val = 1.5
+    self.yorick_current_option = 2  -- Default to 1.23
+    self.yorick_current_option_val = 1.23
   end
 end
 

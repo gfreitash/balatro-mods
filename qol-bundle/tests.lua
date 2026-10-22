@@ -74,13 +74,14 @@ T.DEFAULTS = {
 	wraith_rework_enabled = false,
 	ankh_rework_enabled = false,
 	lovers_two_cards_enabled = false,
+	strength_two_cards_enabled = false,
 	hex_rework_enabled = false,
 	matador_rework_enabled = false,
 	red_card_rework_enabled = false,
 	bull_buff_enabled = false,
 	mr_bones_rework_enabled = false,
 	yorick_multiplier_enabled = true,
-	yorick_multiplier_value = 1.5,
+	yorick_multiplier_value = 1.23,
 }
 
 T.CONFIG_KEYS = {}

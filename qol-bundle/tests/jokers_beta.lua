@@ -188,9 +188,9 @@ return function(T)
 	BInt.register_test("riosodu/qol_bundle/beta_caino_config", function(test)
 		test:assert_false(QOL_BUNDLE.config.caino_rework_enabled, "the Canio rework should default to off")
 		local g = T.apply_feature("caino_rework_enabled", "j_caino", F.get_ownership_joker_caino)
-		test:assert_eq(g.config.extra, 0.25, "Canio should gain X0.25 per destroyed face card")
-		local lv = g.loc_vars(nil, {}, { ability = { extra = 0.25, caino_xmult = 1.5 } })
-		test:assert_eq(lv.vars[1], 0.25, "loc var #1 should be the per-face gain")
+		test:assert_eq(g.config.extra, 0.5, "Canio should gain X0.5 per destroyed face card")
+		local lv = g.loc_vars(nil, {}, { ability = { extra = 0.5, caino_xmult = 1.5 } })
+		test:assert_eq(lv.vars[1], 0.5, "loc var #1 should be the per-face gain")
 		test:assert_eq(lv.vars[2], 1.5, "loc var #2 should be the current X mult")
 	end)
 
@@ -202,15 +202,23 @@ return function(T)
 		return G.jokers.cards[1]
 	end
 
-	BInt.register_test("riosodu/qol_bundle/beta_caino_destroying_card", function(test)
+	BInt.register_test("riosodu/qol_bundle/beta_caino_destroys_played_faces", function(test)
 		local canio = canio_setup(test, "QOL_BETA_CAN_1")
-		local king = T.force_card(1, "S_K")
-		local eval = T.calc(canio, { destroying_card = king, full_hand = { king } })
-		test:assert_true(eval ~= nil and eval.remove == true, "a scored face card should be marked for destruction")
+		local scored = T.force_card(1, "S_K")
+		local unscored = T.force_card(2, "H_Q")
+		local low = T.force_card(3, "S_7")
 
-		local low = T.force_card(2, "S_7")
-		local eval_low = T.calc(canio, { destroying_card = low, full_hand = { low } })
-		test:assert_true(eval_low == nil, "non-face cards must not be destroyed")
+		-- Mark the hand as scored, then run the after-scoring destruction pass.
+		T.calc(canio, { joker_main = true, cardarea = G.jokers })
+		local eval = T.calc(canio, { after = true, full_hand = { scored, unscored, low }, scoring_hand = { scored } })
+		BInt._wait.stable_drain()
+
+		test:assert_true(eval ~= nil, "destroying played faces should report")
+		test:assert_true(scored.destroyed == true, "a scored face should be destroyed")
+		test:assert_true(unscored.destroyed == true, "an unscored played face should be destroyed")
+		test:assert_true(not low.destroyed, "non-face played cards must not be destroyed")
+		test:assert_true(math.abs(canio.ability.caino_xmult - 2.0) < 1e-9,
+			"two destroyed faces should give X2.0")
 	end)
 
 	BInt.register_test("riosodu/qol_bundle/beta_caino_remove_playing_cards_scaling", function(test)
@@ -221,19 +229,23 @@ return function(T)
 
 		local eval = T.calc(canio, { remove_playing_cards = true, removed = { face_a, low, face_b } })
 		test:assert_true(eval ~= nil, "destroyed face cards should report")
-		test:assert_true(math.abs(canio.ability.caino_xmult - 1.5) < 1e-9, "two faces destroyed should give X1.5")
+		test:assert_true(math.abs(canio.ability.caino_xmult - 2.0) < 1e-9,
+			"two faces destroyed should give X2.0")
 
 		local eval_low = T.calc(canio, { remove_playing_cards = true, removed = { low } })
 		test:assert_true(eval_low ~= nil and next(eval_low) == nil, "non-face removals should return an empty table")
-		test:assert_true(math.abs(canio.ability.caino_xmult - 1.5) < 1e-9, "non-face removals must not scale")
+		test:assert_true(math.abs(canio.ability.caino_xmult - 2.0) < 1e-9, "non-face removals must not scale")
 	end)
 
 	BInt.register_test("riosodu/qol_bundle/beta_caino_blueprint_no_op", function(test)
 		local canio = canio_setup(test, "QOL_BETA_CAN_3")
 		local king = T.force_card(1, "S_K")
 
-		local eval = T.calc(canio, { destroying_card = king, full_hand = { king }, blueprint = 1 })
+		-- Mark the hand as scored so only the blueprint guard can stop the pass.
+		T.calc(canio, { joker_main = true, cardarea = G.jokers })
+		local eval = T.calc(canio, { after = true, full_hand = { king }, blueprint = 1 })
 		test:assert_true(eval == nil, "blueprint passes must not destroy face cards")
+		test:assert_true(not king.destroyed, "blueprint passes leave played cards alone")
 
 		local eval_removed = T.calc(canio, { remove_playing_cards = true, removed = { king }, blueprint = 1 })
 		test:assert_true(eval_removed == nil, "blueprint passes must not scale the X mult")
@@ -251,7 +263,7 @@ return function(T)
 		test:assert_true(eval_base ~= nil and next(eval_base) == nil, "at X1 Canio should return an empty table")
 	end)
 
-	BInt.register_test("riosodu/qol_bundle/beta_caino_integration_destroy", function(test)
+	BInt.register_test("riosodu/qol_bundle/beta_caino_integration_destroy_scored_face", function(test)
 		local canio = canio_setup(test, "QOL_BETA_CAN_5")
 		local king = T.force_card(1, "S_K")
 		T.force_card(2, "S_2")
@@ -265,10 +277,41 @@ return function(T)
 			return not in_playing_cards(king)
 		end, 10, "the scored King should be destroyed")
 		BInt._wait.for_condition(function()
-			return math.abs(canio.ability.caino_xmult - 1.25) < 1e-9
-		end, 10, "exactly one destroyed face should give X0.25 (no double scaling)")
+			return math.abs(canio.ability.caino_xmult - 1.5) < 1e-9
+		end, 10, "exactly one destroyed face should give X0.5 (no double scaling)")
 
 		test:assert_eq(#G.playing_cards, cards_before - 1, "the deck registry should shrink by the destroyed card")
+	end)
+
+	BInt.register_test("riosodu/qol_bundle/beta_caino_integration_destroy_unscored_faces", function(test)
+		local canio = canio_setup(test, "QOL_BETA_CAN_6")
+		local seven_a = T.force_card(1, "S_7")
+		local seven_b = T.force_card(2, "H_7")
+		local king = T.force_card(3, "C_K")
+		local queen = T.force_card(4, "D_Q")
+		local two = T.force_card(5, "S_2")
+
+		-- The setup must be a Pair of 7s: K/Q are played but outside the scoring hand.
+		local hand_text, _, _, scoring_hand = G.FUNCS.get_poker_hand_info({ seven_a, seven_b, king, queen, two })
+		test:assert_eq(hand_text, "Pair", "the test hand should evaluate as a Pair")
+		local in_scoring = {}
+		for _, card in ipairs(scoring_hand) do in_scoring[card] = true end
+		test:assert_true(not in_scoring[king], "the King must be outside the scoring hand")
+		test:assert_true(not in_scoring[queen], "the Queen must be outside the scoring hand")
+
+		local cards_before = #G.playing_cards
+		T.win_round(test)
+		BInt._wait.for_condition(function()
+			return not in_playing_cards(king) and not in_playing_cards(queen)
+		end, 10, "both unscored played faces should be destroyed")
+		BInt._wait.for_condition(function()
+			return math.abs(canio.ability.caino_xmult - 2.0) < 1e-9
+		end, 10, "two destroyed faces should give X2.0")
+
+		test:assert_true(in_playing_cards(seven_a) and in_playing_cards(seven_b),
+			"the scored non-face cards must survive")
+		test:assert_eq(#G.playing_cards, cards_before - 2,
+			"the deck registry should shrink by the two destroyed faces")
 	end)
 
 	-- === Onyx Agate (permanent Mult rework, default off) ==================

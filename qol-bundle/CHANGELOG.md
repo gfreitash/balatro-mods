@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.1] - 2026-10-22
+### Added
+- Strength rework (beta): requires selecting 2 cards; the lower rank card is raised to the higher rank.
+
+### Changed
+- Canio rework (beta): now destroys played face cards (including cards outside the scoring hand) and gains X0.5 Mult per destroyed face card (was X0.25).
+- Yorick's default multiplier is now X1.23 (was X1.5).
+- Updated the Mr. Bones, Matador, Splash and Loyalty Card tooltips.
+- Ankh's cleanup now juices each Joker whose stickers are removed, then the two newly Eternal Jokers, in order.
+
 ## [1.13.0] - 2026-10-22
 ### Added
 - Planet Merchant rework (beta): Planet Merchant and Planet Tycoon now replace their shop Planet-rate bonus with a chance to create the played hand's equivalent Planet card (1 in 4 for Planet Merchant, 1 in 2 for Planet Tycoon, which replaces Planet Merchant's effect). Nothing is created when the consumable area is full or the hand has no equivalent Planet.

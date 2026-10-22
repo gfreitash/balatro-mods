@@ -19,30 +19,94 @@ function QOL_BUNDLE.funcs.get_ownership_spectral_ankh()
                 func = function()
                     play_sound('timpani')
 
+                    -- Snapshot the row in display order (left to right).
                     local jokers = {}
                     for _, joker in ipairs(G.jokers.cards) do
                         jokers[#jokers + 1] = joker
                     end
 
-                    -- Remove vanilla and modded stickers alike.
+                    -- Detect which Jokers actually have a sticker before removing
+                    -- any, so only affected Jokers get the cleanup juice.
+                    local affected = {}
                     for _, joker in ipairs(jokers) do
+                        local has_sticker = false
                         for key in pairs(SMODS.Stickers) do
-                            joker:remove_sticker(key)
+                            if (key == 'pinned' and joker.pinned) or joker.ability[key] then
+                                has_sticker = true
+                                break
+                            end
+                        end
+                        if has_sticker then
+                            affected[#affected + 1] = joker
                         end
                     end
 
-                    local pool = {}
-                    for _, joker in ipairs(jokers) do
-                        if joker.config.center.eternal_compat and not joker.ability.eternal then
-                            pool[#pool + 1] = joker
-                        end
-                    end
-                    pseudoshuffle(pool, pseudoseed('ankh_eternal'))
-                    for i = 1, math.min(2, #pool) do
-                        pool[i]:set_eternal(true)
+                    -- Remove each Joker's stickers and juice it in order.
+                    for _, joker in ipairs(affected) do
+                        G.E_MANAGER:add_event(Event({
+                            trigger = 'after',
+                            delay = 0.1,
+                            func = function()
+                                for key in pairs(SMODS.Stickers) do
+                                    joker:remove_sticker(key)
+                                end
+                                joker:juice_up(0.3, 0.5)
+                                return true
+                            end
+                        }))
                     end
 
-                    used_tarot:juice_up(0.3, 0.5)
+                    -- Let the cleanup read before revealing the new Eternal Jokers.
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'after',
+                        delay = 0.2,
+                        func = function()
+                            local pool = {}
+                            for _, joker in ipairs(G.jokers.cards) do
+                                if joker.config.center.eternal_compat and not joker.ability.eternal then
+                                    pool[#pool + 1] = joker
+                                end
+                            end
+                            pseudoshuffle(pool, pseudoseed('ankh_eternal'))
+
+                            local targets = {}
+                            for i = 1, math.min(2, #pool) do
+                                targets[#targets + 1] = pool[i]
+                            end
+
+                            -- Juice the chosen Jokers left to right, regardless of
+                            -- the order the shuffle picked them in.
+                            local order = {}
+                            for i, joker in ipairs(G.jokers.cards) do
+                                order[joker] = i
+                            end
+                            table.sort(targets, function(a, b)
+                                return (order[a] or 0) < (order[b] or 0)
+                            end)
+
+                            for i, joker in ipairs(targets) do
+                                G.E_MANAGER:add_event(Event({
+                                    trigger = 'after',
+                                    delay = i == 1 and 0 or 0.1,
+                                    func = function()
+                                        joker:set_eternal(true)
+                                        joker:juice_up(0.3, 0.5)
+                                        return true
+                                    end
+                                }))
+                            end
+
+                            G.E_MANAGER:add_event(Event({
+                                trigger = 'after',
+                                delay = 0.1,
+                                func = function()
+                                    used_tarot:juice_up(0.3, 0.5)
+                                    return true
+                                end
+                            }))
+                            return true
+                        end
+                    }))
                     return true
                 end
             }))

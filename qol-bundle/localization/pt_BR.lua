@@ -121,7 +121,7 @@ return {
             qolb_splash_joker_retrigger_label = 'Habilitar Reativação do Splash',
             qolb_splash_joker_retrigger_info = {
                 'O Splash Joker adicionalmente reativa',
-                'uma carta pontuante aleatória'
+                'duas cartas pontuantes aleatórias'
             },
             qolb_interest_on_skip_label = 'Ativar Juros ao Pular',
             qolb_interest_on_skip_info = {
@@ -208,8 +208,7 @@ return {
             j_splash_retrigger = {
                 "Toda {C:attention}carta jogada",
                 "conta na pontuação.",
-                "{C:green}Duas cartas pontuantes aleatórias",
-                "{C:green}são reativadas"
+                "{C:green}Reativa duas delas"
             },
 
             j_erosion_original = {
@@ -275,7 +274,7 @@ return {
                 "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)",
             },
             j_caino_modified = {
-                "Destrói cartas de {C:attention}realeza{} pontuadas e",
+                "Destrói cartas de {C:attention}realeza{} jogadas e",
                 "ganha {X:mult,C:white} X#1# {} Multi por carta de",
                 "{C:attention}realeza{} destruída",
                 "{C:inactive}(No momento, {X:mult,C:white} X#2# {C:inactive} Multi)",
@@ -457,6 +456,16 @@ return {
                 "selecionadas para",
                 "{C:attention}#2#",
             },
+            c_strength_original = {
+                "Aumenta a classe de",
+                "até {C:attention}#1#{} cartas",
+                "selecionadas em {C:attention}1",
+            },
+            c_strength_modified = {
+                "Selecione {C:attention}2{} cartas",
+                "A classe menor se torna",
+                "a classe {C:attention}maior",
+            },
             j_matador_original = {
                 "Ganhe {C:money}$#1#{} se a",
                 "mão jogada ativa a",
@@ -465,7 +474,7 @@ return {
             j_matador_modified = {
                 "Ganhe {C:money}$#1#{} por mão",
                 "jogada durante um {C:attention}Blind de Chefe{}",
-                "{C:inactive}(pago no fim da rodada)",
+                "até o fim da rodada",
             },
             j_red_card_original = {
                 "Este Curinga ganha",
@@ -488,9 +497,9 @@ return {
             },
             j_mr_bones_modified = {
                 "Evita a Morte, depois",
-                "{S:1.1,C:red,E:2}se autodestrói{} e sua",
-                "run fica {C:attention}Aleijada{}",
-                "{C:inactive}(veja o tooltip Aleijada)",
+                "{S:1.1,C:red,E:2}se autodestrói{} e você",
+                "volta {C:red}-1{} Ante;",
+                "{C:attention}Aleija{} sua run",
             },
             k_crippled_ex = "Aleijado!",
 
@@ -521,8 +530,8 @@ return {
             },
             qolb_caino_rework_label = 'Ativar reformulação do Caino',
             qolb_caino_rework_info = {
-                'Caino destrói cartas de realeza pontuadas',
-                'e ganha X0.25 de Multi por carta destruída'
+                'Caino destrói cartas de realeza jogadas',
+                'e ganha X0.5 de Multi por carta destruída'
             },
             qolb_onyx_agate_label = 'Ativar reformulação da Ágata Ônix',
             qolb_onyx_agate_info = {
@@ -550,6 +559,11 @@ return {
                 'Os Amantes podem aprimorar até',
                 '2 cartas selecionadas'
             },
+            qolb_strength_two_cards_label = 'Ativar Reforma da Força de 2 Cartas',
+            qolb_strength_two_cards_info = {
+                'Força exige selecionar 2 cartas:',
+                'a de menor classe sobe para a maior'
+            },
             qolb_hex_rework_label = 'Ativar reformulação do Feitiço',
             qolb_hex_rework_info = {
                 'O Feitiço adiciona Poli e um adesivo aleatório',
@@ -571,15 +585,15 @@ return {
             },
             qolb_mr_bones_rework_label = 'Ativar reformulação do Sr. Osso',
             qolb_mr_bones_rework_info = {
-                'O Sr. Osso sempre evita a Morte, mas se autodestrói',
-                'e Aleija a run: dinheiro $0, -1 Ante,',
+                'O Sr. Osso sempre evita a Morte, se autodestrói,',
+                'volta -1 Ante e Aleija a run: dinheiro $0,',
                 '-1 mão, -1 tamanho da mão e -1 descarte; custa $10'
             },
             qolb_yorick_multiplier_label = 'Ativar Configuração do Multiplicador do Yorick',
             qolb_yorick_multiplier_info = {
                 'Configure quanto XMulti Yorick ganha',
                 'por 23 cartas descartadas.',
-                'Padrão: 1.5X',
+                'Padrão: 1.23X',
             },
 
             -- Smeared joker texts (from base game)
@@ -628,21 +642,19 @@ return {
         Joker = {
             j_loyalty_card_scaling = {
                 text = {
-                    "{X:red,C:white} X#1# {} de Multi",
                     "Ganha {X:red,C:white} X0.5 {} de Multi ao terminar",
                     "um {C:attention}blind",
-                    "Volta para {X:red,C:white}X2{} após terminar",
-                    "um blind em {X:red,C:white}X4{}",
+                    "Quando {X:red,C:white}X4{} volta para {X:red,C:white}X2{}",
+                    "{C:inactive}(No momento, {X:mult,C:white} X#1# {C:inactive} Multi)",
                 },
             },
         },
         Other = {
             crippled = {
                 text = {
-                    "Sua run está {C:attention}Aleijada{}:",
-                    "dinheiro definido para {C:money}$0{},",
-                    "{C:attention}-1{} Ante, {C:attention}-1{} mão,",
-                    "{C:attention}-1{} tamanho da mão, {C:attention}-1{} descarte",
+                    "Dinheiro definido para {C:money}$0{},",
+                    "{C:red}-1{} mão, {C:red}-1{} tamanho da mão,",
+                    "{C:red}-1{} descarte",
                 },
             },
         },

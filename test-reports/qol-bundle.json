@@ -10,7 +10,7 @@
       "worktree_dirty": true,
       "hashes": {
         "mods": {
-          "qol-bundle": "3902b2c897b09b0409e4b38a05ed6baf4b71cda40e8490e7cae42784cf46e1ca"
+          "qol-bundle": "a1ad1bb8593de33120604a3660edbc73c72520b5ae881421457b456ea04e0950"
         },
         "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
       },
@@ -682,7 +682,7 @@
       "worktree_dirty": true,
       "hashes": {
         "mods": {
-          "qol-bundle": "3902b2c897b09b0409e4b38a05ed6baf4b71cda40e8490e7cae42784cf46e1ca"
+          "qol-bundle": "a1ad1bb8593de33120604a3660edbc73c72520b5ae881421457b456ea04e0950"
         },
         "harness": "cf2a1fd25af2361b9ae0aa1ea077ee579d27b1134193504da07da2a42684f831"
       },

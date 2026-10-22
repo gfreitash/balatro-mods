@@ -38,9 +38,10 @@ fi
 
 # evidence_fingerprint PATHS...
 #   sha256 over the working-tree content of PATHS, canonicalized as sorted
-#   "path<TAB>blob" lines (git blob hashes). Version metadata is excluded
-#   (smods.json / manifest.json / CHANGELOG.md anywhere, _common/version.lua)
-#   because releases change it without changing behavior.
+#   "path<TAB>blob" lines (git blob hashes). Version metadata and documentation
+#   are excluded (smods.json / manifest.json / *.md anywhere,
+#   _common/version.lua) because releases and docs change them without changing
+#   behavior.
 #   Echoes the hex digest; returns 1 outside a git repo or on git errors.
 evidence_fingerprint() {
     [ "$#" -gt 0 ] || return 1
@@ -62,7 +63,8 @@ evidence_fingerprint() {
     rm -f "$tmp"
     digest="$(printf '%s\n' "$index_out" \
         | awk -F'\t' '
-            $2 ~ /(^|\/)(smods\.json|manifest\.json|CHANGELOG\.md)$/ { next }
+            $2 ~ /(^|\/)(smods\.json|manifest\.json)$/ { next }
+            $2 ~ /\.md$/ { next }
             $2 == "_common/version.lua" { next }
             $1 ~ /^[0-9]+ [0-9a-f]+ [0-9]+$/ { split($1, m, " "); print $2 "\t" m[2] }
         ' \

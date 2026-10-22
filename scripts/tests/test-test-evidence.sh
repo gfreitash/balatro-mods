@@ -75,13 +75,16 @@ git commit -qm init
 BASE="$(evidence_mod_fingerprint qol-bundle)"
 check "fingerprint is stable" "$(evidence_mod_fingerprint qol-bundle)" "$BASE"
 
-# Version metadata must NOT invalidate evidence (release bumps touch these).
+# Version metadata and documentation must NOT invalidate evidence (release
+# bumps and docs touch these).
 printf '{"name":"QoL_Bundle","version":"9.9.9"}\n' > qol-bundle/smods.json
 check "smods.json version bump ignored" "$(evidence_mod_fingerprint qol-bundle)" "$BASE"
 printf '{"name":"QoL_Bundle","version_number":"9.9.9"}\n' > qol-bundle/manifest.json
 check "manifest.json version bump ignored" "$(evidence_mod_fingerprint qol-bundle)" "$BASE"
 printf '# Changelog v9\n' > qol-bundle/CHANGELOG.md
 check "CHANGELOG edit ignored" "$(evidence_mod_fingerprint qol-bundle)" "$BASE"
+printf '# README v9\n' > qol-bundle/README.md
+check "README edit ignored" "$(evidence_mod_fingerprint qol-bundle)" "$BASE"
 printf 'return "9.9.9"\n' > _common/version.lua
 check "_common/version.lua bump ignored" "$(evidence_mod_fingerprint qol-bundle)" "$BASE"
 

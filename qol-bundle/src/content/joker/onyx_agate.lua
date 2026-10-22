@@ -5,7 +5,7 @@ function QOL_BUNDLE.funcs.get_ownership_joker_onyx_agate()
     end
 
     QOL_BUNDLE.state.onyx_agate = SMODS.Joker:take_ownership('j_onyx_agate', {
-        config = { extra = 5 },
+        config = { extra = 3 },
         loc_vars = function(self, info_queue, center)
             return {
                 vars = {

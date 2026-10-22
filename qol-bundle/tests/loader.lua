@@ -101,6 +101,15 @@ return function(T)
 			"seance_rework_enabled",
 			"caino_rework_enabled",
 			"onyx_agate_enabled",
+			"planet_merchant_rework_enabled",
+			"wraith_rework_enabled",
+			"ankh_rework_enabled",
+			"lovers_two_cards_enabled",
+			"hex_rework_enabled",
+			"matador_rework_enabled",
+			"red_card_rework_enabled",
+			"bull_buff_enabled",
+			"mr_bones_rework_enabled",
 			"spectral_seal_clip_enabled",
 			"unweighted_editions_enabled",
 		}) do
@@ -116,6 +125,15 @@ return function(T)
 			{ "seance_rework_enabled", "j_seance", QOL_BUNDLE.funcs.get_ownership_joker_seance },
 			{ "caino_rework_enabled", "j_caino", QOL_BUNDLE.funcs.get_ownership_joker_caino },
 			{ "onyx_agate_enabled", "j_onyx_agate", QOL_BUNDLE.funcs.get_ownership_joker_onyx_agate },
+			{ "planet_merchant_rework_enabled", "v_planet_merchant", QOL_BUNDLE.funcs.get_ownership_voucher_planet_merchant },
+			{ "wraith_rework_enabled", "c_wraith", QOL_BUNDLE.funcs.get_ownership_spectral_wraith },
+			{ "ankh_rework_enabled", "c_ankh", QOL_BUNDLE.funcs.get_ownership_spectral_ankh },
+			{ "lovers_two_cards_enabled", "c_lovers", QOL_BUNDLE.funcs.get_ownership_tarot_lovers },
+			{ "hex_rework_enabled", "c_hex", QOL_BUNDLE.funcs.get_ownership_spectral_hex },
+			{ "matador_rework_enabled", "j_matador", QOL_BUNDLE.funcs.get_ownership_joker_matador },
+			{ "red_card_rework_enabled", "j_red_card", QOL_BUNDLE.funcs.get_ownership_joker_red_card },
+			{ "bull_buff_enabled", "j_bull", QOL_BUNDLE.funcs.get_ownership_joker_bull },
+			{ "mr_bones_rework_enabled", "j_mr_bones", QOL_BUNDLE.funcs.get_ownership_joker_mr_bones },
 		}
 		for _, entry in ipairs(gated) do
 			local config_key, center_key, getter = entry[1], entry[2], entry[3]

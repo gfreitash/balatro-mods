@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-10-22
+### Added
+- Planet Merchant rework (beta): Planet Merchant and Planet Tycoon now replace their shop Planet-rate bonus with a chance to create the played hand's equivalent Planet card (1 in 4 for Planet Merchant, 1 in 2 for Planet Tycoon, which replaces Planet Merchant's effect). Nothing is created when the consumable area is full or the hand has no equivalent Planet.
+- Wraith rework (beta): creates a copy of a random Joker and makes every other Joker Perishable (Eternal Jokers excluded). The random Rare Joker and the money-to-$0 clause were removed.
+- Ankh rework (beta): removes all stickers (including modded ones) from all Jokers, then two random Jokers become Eternal.
+- The Lovers two-card enhancement (beta): The Lovers now enhances up to 2 selected cards into Wild Cards.
+- Hex rework (beta): still adds Polychrome to a random Joker, but now also gives that same Joker a random applicable sticker instead of destroying the other Jokers.
+- Matador rework (beta): earns $5 for each hand played during a Boss Blind, paid at the end of the round like Satellite.
+- Red Card rework (beta): gains +1 Mult for each Booster Pack opened and +2 Mult for each Booster Pack skipped.
+- Bull buff (beta): gives +3 Chips for each $1 (was +2).
+- Mr. Bones rework (beta): always prevents Death, then self-destructs and Cripples the run (money set to $0, -1 Ante, -1 hand, -1 hand size, -1 discard); costs $10.
+
+### Changed
+- Onyx Agate rework (beta): scored Clubs now permanently gain +3 Mult (was +5).
+
+### Fixed
+- Seance rework (beta): only a hand that actually matched the played hand can trigger it. Previously every played hand triggered, because undiscovered secret hands are always listed (as empty entries) in the scoring context; this also removes a potential `handname 'top' not found!` crash when the internal `top` marker reached the poker-hand visibility check.
+
 ## [1.12.3] - 2026-10-16
 ### Fixed
 - Hit the Road rework: the deck shuffle now runs after the discarded Jacks are returned to the deck, so repeated discards no longer draw back the same Jacks in the same order.

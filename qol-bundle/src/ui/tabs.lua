@@ -354,6 +354,105 @@ function QOL_BUNDLE.UI.getAllConfigOptionBoxes()
             }),
         }),
         RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Planet Merchant/Tycoon Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'planet_merchant_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_planet_merchant_rework_label,
+                info = G.localization.misc.dictionary.qolb_planet_merchant_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Wraith Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'wraith_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_wraith_rework_label,
+                info = G.localization.misc.dictionary.qolb_wraith_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Ankh Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'ankh_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_ankh_rework_label,
+                info = G.localization.misc.dictionary.qolb_ankh_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- The Lovers Two-Card Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'lovers_two_cards_enabled',
+                label = G.localization.misc.dictionary.qolb_lovers_two_cards_label,
+                info = G.localization.misc.dictionary.qolb_lovers_two_cards_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Hex Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'hex_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_hex_rework_label,
+                info = G.localization.misc.dictionary.qolb_hex_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Matador Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'matador_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_matador_rework_label,
+                info = G.localization.misc.dictionary.qolb_matador_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Red Card Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'red_card_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_red_card_rework_label,
+                info = G.localization.misc.dictionary.qolb_red_card_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Bull Buff Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'bull_buff_enabled',
+                label = G.localization.misc.dictionary.qolb_bull_buff_label,
+                info = G.localization.misc.dictionary.qolb_bull_buff_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
+            -- Mr. Bones Rework Config
+            RIOSODU_SHARED.UIDEF.create_option_toggle({
+                ref_table = QOL_BUNDLE.config,
+                ref_value = 'mr_bones_rework_enabled',
+                label = G.localization.misc.dictionary.qolb_mr_bones_rework_label,
+                info = G.localization.misc.dictionary.qolb_mr_bones_rework_info,
+                requires_restart = true,
+                beta = true
+            }),
+        }),
+        RIOSODU_SHARED.UIDEF.create_option_box({
             -- Yorick Multiplier Config
             RIOSODU_SHARED.UIDEF.create_option_toggle({
                 ref_table = QOL_BUNDLE.config,

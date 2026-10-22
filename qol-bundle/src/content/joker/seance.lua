@@ -25,8 +25,13 @@ function QOL_BUNDLE.funcs.get_ownership_joker_seance()
             -- The vanilla Straight Flush trigger is fully replaced by our set
             if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
                 local secret_hand_played = false
-                for hand, _ in pairs(context.poker_hands or {}) do
-                    if is_secret_hand(hand) then
+                for hand, matches in pairs(context.poker_hands or {}) do
+                    -- poker_hands lists every registered hand (unmatched ones
+                    -- as empty lists) plus internal markers such as 'top';
+                    -- only a registered hand that actually matched this play
+                    -- counts as played.
+                    local registered = SMODS.PokerHands[hand] ~= nil or G.GAME.hands[hand] ~= nil
+                    if registered and type(matches) == 'table' and next(matches) and is_secret_hand(hand) then
                         secret_hand_played = true
                         break
                     end

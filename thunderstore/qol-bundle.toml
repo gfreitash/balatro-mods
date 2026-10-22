@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Riosodu"
 name = "QoL_Bundle"
-versionNumber = "1.12.3"
+versionNumber = "1.13.0"
 description = "Balance and gameplay changes that feels good, configurable per feature. Bad mod name, too late now."
 websiteUrl = "https://github.com/gfreitash/balatro-mods"
 containsNsfwContent = false

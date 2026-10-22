@@ -395,6 +395,103 @@ return {
                 "{C:attention}clones{} of cards in your {C:attention}deck{},",
                 "and their upgrades can be {C:attention}rerolled{}"
             },
+            v_planet_merchant_original = {
+                "{C:planet}Planet{} cards appear",
+                "{C:attention}#1#X{} more frequently",
+                "in the shop",
+            },
+            v_planet_merchant_modified = {
+                "After each hand played,",
+                "{C:green}1 in #1#{} chance to create",
+                "the hand's {C:planet}Planet{} card",
+            },
+            v_planet_tycoon_original = {
+                "{C:planet}Planet{} cards appear",
+                "{C:attention}#1#X{} more frequently",
+                "in the shop",
+            },
+            v_planet_tycoon_modified = {
+                "After each hand played,",
+                "{C:green}1 in #1#{} chance to create",
+                "the hand's {C:planet}Planet{} card",
+            },
+            c_wraith_original = {
+                "Creates a random",
+                "{C:red}Rare{C:attention} Joker{},",
+                "sets money to {C:money}$0",
+            },
+            c_wraith_modified = {
+                "Create a copy of a random",
+                "{C:attention}Joker{}; all other {C:attention}Jokers{}",
+                "become {C:attention}Perishable",
+                "{C:inactive}(Eternal Jokers are unaffected)",
+            },
+            c_ankh_original = {
+                "Create a copy of a",
+                "random {C:attention}Joker{}, destroy",
+                "all other Jokers",
+            },
+            c_ankh_modified = {
+                "Remove all {C:attention}stickers{} from",
+                "all {C:attention}Jokers{}; two random",
+                "{C:attention}Jokers{} become {C:attention}Eternal",
+            },
+            c_hex_original = {
+                "Add {C:dark_edition}Polychrome{} to a",
+                "random {C:attention}Joker{}, destroy",
+                "all other Jokers",
+            },
+            c_hex_modified = {
+                "Add {C:dark_edition}Polychrome{} and a",
+                "random {C:attention}sticker{} to a random",
+                "{C:attention}Joker{}",
+            },
+            c_lovers_original = {
+                "Enhances {C:attention}#1#{} selected",
+                "card into a",
+                "{C:attention}#2#",
+            },
+            c_lovers_modified = {
+                "Enhances up to {C:attention}#1#{} selected",
+                "cards into a",
+                "{C:attention}#2#",
+            },
+            j_matador_original = {
+                "Earn {C:money}$#1#{} if played",
+                "hand triggers the",
+                "{C:attention}Boss Blind{} ability",
+            },
+            j_matador_modified = {
+                "Earn {C:money}$#1#{} for each hand",
+                "played during a {C:attention}Boss Blind{}",
+                "{C:inactive}(paid at end of round)",
+            },
+            j_red_card_original = {
+                "This Joker gains",
+                "{C:red}+#1#{} Mult when any",
+                "{C:attention}Booster Pack{} is skipped",
+                "{C:inactive}(Currently {C:red}+#2#{C:inactive} Mult)",
+            },
+            j_red_card_modified = {
+                "This Joker gains {C:red}+#1#{} Mult when",
+                "a {C:attention}Booster Pack{} is opened and",
+                "{C:red}+#2#{} Mult when one is skipped",
+                "{C:inactive}(Currently {C:red}+#3#{C:inactive} Mult)",
+            },
+            j_mr_bones_original = {
+                "Prevents Death",
+                "if chips scored",
+                "are at least {C:attention}25%",
+                "of required chips",
+                "{S:1.1,C:red,E:2}self destructs{}",
+            },
+            j_mr_bones_modified = {
+                "Prevents Death, then",
+                "{S:1.1,C:red,E:2}self destructs{} and your",
+                "run becomes {C:attention}Crippled{}",
+                "{C:inactive}(see the Crippled tooltip)",
+            },
+            k_crippled_ex = "Crippled!",
 
             -- Castle joker config
             qolb_castle_checkered_label = 'Enable Castle Checkered Enhancement',
@@ -429,7 +526,53 @@ return {
             qolb_onyx_agate_label = 'Enable Onyx Agate Rework',
             qolb_onyx_agate_info = {
                 'Played Club cards permanently',
-                'gain +5 Mult when scored'
+                'gain +3 Mult when scored'
+            },
+            qolb_planet_merchant_rework_label = 'Enable Planet Merchant Rework',
+            qolb_planet_merchant_rework_info = {
+                'Planet Merchant and Planet Tycoon',
+                'create the played hand\'s Planet card',
+                '(1 in 4 / 1 in 2 chance)'
+            },
+            qolb_wraith_rework_label = 'Enable Wraith Rework',
+            qolb_wraith_rework_info = {
+                'Wraith duplicates a random Joker',
+                'and makes the other Jokers Perishable'
+            },
+            qolb_ankh_rework_label = 'Enable Ankh Rework',
+            qolb_ankh_rework_info = {
+                'Ankh removes all stickers from all Jokers',
+                'and makes two random Jokers Eternal'
+            },
+            qolb_lovers_two_cards_label = 'Enable The Lovers Two-Card Enhancement',
+            qolb_lovers_two_cards_info = {
+                'The Lovers can enhance up to',
+                '2 selected cards at once'
+            },
+            qolb_hex_rework_label = 'Enable Hex Rework',
+            qolb_hex_rework_info = {
+                'Hex adds Polychrome and a random sticker',
+                'to a random Joker without destroying the others'
+            },
+            qolb_matador_rework_label = 'Enable Matador Rework',
+            qolb_matador_rework_info = {
+                'Matador earns $5 per hand played',
+                'during a Boss Blind, paid at round end'
+            },
+            qolb_red_card_rework_label = 'Enable Red Card Rework',
+            qolb_red_card_rework_info = {
+                'Red Card gains +1 Mult per Booster Pack opened',
+                'and +2 Mult per Booster Pack skipped'
+            },
+            qolb_bull_buff_label = 'Enable Bull Buff',
+            qolb_bull_buff_info = {
+                'Bull gives +3 Chips for each $1'
+            },
+            qolb_mr_bones_rework_label = 'Enable Mr. Bones Rework',
+            qolb_mr_bones_rework_info = {
+                'Mr. Bones always prevents Death but self-destructs',
+                'and Cripples the run: money set to $0, -1 Ante,',
+                '-1 hand, -1 hand size and -1 discard; costs $10'
             },
             qolb_yorick_multiplier_label = 'Enable Yorick Multiplier Configuration',
             qolb_yorick_multiplier_info = {
@@ -484,6 +627,16 @@ return {
                     "finishing a {C:attention}blind",
                     "Resets to {X:red,C:white}X2{} after finishing",
                     "a blind at {X:red,C:white}X4{}",
+                },
+            },
+        },
+        Other = {
+            crippled = {
+                text = {
+                    "Your run is {C:attention}Crippled{}:",
+                    "money set to {C:money}$0{},",
+                    "{C:attention}-1{} Ante, {C:attention}-1{} hand,",
+                    "{C:attention}-1{} hand size, {C:attention}-1{} discard",
                 },
             },
         },

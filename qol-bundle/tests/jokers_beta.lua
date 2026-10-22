@@ -124,7 +124,7 @@ return function(T)
 
 		local eval = T.calc(seance, {
 			joker_main = true,
-			poker_hands = { ["Five of a Kind"] = {} },
+			poker_hands = { ["Five of a Kind"] = { { G.hand.cards[1] } } },
 			scoring_name = "Five of a Kind",
 			scoring_hand = { G.hand.cards[1] },
 		})
@@ -141,7 +141,7 @@ return function(T)
 
 		local eval = T.calc(seance, {
 			joker_main = true,
-			poker_hands = { ["Straight Flush"] = {} },
+			poker_hands = { ["Straight Flush"] = { { G.hand.cards[1] } } },
 			scoring_name = "Straight Flush",
 			scoring_hand = { G.hand.cards[1] },
 		})
@@ -157,7 +157,7 @@ return function(T)
 
 		local eval = T.calc(seance, {
 			joker_main = true,
-			poker_hands = { ["Flush"] = {} },
+			poker_hands = { ["Flush"] = { { G.hand.cards[1] } } },
 			scoring_name = "Flush",
 			scoring_hand = { G.hand.cards[1] },
 		})
@@ -174,7 +174,7 @@ return function(T)
 
 		local eval = T.calc(seance, {
 			joker_main = true,
-			poker_hands = { ["Five of a Kind"] = {} },
+			poker_hands = { ["Five of a Kind"] = { { G.hand.cards[1] } } },
 			scoring_name = "Five of a Kind",
 			scoring_hand = { G.hand.cards[1] },
 		})
@@ -276,9 +276,9 @@ return function(T)
 	BInt.register_test("riosodu/qol_bundle/beta_onyx_config", function(test)
 		test:assert_false(QOL_BUNDLE.config.onyx_agate_enabled, "the Onyx Agate rework should default to off")
 		local g = T.apply_feature("onyx_agate_enabled", "j_onyx_agate", F.get_ownership_joker_onyx_agate)
-		test:assert_eq(g.config.extra, 5, "scored Clubs should gain +5 permanent Mult")
-		local lv = g.loc_vars(nil, {}, { ability = { extra = 5 } })
-		test:assert_eq(lv.vars[1], 5, "loc var #1 should be the per-Club permanent Mult")
+		test:assert_eq(g.config.extra, 3, "scored Clubs should gain +3 permanent Mult")
+		local lv = g.loc_vars(nil, {}, { ability = { extra = 3 } })
+		test:assert_eq(lv.vars[1], 3, "loc var #1 should be the per-Club permanent Mult")
 	end)
 
 	local function onyx_setup(test, seed)
@@ -294,7 +294,7 @@ return function(T)
 		local club = T.force_card(1, "C_7")
 		local eval = T.calc(onyx, { individual = true, cardarea = G.play, other_card = club })
 		test:assert_true(eval ~= nil, "a scored Club should trigger the rework")
-		test:assert_eq(club.ability.perma_mult, 5, "the Club should permanently gain +5 Mult")
+		test:assert_eq(club.ability.perma_mult, 3, "the Club should permanently gain +3 Mult")
 	end)
 
 	BInt.register_test("riosodu/qol_bundle/beta_onyx_non_club_inert", function(test)
@@ -323,14 +323,132 @@ return function(T)
 
 		T.win_round(test)
 		BInt._wait.for_condition(function()
-			return club.ability.perma_mult == 5
-		end, 10, "the scored Club should gain +5 permanent Mult")
+			return club.ability.perma_mult == 3
+		end, 10, "the scored Club should gain +3 permanent Mult")
 
 		-- The gain lives on the card object and must survive the round change.
 		test:go_to_shop():assert()
 		test:leave_shop():assert()
 		test:select_blind():assert()
 		test:assert_true(in_playing_cards(club), "the Club should stay in the deck")
-		test:assert_eq(club.ability.perma_mult, 5, "the permanent Mult should persist across rounds")
+		test:assert_eq(club.ability.perma_mult, 3, "the permanent Mult should persist across rounds")
+	end)
+
+	-- === Matador (beta): $5 per hand in a Boss Blind ======================
+
+	local function matador_setup(test, seed)
+		T.apply_feature("matador_rework_enabled", "j_matador", F.get_ownership_joker_matador)
+		T.start_run(test, seed, 1)
+		test:select_blind():assert()
+		test:spawn_joker("j_matador"):assert()
+		return G.jokers.cards[1]
+	end
+
+	BInt.register_test("riosodu/qol_bundle/beta_matador_pays_per_boss_hand", function(test)
+		local matador = matador_setup(test, "QOL_BETA_MATADOR_1")
+
+		local was_boss = G.GAME.blind.boss
+		local hands_played = G.GAME.current_round.hands_played
+		G.GAME.blind.boss = true
+		G.GAME.current_round.hands_played = 3
+		local boss_bonus = matador:calculate_dollar_bonus()
+		G.GAME.blind.boss = false
+		local non_boss_bonus = matador:calculate_dollar_bonus()
+		G.GAME.blind.boss = was_boss
+		G.GAME.current_round.hands_played = hands_played
+
+		test:assert_eq(boss_bonus, 15, "a Boss Blind with 3 hands should pay $15")
+		test:assert_true(non_boss_bonus == nil, "non-Boss blinds must not pay")
+	end)
+
+	BInt.register_test("riosodu/qol_bundle/beta_matador_suppresses_vanilla_payout", function(test)
+		local matador = matador_setup(test, "QOL_BETA_MATADOR_2")
+		local eval = T.calc(matador, { debuffed_hand = true })
+		test:assert_true(eval ~= nil and next(eval) == nil,
+			"the vanilla $8 boss-ability payout must be suppressed")
+	end)
+
+	-- === Red Card (beta): opened +1, skipped +2 ===========================
+
+	local function red_card_setup(test, seed)
+		T.apply_feature("red_card_rework_enabled", "j_red_card", F.get_ownership_joker_red_card)
+		T.start_run(test, seed, 1)
+		test:select_blind():assert()
+		test:spawn_joker("j_red_card"):assert()
+		return G.jokers.cards[1]
+	end
+
+	BInt.register_test("riosodu/qol_bundle/beta_red_card_open_and_skip", function(test)
+		local red = red_card_setup(test, "QOL_BETA_RED_1")
+		test:assert_eq(red.ability.mult, 0, "precondition: no Mult yet")
+
+		T.calc(red, { open_booster = true })
+		test:assert_eq(red.ability.mult, 1, "opening a Booster Pack should give +1 Mult")
+
+		T.calc(red, { open_booster = true, blueprint = 1 })
+		test:assert_eq(red.ability.mult, 1, "blueprint passes must not grant Mult")
+
+		T.calc(red, { skipping_booster = true })
+		test:assert_eq(red.ability.mult, 3, "skipping a Booster Pack should give +2 Mult (not +3)")
+
+		local loc_vars = G.P_CENTERS.j_red_card.loc_vars(nil, {}, red)
+		test:assert_eq(loc_vars.vars[1], 1, "tooltip #1# should be the opened gain")
+		test:assert_eq(loc_vars.vars[2], 2, "tooltip #2# should be the skipped gain")
+		test:assert_eq(loc_vars.vars[3], red.ability.mult, "tooltip #3# should be the current Mult")
+	end)
+
+	-- === Bull (beta): +3 Chips per $ ======================================
+
+	BInt.register_test("riosodu/qol_bundle/beta_bull_three_chips_per_dollar", function(test)
+		T.apply_feature("bull_buff_enabled", "j_bull", F.get_ownership_joker_bull)
+		T.start_run(test, "QOL_BETA_BULL_1", 1)
+		test:select_blind():assert()
+		test:spawn_joker("j_bull"):assert()
+
+		test:assert_eq(G.P_CENTERS.j_bull.config.extra, 3, "Bull should give +3 Chips per $1")
+
+		local bull = G.jokers.cards[1]
+		G.GAME.dollars = 10
+		local eval = T.calc(bull, { joker_main = true })
+		test:assert_eq(eval.chip_mod, 30, "$10 should give +30 Chips")
+	end)
+
+	-- === Mr. Bones (beta): always saves, then cripples the run ============
+
+	BInt.register_test("riosodu/qol_bundle/beta_mr_bones_always_saves_and_cripples", function(test)
+		T.apply_feature("mr_bones_rework_enabled", "j_mr_bones", F.get_ownership_joker_mr_bones)
+		T.start_run(test, "QOL_BETA_BONES_1", 1)
+		test:select_blind():assert()
+		test:spawn_joker("j_mr_bones"):assert()
+
+		test:assert_eq(G.P_CENTERS.j_mr_bones.cost, 10, "Mr. Bones should cost $10")
+
+		local bones = G.jokers.cards[1]
+		local dollars_before = G.GAME.dollars
+		local ante_before = G.GAME.round_resets.ante
+		local hands_before = G.GAME.round_resets.hands
+		local discards_before = G.GAME.round_resets.discards
+		local hand_size_before = G.hand.config.card_limit
+		test:assert_true(dollars_before > 0, "precondition: the player has money")
+
+		-- No 25% threshold anymore: even 0 chips must be saved.
+		G.GAME.chips = 0
+		G.GAME.blind.chips = 100
+		local eval = T.calc(bones, { game_over = true })
+		BInt._wait.for_condition(function()
+			return #G.jokers.cards == 0
+		end, 10, "Mr. Bones should self-destruct after saving")
+		BInt._wait.stable_drain()
+
+		test:assert_true(eval ~= nil and eval.saved == true, "Mr. Bones should save the run")
+		test:assert_eq(G.GAME.dollars, 0, "the run should be set to $0")
+		test:assert_eq(G.GAME.round_resets.ante, ante_before - 1, "the run should lose 1 Ante")
+		test:assert_eq(G.GAME.round_resets.blind_ante, ante_before - 1,
+			"the current blind's Ante should also drop by 1")
+		test:assert_eq(G.GAME.round_resets.hands, hands_before - 1, "the run should lose 1 hand")
+		test:assert_eq(G.GAME.round_resets.discards, discards_before - 1, "the run should lose 1 discard")
+		test:assert_eq(G.hand.config.card_limit, hand_size_before - 1, "the hand size should drop by 1")
+		test:assert_true(G.localization.descriptions.Other.crippled ~= nil,
+			"the Crippled tooltip must be readable")
 	end)
 end

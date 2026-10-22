@@ -474,24 +474,11 @@ return function(T)
 	end)
 
 	-- === Variant 3: consecutive discards within one round ===================
-	-- The mod's seed string embeds hands_played / hands_left / discards_left,
-	-- so consecutive discards inside one round reach DIFFERENT tuples. The user
-	-- reports the same Jacks coming back in the same order even then ("even the
-	-- amount of discards reducing 3->2->1->0"). Seven Jacks in a ten-card deck
-	-- keep the drawn-back identity observable (5 of 7 return), and the hands
-	-- axis is varied naturally by playing one low card between discards
-	-- (hands_left 4 -> 3, G.GAME.hands_played 0 -> 1).
-	--
-	-- Counter timing note: under the test harness the seed's discards_left
-	-- component is the POST-discard value (first of a four-discard round
-	-- reads 3, then 2, then 1; the pre-discard snapshot recorded below shows
-	-- 4, 3, 2). Reason: the harness' animation-skip layer forces
-	-- ease_discard(mod, true) (lib/BalatroIntegration/lib/params.lua:65-69),
-	-- so the decrement is synchronous while the mod builds the seed inside its
-	-- queued event. In real play ease_discard(-1) is queued (state_events.lua
-	-- :468) behind the mod's pre_discard event, so the seed would read the
-	-- pre-discard value (4, 3, 2). Either way the three tuples differ, which
-	-- is what this test's seed-axis assert verifies.
+	-- The mod now shuffles with a fixed seed key; pseudoseed() advances a
+	-- per-key counter, so consecutive discards still get different shuffles.
+	-- Seven Jacks in a ten-card deck keep the drawn-back identity observable
+	-- (5 of 7 return), and playing one low card between discards also varies
+	-- the hand counters.
 	BInt.register_test("riosodu/qol_bundle/hit_the_road_multi_discard", function(test)
 		T.apply_feature("hit_the_road_joker_enabled", "j_hit_the_road", F.get_ownership_joker_hit_the_road)
 		T.start_run(test, "QOL_HIT_ROAD_MULTI", 1)
@@ -575,7 +562,7 @@ return function(T)
 			}
 		end
 
-		-- Discard 1: first discard of the round (tuple 0_4_3).
+		-- Discard 1: first discard of the round.
 		set_scenario_state(scenario_hand)
 		test:assert_eq(#G.hand.cards, 8, "scenario hand size")
 		local records = {}
@@ -598,7 +585,7 @@ return function(T)
 		end, 10, "timeout waiting for the played-card counters")
 		BInt._wait.stable_drain()
 
-		-- Discards 2 and 3: the same five Jacks, tuples 1_3_2 and 1_3_1.
+		-- Discards 2 and 3: the same five Jacks.
 		records[2] = discard_jacks("discard 2", records[1].drawn_jacks)
 		records[3] = discard_jacks("discard 3", records[2].drawn_jacks)
 
@@ -609,12 +596,10 @@ return function(T)
 			seeds[i] = record.seed
 		end
 
-		-- The seed axis must actually vary, otherwise this test would prove
-		-- nothing about it (see the counter timing note above).
-		test:assert_true(
-			seeds[1] ~= seeds[2] and seeds[1] ~= seeds[3] and seeds[2] ~= seeds[3],
-			"the three in-round discards should reach different seed tuples, got: " .. table.concat(seeds, " / ")
-		)
+		-- The seed key is fixed; the shuffle variation comes from pseudoseed()'s
+		-- advancing per-key counter.
+		test:assert_eq(seeds[1], seeds[2], "in-round discards should use the fixed Hit the Road seed")
+		test:assert_eq(seeds[2], seeds[3], "in-round discards should use the fixed Hit the Road seed")
 
 		local function describe_record(record)
 			return record.label .. " (" .. record.seed
@@ -627,9 +612,9 @@ return function(T)
 				.. ", left in deck " .. describe_order(record.deck_jacks)
 		end
 
-		-- Desired behavior: different seed tuples must produce different draw
-		-- outcomes -- the drawn-back Jack sequence must not be identical
-		-- across the three discards.
+		-- Different pseudoseed values must produce different draw outcomes --
+		-- the drawn-back Jack sequence must not be identical across the three
+		-- discards.
 		local all_same = true
 		for i = 2, #records do
 			if not same_order(records[1].drawn_jacks, records[i].drawn_jacks) then
@@ -638,15 +623,15 @@ return function(T)
 		end
 		test:assert_true(
 			not all_same,
-			"in-round discards with different seed tuples drew back the same Jacks in the same order -- "
-				.. "different tuples should produce different draw outcomes. "
+			"consecutive in-round discards drew back the same Jacks in the same order -- "
+				.. "the fixed pseudoseed must still produce different shuffles. "
 				.. describe_record(records[1]) .. "; "
 				.. describe_record(records[2]) .. "; "
 				.. describe_record(records[3])
 		)
 
 		test:log(
-			"multi-discard drew back different Jacks per seed: "
+			"multi-discard drew back different Jacks per shuffle: "
 				.. records[1].seed .. " -> " .. describe_order(records[1].drawn_jacks) .. "; "
 				.. records[2].seed .. " -> " .. describe_order(records[2].drawn_jacks) .. "; "
 				.. records[3].seed .. " -> " .. describe_order(records[3].drawn_jacks)

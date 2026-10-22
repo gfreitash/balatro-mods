@@ -8,6 +8,11 @@
 --  * 1.12.2  Onyx Agate / Seance effect tables must carry the Joker CARD in
 --            `card` (the scoring engine calls effect.card:juice_up) and the
 --            message/colour at the top level (crash fix).
+--  * Seance rework: only hands that actually matched the play may trigger.
+--            Standard (visible) hands must never trigger on the hidden hands
+--            that are always listed (empty) in context.poker_hands, and the
+--            internal 'top' marker must never reach SMODS.is_poker_hand_visible
+--            (crash: "handname 'top' not found!").
 --  * 1.11.2  Smeared shade matching in the non-Paperback branch: no light/dark
 --            cross-match and suitless (Stone) cards match no suit.
 --  * 1.8.2 / 2ad18d5  Wildcard fix: Wild Cards and same-shade cards under
@@ -64,7 +69,7 @@ return function(T)
 		local before = #G.consumeables.cards
 		local eval = T.calc(seance, {
 			joker_main = true,
-			poker_hands = { ["Five of a Kind"] = {} },
+			poker_hands = { ["Five of a Kind"] = { { G.hand.cards[1] } } },
 			scoring_name = "Five of a Kind",
 			scoring_hand = { G.hand.cards[1] },
 		})
@@ -80,6 +85,153 @@ return function(T)
 		BInt._wait.for_condition(function()
 			return #G.consumeables.cards == before + 1
 		end, 10, "Seance should create the Spectral card")
+	end)
+
+	-- === Seance rework: only matched secret hands may trigger =============
+	--
+	-- The real `context.poker_hands` built by evaluate_poker_hand() carries
+	-- EVERY registered hand -- unmatched ones as empty lists -- plus the
+	-- internal `top` marker. The rework must only count hands that actually
+	-- matched the play: hidden-but-unmatched hands (Flush Five / Flush House /
+	-- Five of a Kind while undiscovered) used to make every played hand
+	-- trigger, and `top` used to reach SMODS.is_poker_hand_visible, which
+	-- asserts "handname 'top' not found!".
+
+	local STANDARD_HANDS = {
+		{ name = "High Card", cards = { "S_K", "H_Q", "D_9", "C_5", "S_3" } },
+		{ name = "Pair", cards = { "S_K", "H_K", "D_9", "C_5", "S_3" } },
+		{ name = "Two Pair", cards = { "S_K", "H_K", "D_9", "C_9", "S_3" } },
+		{ name = "Three of a Kind", cards = { "S_K", "H_K", "D_K", "C_5", "S_3" } },
+		{ name = "Straight", cards = { "S_8", "H_9", "D_T", "C_J", "S_Q" } },
+		{ name = "Flush", cards = { "S_3", "S_5", "S_9", "S_J", "S_K" } },
+		{ name = "Full House", cards = { "S_K", "H_K", "D_K", "C_5", "H_5" } },
+		{ name = "Four of a Kind", cards = { "S_7", "H_7", "D_7", "C_7" } },
+	}
+
+	local function seance_rework_setup(test, seed)
+		T.apply_feature("seance_rework_enabled", "j_seance", F.get_ownership_joker_seance)
+		T.start_run(test, seed, 1)
+		test:select_blind():assert()
+		test:spawn_joker("j_seance"):assert()
+		return G.jokers.cards[1]
+	end
+
+	-- Fresh-run state: the secret hands are undiscovered (invisible). Any
+	-- evaluated hand still lists them as empty entries in poker_hands.
+	local function hide_secret_hands()
+		for _, hand in ipairs({ "Flush Five", "Flush House", "Five of a Kind" }) do
+			G.GAME.hands[hand].visible = false
+		end
+	end
+
+	-- Builds the exact structure evaluate_play() hands to jokers.
+	local function real_poker_hands(ids)
+		local cards = {}
+		for i, id in ipairs(ids) do
+			cards[i] = T.force_card(i, id)
+		end
+		return evaluate_poker_hand(cards), cards
+	end
+
+	BInt.register_test("riosodu/qol_bundle/regr_seance_standard_hands_never_trigger", function(test)
+		local seance = seance_rework_setup(test, "QOL_REGR_SEANCE_STD_1")
+		local before = #G.consumeables.cards
+		hide_secret_hands()
+
+		for _, entry in ipairs(STANDARD_HANDS) do
+			local poker_hands, cards = real_poker_hands(entry.cards)
+
+			test:assert_true(poker_hands.top ~= nil,
+				entry.name .. ": the real poker_hands structure must carry the internal 'top' marker")
+			test:assert_true(next(poker_hands["Flush Five"]) == nil,
+				entry.name .. ": hidden hands must be listed as empty (unmatched) entries")
+			test:assert_true(next(poker_hands[entry.name]) ~= nil,
+				entry.name .. ": the fixture cards must actually evaluate as this hand")
+
+			local eval = T.calc(seance, {
+				joker_main = true,
+				poker_hands = poker_hands,
+				scoring_name = entry.name,
+				scoring_hand = cards,
+			})
+			test:assert_true(eval ~= nil and next(eval) == nil,
+				entry.name .. ": a visible standard hand must not trigger the Seance rework")
+		end
+
+		BInt._wait.stable_drain()
+		test:assert_eq(#G.consumeables.cards, before,
+			"no Spectral card may be created for any standard hand")
+	end)
+
+	BInt.register_test("riosodu/qol_bundle/regr_seance_top_marker_ignored", function(test)
+		local seance = seance_rework_setup(test, "QOL_REGR_SEANCE_TOP_1")
+		local before = #G.consumeables.cards
+
+		-- 'top' is an internal marker pointing at the best matched hand, not
+		-- a poker hand. It must be ignored instead of reaching
+		-- SMODS.is_poker_hand_visible, which asserts G.GAME.hands['top']
+		-- ("handname 'top' not found!"). Pairs order decided whether the old
+		-- loop hit 'top' or a hidden hand first, so this pins the crash path.
+		local eval = T.calc(seance, {
+			joker_main = true,
+			poker_hands = { top = { { G.hand.cards[1] } }, ["Flush Five"] = {} },
+			scoring_name = "High Card",
+			scoring_hand = { G.hand.cards[1] },
+		})
+		test:assert_true(eval ~= nil and next(eval) == nil,
+			"the internal 'top' marker must neither crash nor trigger the rework")
+
+		BInt._wait.stable_drain()
+		test:assert_eq(#G.consumeables.cards, before, "no Spectral card may be created")
+	end)
+
+	BInt.register_test("riosodu/qol_bundle/regr_seance_straight_flush_still_triggers", function(test)
+		local seance = seance_rework_setup(test, "QOL_REGR_SEANCE_SF_1")
+		local before = #G.consumeables.cards
+
+		local poker_hands, cards = real_poker_hands({ "S_8", "S_9", "S_T", "S_J", "S_Q" })
+		test:assert_true(next(poker_hands["Straight Flush"]) ~= nil,
+			"the fixture cards must actually evaluate as a Straight Flush")
+
+		local eval = T.calc(seance, {
+			joker_main = true,
+			poker_hands = poker_hands,
+			scoring_name = "Straight Flush",
+			scoring_hand = cards,
+		})
+		test:assert_true(eval ~= nil and eval.message ~= nil,
+			"Straight Flush is the one visible hand the rework keeps triggering on")
+
+		BInt._wait.for_condition(function()
+			return #G.consumeables.cards == before + 1
+		end, 10, "Straight Flush should create exactly one Spectral card")
+	end)
+
+	BInt.register_test("riosodu/qol_bundle/regr_seance_matched_hidden_hand_still_triggers", function(test)
+		local seance = seance_rework_setup(test, "QOL_REGR_SEANCE_HID_1")
+		local before = #G.consumeables.cards
+		hide_secret_hands()
+
+		-- Five of a Kind is a genuine secret hand: it must still trigger when
+		-- it is the hand that was actually played.
+		local poker_hands, cards = real_poker_hands({ "S_7", "H_7", "D_7", "C_7", "S_7" })
+		test:assert_true(next(poker_hands["Five of a Kind"]) ~= nil,
+			"the fixture cards must actually evaluate as a Five of a Kind")
+		test:assert_false(G.GAME.hands["Five of a Kind"].visible,
+			"precondition: the secret hand is invisible on a fresh run")
+
+		local eval = T.calc(seance, {
+			joker_main = true,
+			poker_hands = poker_hands,
+			scoring_name = "Five of a Kind",
+			scoring_hand = cards,
+		})
+		test:assert_true(eval ~= nil and eval.message ~= nil,
+			"a matched secret hand must keep triggering the rework")
+
+		BInt._wait.for_condition(function()
+			return #G.consumeables.cards == before + 1
+		end, 10, "Five of a Kind should create exactly one Spectral card")
 	end)
 
 	-- === 1.11.2: Smeared shade matching (non-Paperback branch) ============

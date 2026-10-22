@@ -396,6 +396,103 @@ return {
                 "{C:attention}clones{} de cartas no seu {C:attention}baralho,",
                 "e seus aprimoramentos podem ser {C:attention}rerrolados{}."
             },
+            v_planet_merchant_original = {
+                "Cartas de {C:planet}Planeta{} aparecem",
+                "{C:attention}#1#X{} mais frequentemente",
+                "na loja",
+            },
+            v_planet_merchant_modified = {
+                "Após cada mão jogada,",
+                "{C:green}chance de 1 em #1#{} de criar",
+                "a carta de {C:planet}Planeta{} da mão",
+            },
+            v_planet_tycoon_original = {
+                "Cartas de {C:planet}Planeta{} aparecem",
+                "{C:attention}#1#X{} mais frequentemente",
+                "na loja",
+            },
+            v_planet_tycoon_modified = {
+                "Após cada mão jogada,",
+                "{C:green}chance de 1 em #1#{} de criar",
+                "a carta de {C:planet}Planeta{} da mão",
+            },
+            c_wraith_original = {
+                "Cria um",
+                "{C:attention}Curinga{} {C:red}Raro,",
+                "define o dinheiro para {C:money}$0",
+            },
+            c_wraith_modified = {
+                "Cria uma cópia de um {C:attention}Curinga",
+                "aleatório{}; todos os outros {C:attention}Curingas",
+                "ficam {C:attention}Perecíveis",
+                "{C:inactive}(Curingas Eternos não são afetados)",
+            },
+            c_ankh_original = {
+                "Cria uma cópia de um",
+                "{C:attention}Curinga{} aleatório, destrói",
+                "todos os outros Curingas",
+            },
+            c_ankh_modified = {
+                "Remove todos os {C:attention}adesivos{} de",
+                "todos os {C:attention}Curingas{}; dois {C:attention}Curingas",
+                "aleatórios ficam {C:attention}Eternos",
+            },
+            c_hex_original = {
+                "Adiciona {C:dark_edition}Policromático{} a um",
+                "{C:attention}Curinga{} aleatório, destrói",
+                "todos os outros Curingas",
+            },
+            c_hex_modified = {
+                "Adiciona {C:dark_edition}Policromático{} e um",
+                "{C:attention}adesivo{} aleatório a um",
+                "{C:attention}Curinga{} aleatório",
+            },
+            c_lovers_original = {
+                "Aprimora {C:attention}#1#{} carta",
+                "selecionada para",
+                "{C:attention}#2#",
+            },
+            c_lovers_modified = {
+                "Aprimora até {C:attention}#1#{} cartas",
+                "selecionadas para",
+                "{C:attention}#2#",
+            },
+            j_matador_original = {
+                "Ganhe {C:money}$#1#{} se a",
+                "mão jogada ativa a",
+                "habilidade {C:attention}Blind de Chefe{}",
+            },
+            j_matador_modified = {
+                "Ganhe {C:money}$#1#{} por mão",
+                "jogada durante um {C:attention}Blind de Chefe{}",
+                "{C:inactive}(pago no fim da rodada)",
+            },
+            j_red_card_original = {
+                "Este Curinga ganha",
+                "{C:red}+#1#{} Multi quando qualquer",
+                "{C:attention}Pacote de Reforço{} é ignorado",
+                "{C:inactive}(No momento, {C:red}+#2#{C:inactive} Multi)",
+            },
+            j_red_card_modified = {
+                "Este Curinga ganha {C:red}+#1#{} Multi quando",
+                "um {C:attention}Pacote de Reforço{} é aberto e",
+                "{C:red}+#2#{} Multi quando um é ignorado",
+                "{C:inactive}(No momento, {C:red}+#3#{C:inactive} Multi)",
+            },
+            j_mr_bones_original = {
+                "Evita a Morte",
+                "se as fichas pontuadas",
+                "forem, pelo menos, {C:attention}25%",
+                "das fichas necessárias",
+                "{S:1.1,C:red,E:2}se autodestrói{}",
+            },
+            j_mr_bones_modified = {
+                "Evita a Morte, depois",
+                "{S:1.1,C:red,E:2}se autodestrói{} e sua",
+                "run fica {C:attention}Aleijada{}",
+                "{C:inactive}(veja o tooltip Aleijada)",
+            },
+            k_crippled_ex = "Aleijado!",
 
             -- Castle joker config
             qolb_castle_checkered_label = 'Ativar Castelo com melhoria Xadrez',
@@ -430,7 +527,53 @@ return {
             qolb_onyx_agate_label = 'Ativar reformulação da Ágata Ônix',
             qolb_onyx_agate_info = {
                 'Cartas de Paus jogadas ganham',
-                'permanentemente +5 de Multi ao pontuar'
+                'permanentemente +3 de Multi ao pontuar'
+            },
+            qolb_planet_merchant_rework_label = 'Ativar reformulação do Comerciante de Planetas',
+            qolb_planet_merchant_rework_info = {
+                'Comerciante e Magnata dos Planetas',
+                'criam a carta de Planeta da mão jogada',
+                '(chance de 1 em 4 / 1 em 2)'
+            },
+            qolb_wraith_rework_label = 'Ativar reformulação do Espectro',
+            qolb_wraith_rework_info = {
+                'O Espectro duplica um Curinga aleatório',
+                'e torna os outros Curingas Perecíveis'
+            },
+            qolb_ankh_rework_label = 'Ativar reformulação do Ankh',
+            qolb_ankh_rework_info = {
+                'O Ankh remove todos os adesivos de todos os Curingas',
+                'e torna dois Curingas aleatórios Eternos'
+            },
+            qolb_lovers_two_cards_label = 'Ativar melhoria de 2 cartas dos Amantes',
+            qolb_lovers_two_cards_info = {
+                'Os Amantes podem aprimorar até',
+                '2 cartas selecionadas'
+            },
+            qolb_hex_rework_label = 'Ativar reformulação do Feitiço',
+            qolb_hex_rework_info = {
+                'O Feitiço adiciona Poli e um adesivo aleatório',
+                'a um Curinga sem destruir os outros'
+            },
+            qolb_matador_rework_label = 'Ativar reformulação do Matador',
+            qolb_matador_rework_info = {
+                'O Matador ganha $5 por mão jogada',
+                'durante um Blind de Chefe, pago no fim da rodada'
+            },
+            qolb_red_card_rework_label = 'Ativar reformulação da Carta Vermelha',
+            qolb_red_card_rework_info = {
+                'A Carta Vermelha ganha +1 Multi por pacote aberto',
+                'e +2 Multi por pacote ignorado'
+            },
+            qolb_bull_buff_label = 'Ativar melhoria do Touro',
+            qolb_bull_buff_info = {
+                'O Touro dá +3 Fichas por $1'
+            },
+            qolb_mr_bones_rework_label = 'Ativar reformulação do Sr. Osso',
+            qolb_mr_bones_rework_info = {
+                'O Sr. Osso sempre evita a Morte, mas se autodestrói',
+                'e Aleija a run: dinheiro $0, -1 Ante,',
+                '-1 mão, -1 tamanho da mão e -1 descarte; custa $10'
             },
             qolb_yorick_multiplier_label = 'Ativar Configuração do Multiplicador do Yorick',
             qolb_yorick_multiplier_info = {
@@ -490,6 +633,16 @@ return {
                     "um {C:attention}blind",
                     "Volta para {X:red,C:white}X2{} após terminar",
                     "um blind em {X:red,C:white}X4{}",
+                },
+            },
+        },
+        Other = {
+            crippled = {
+                text = {
+                    "Sua run está {C:attention}Aleijada{}:",
+                    "dinheiro definido para {C:money}$0{},",
+                    "{C:attention}-1{} Ante, {C:attention}-1{} mão,",
+                    "{C:attention}-1{} tamanho da mão, {C:attention}-1{} descarte",
                 },
             },
         },

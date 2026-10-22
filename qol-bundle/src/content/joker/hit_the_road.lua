@@ -38,14 +38,10 @@ function QOL_BUNDLE.funcs.get_ownership_joker_hit_the_road()
                             blocking = true,
                             blockable = true,
                             func = function()
-                                G.deck:shuffle(
-                                    'j_hit_the_road_shuffle_'
-                                    ..G.GAME.hands_played
-                                    ..'_'
-                                    ..G.GAME.current_round.hands_left
-                                    ..'_'
-                                    ..G.GAME.current_round.discards_left
-                                )
+                                -- Fixed seed: pseudoseed() advances its per-key
+                                -- counter on every call, so a constant key still
+                                -- yields a fresh permutation per discard.
+                                G.deck:shuffle('j_hit_the_road_shuffle')
                                 return true
                             end
                         }))

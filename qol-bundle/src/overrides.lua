@@ -361,3 +361,14 @@ function reset_castle_card()
     end
 end
 
+-- Ankh rework: the reworked Ankh no longer copies a Joker, so the vanilla
+-- "no free Joker slot" check must not block it. Every other consumable keeps
+-- the vanilla check.
+QOL_BUNDLE.original.Card_check_use = Card.check_use
+function Card:check_use()
+    if QOL_BUNDLE.config.ankh_rework_enabled and self.ability.name == 'Ankh' then
+        return nil
+    end
+    return QOL_BUNDLE.original.Card_check_use(self)
+end
+

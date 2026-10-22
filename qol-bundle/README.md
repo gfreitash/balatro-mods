@@ -33,17 +33,17 @@ Balance and gameplay changes that feels good, configurable per feature. Bad mod 
 - **Marble Joker X Chips**: Marble Joker keeps its original effect and also gains X0.1 Chips for every Stone card added to the deck (from any source, but not from in-place transformations).
 - **Stone Joker Mult**: Stone Joker gives +4 Mult for each Stone Card in your full deck instead of +25 Chips.
 - **Seance Rework** (beta): Seance triggers on Straight Flush or any secret hand (including modded ones) and is Rare ($8 instead of $6).
-- **Canio Rework** (beta): Canio destroys scored face cards and gains X0.25 Mult per destroyed face card (the destroying is not blueprint compatible).
+- **Canio Rework** (beta): Canio destroys scored face cards and gains X0.25 Mult per destroyed face card.
 - **Onyx Agate Rework** (beta): Played Club cards permanently gain +3 Mult when scored.
-- **Planet Merchant Rework** (beta): Planet Merchant and Planet Tycoon no longer boost the shop's Planet rate; instead each played hand has a 1 in 4 (Merchant) or 1 in 2 (Tycoon) chance to create its equivalent Planet card, if there is space.
-- **Wraith Rework** (beta): Wraith creates a copy of a random Joker and makes every other Joker Perishable (Eternal Jokers are unaffected); it no longer creates a Rare Joker or sets money to $0.
-- **Ankh Rework** (beta): Ankh removes all stickers (including modded ones) from all Jokers, then two random Jokers become Eternal.
+- **Planet Merchant Rework** (beta): Planet Merchant and Planet Tycoon no longer boost the shop's Planet rate; instead each played hand has a 1 in 4 (Merchant) or 1 in 2 (Tycoon) chance to create its equivalent Planet card.
+- **Wraith Rework** (beta): Wraith creates a copy of a random Joker and makes every other Joker Perishable.
+- **Ankh Rework** (beta): Ankh removes all stickers from all Jokers, then two random Jokers become Eternal.
 - **The Lovers Two-Card Enhancement** (beta): The Lovers can enhance up to 2 selected cards into Wild Cards.
 - **Hex Rework** (beta): Hex adds Polychrome and a random sticker to a random Joker instead of destroying the other Jokers.
 - **Matador Rework** (beta): Matador earns $5 for each hand played during a Boss Blind, paid at the end of the round.
 - **Red Card Rework** (beta): Red Card gains +1 Mult per Booster Pack opened and +2 Mult per Booster Pack skipped.
 - **Bull Buff** (beta): Bull gives +3 Chips for each $1 (was +2).
-- **Mr. Bones Rework** (beta): Mr. Bones always prevents Death, then self-destructs and Cripples the run (money set to $0, -1 Ante, -1 hand, -1 hand size, -1 discard) and costs $10.
+- **Mr. Bones Rework** (beta): Mr. Bones now costs $10, always prevents Death, go back -1 ante, then self-destructs and `cripples` the run (money set to $0, -1 hand, -1 hand size, -1 discard).
 - **Yorick Enhancement**: Yorick now gains a configurable amount (+1.5x for each 23 cards instead of +1x).
 - **Reworked Magic Trick and Illusion Vouchers**: 
     - Magic Trick is now a "better" Illusion voucher with playing cards in shop appearing with enhancements, editions and seals (actually spawn instead of the bugged vanilla). 

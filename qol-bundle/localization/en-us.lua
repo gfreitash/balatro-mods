@@ -431,9 +431,9 @@ return {
                 "all other Jokers",
             },
             c_ankh_modified = {
-                "Remove all {C:attention}stickers{} from",
-                "all {C:attention}Jokers{}; two random",
-                "{C:attention}Jokers{} become {C:attention}Eternal",
+                "Remove {C:qolb_eternal}Eternal{}, {C:qolb_perishable}Perishable{} and",
+                "{C:qolb_rental}Rental{} stickers from all {C:attention}Jokers{};",
+                "two random {C:attention}Jokers{} become {C:qolb_eternal}Eternal",
             },
             c_hex_original = {
                 "Add {C:dark_edition}Polychrome{} to a",
@@ -550,8 +550,9 @@ return {
             },
             qolb_ankh_rework_label = 'Enable Ankh Rework',
             qolb_ankh_rework_info = {
-                'Ankh removes all stickers from all Jokers',
-                'and makes two random Jokers Eternal'
+                'Ankh removes {C:qolb_eternal}Eternal{}, {C:qolb_perishable}Perishable{}',
+                'and {C:qolb_rental}Rental{} stickers from all Jokers',
+                'and makes two random Jokers {C:qolb_eternal}Eternal'
             },
             qolb_lovers_two_cards_label = 'Enable The Lovers Two-Card Enhancement',
             qolb_lovers_two_cards_info = {

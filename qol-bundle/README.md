@@ -37,7 +37,7 @@ Balance and gameplay changes that feels good, configurable per feature. Bad mod 
 - **Onyx Agate Rework** (beta): Played Club cards permanently gain +3 Mult when scored.
 - **Planet Merchant Rework** (beta): Planet Merchant and Planet Tycoon no longer boost the shop's Planet rate; instead each played hand has a 1 in 4 (Merchant) or 1 in 2 (Tycoon) chance to create its equivalent Planet card.
 - **Wraith Rework** (beta): Wraith creates a copy of a random Joker and makes every other Joker Perishable.
-- **Ankh Rework** (beta): Ankh removes all stickers from all Jokers, then two random Jokers become Eternal.
+- **Ankh Rework** (beta): Ankh removes Eternal, Perishable and Rental stickers from all Jokers, then two random Jokers become Eternal.
 - **The Lovers Two-Card Enhancement** (beta): The Lovers can enhance up to 2 selected cards into Wild Cards.
 - **Strength Two-Card Rework** (beta): Strength now requires selecting 2 cards; the lower rank card is raised to the higher rank.
 - **Hex Rework** (beta): Hex adds Polychrome and a random sticker to a random Joker instead of destroying the other Jokers.

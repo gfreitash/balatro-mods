@@ -432,9 +432,9 @@ return {
                 "todos os outros Curingas",
             },
             c_ankh_modified = {
-                "Remove todos os {C:attention}adesivos{} de",
-                "todos os {C:attention}Curingas{}; dois {C:attention}Curingas",
-                "aleatórios ficam {C:attention}Eternos",
+                "Remove os adesivos {C:qolb_eternal}Eterna{}, {C:qolb_perishable}Perecível{}",
+                "e {C:qolb_rental}Aluguel{} de todos os {C:attention}Curingas{};",
+                "dois {C:attention}Curingas{} aleatórios ficam {C:qolb_eternal}Eternos",
             },
             c_hex_original = {
                 "Adiciona {C:dark_edition}Policromático{} a um",
@@ -551,8 +551,9 @@ return {
             },
             qolb_ankh_rework_label = 'Ativar reformulação do Ankh',
             qolb_ankh_rework_info = {
-                'O Ankh remove todos os adesivos de todos os Curingas',
-                'e torna dois Curingas aleatórios Eternos'
+                'O Ankh remove os adesivos {C:qolb_eternal}Eterna{}, {C:qolb_perishable}Perecível{}',
+                'e {C:qolb_rental}Aluguel{} de todos os Curingas',
+                'e deixa dois Curingas aleatórios {C:qolb_eternal}Eternos'
             },
             qolb_lovers_two_cards_label = 'Ativar melhoria de 2 cartas dos Amantes',
             qolb_lovers_two_cards_info = {

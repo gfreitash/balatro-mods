@@ -1,6 +1,19 @@
--- Override Ankh: strip every sticker from every Joker, then two random
--- Jokers gain Eternal. Uses the vanilla setters, so Eternal compatibility and
--- the Perishable/Eternal exclusion are respected.
+-- Override Ankh: remove the vanilla run stickers (Eternal, Perishable and
+-- Rental) from every Joker, then two random Jokers gain Eternal. Modded
+-- stickers and Pinned are intentionally left alone: SMODS's remove_sticker
+-- only clears the sticker flag, so generic removal would half-undo stickers
+-- whose side effects this mod cannot know.
+--
+-- Tooltip colours for the three stickers, matching their badge colours.
+-- loc_colour() first so G.ARGS.LOC_COLOURS is populated with the vanilla
+-- palette before our keys are added.
+loc_colour()
+G.ARGS.LOC_COLOURS.qolb_eternal = G.C.ETERNAL
+G.ARGS.LOC_COLOURS.qolb_perishable = G.C.PERISHABLE
+G.ARGS.LOC_COLOURS.qolb_rental = G.C.RENTAL
+
+local ANKH_STICKERS = { 'eternal', 'perishable', 'rental' }
+
 function QOL_BUNDLE.funcs.get_ownership_spectral_ankh()
     if not QOL_BUNDLE.config.ankh_rework_enabled then
         return
@@ -30,8 +43,8 @@ function QOL_BUNDLE.funcs.get_ownership_spectral_ankh()
                     local affected = {}
                     for _, joker in ipairs(jokers) do
                         local has_sticker = false
-                        for key in pairs(SMODS.Stickers) do
-                            if (key == 'pinned' and joker.pinned) or joker.ability[key] then
+                        for _, key in ipairs(ANKH_STICKERS) do
+                            if joker.ability[key] then
                                 has_sticker = true
                                 break
                             end
@@ -47,9 +60,30 @@ function QOL_BUNDLE.funcs.get_ownership_spectral_ankh()
                             trigger = 'after',
                             delay = 0.1,
                             func = function()
-                                for key in pairs(SMODS.Stickers) do
+                                -- Capture side-effect state before the sticker
+                                -- flags are cleared by remove_sticker.
+                                local perishable_expired = joker.ability.perishable
+                                    and (joker.ability.perish_tally or 0) <= 0
+                                local had_rental = joker.ability.rental
+
+                                for _, key in ipairs(ANKH_STICKERS) do
                                     joker:remove_sticker(key)
                                 end
+
+                                -- remove_sticker clears the flags but not the
+                                -- vanilla side effects.
+                                joker.ability.eternal = nil
+                                joker.ability.perishable = nil
+                                joker.ability.perish_tally = nil
+                                joker.ability.rental = nil
+
+                                if had_rental then
+                                    joker:set_cost()
+                                end
+                                if perishable_expired and joker.debuff then
+                                    SMODS.recalc_debuff(joker)
+                                end
+
                                 joker:juice_up(0.3, 0.5)
                                 return true
                             end

@@ -43,7 +43,7 @@
 --- @field onyx_agate_enabled boolean Enable/disable Onyx Agate making Club cards permanently gain Mult when scored
 --- @field planet_merchant_rework_enabled boolean Enable/disable Planet Merchant/Tycoon creating the played hand's Planet card
 --- @field wraith_rework_enabled boolean Enable/disable Wraith duplicating a Joker and making the others Perishable
---- @field ankh_rework_enabled boolean Enable/disable Ankh removing all stickers and making two Jokers Eternal
+--- @field ankh_rework_enabled boolean Enable/disable Ankh removing Eternal, Perishable and Rental stickers and making two Jokers Eternal
 --- @field lovers_two_cards_enabled boolean Enable/disable The Lovers enhancing up to two cards
 --- @field strength_two_cards_enabled boolean Enable/disable Strength requiring two cards and equalizing their ranks
 --- @field hex_rework_enabled boolean Enable/disable Hex adding Polychrome and a sticker to one Joker
@@ -119,7 +119,7 @@ return {
   onyx_agate_enabled = false,    -- Enable/disable Onyx Agate making Club cards permanently gain Mult when scored (beta)
   planet_merchant_rework_enabled = false, -- Enable/disable Planet Merchant/Tycoon creating the played hand's Planet card (beta)
   wraith_rework_enabled = false, -- Enable/disable Wraith duplicating a Joker and making the others Perishable (beta)
-  ankh_rework_enabled = false, -- Enable/disable Ankh removing all stickers and making two Jokers Eternal (beta)
+  ankh_rework_enabled = false, -- Enable/disable Ankh removing Eternal, Perishable and Rental stickers and making two Jokers Eternal (beta)
   lovers_two_cards_enabled = false, -- Enable/disable The Lovers enhancing up to two cards (beta)
   strength_two_cards_enabled = false, -- Enable/disable Strength requiring two cards and equalizing their ranks (beta)
   hex_rework_enabled = false, -- Enable/disable Hex adding Polychrome and a sticker to one Joker (beta)

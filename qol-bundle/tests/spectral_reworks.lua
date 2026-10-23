@@ -3,8 +3,9 @@
 --
 -- Wraith: duplicates a random Joker and makes every other Joker Perishable
 --         (Eternal Jokers are skipped, money is untouched, no Rare Joker).
--- Ankh:   strips every sticker (vanilla + modded) from every Joker, then up to
---         two random Eternal-compatible Jokers become Eternal.
+-- Ankh:   strips the vanilla run stickers (Eternal, Perishable, Rental) from
+--         every Joker, then up to two random Eternal-compatible Jokers become
+--         Eternal. Modded stickers and Pinned are intentionally untouched.
 -- Hex:    gives Polychrome AND one random applicable sticker to the same
 --         random Joker; no other Joker is destroyed or modified.
 
@@ -96,6 +97,7 @@ return function(T)
 
 		local a, b, c, d, e = G.jokers.cards[1], G.jokers.cards[2], G.jokers.cards[3],
 			G.jokers.cards[4], G.jokers.cards[5]
+		local e_cost, e_sell_cost = e.cost, e.sell_cost
 
 		-- Three starters are Eternal: if Ankh failed to strip Eternal first,
 		-- the final Eternal count would stay above two.
@@ -108,7 +110,8 @@ return function(T)
 		test:assert_eq(count_eternal(), 3, "precondition: three Eternal Jokers")
 		test:assert_true(d.ability.perishable, "precondition: a Perishable sticker is present")
 		test:assert_true(e.ability.rental, "precondition: a Rental sticker is present")
-		test:assert_true(a.pinned, "precondition: a SMODS-only sticker is present")
+		test:assert_true(a.pinned, "precondition: a Pinned sticker is present")
+		test:assert_eq(e.cost, 1, "precondition: Rental sets the Joker price to $1")
 
 		test:use_consumable("c_ankh"):assert()
 		BInt._wait.stable_drain()
@@ -118,9 +121,36 @@ return function(T)
 			"exactly two random Jokers should become Eternal (the three starters must be stripped first)")
 		for i, joker in ipairs({ a, b, c, d, e }) do
 			test:assert_true(not joker.ability.perishable, "Joker #" .. i .. " should lose Perishable")
+			test:assert_true(joker.ability.perish_tally == nil,
+				"Joker #" .. i .. " should lose the Perishable tally")
 			test:assert_true(not joker.ability.rental, "Joker #" .. i .. " should lose Rental")
-			test:assert_true(not joker.pinned, "Joker #" .. i .. " should lose the modded sticker")
 		end
+		test:assert_true(a.pinned, "Pinned is intentionally out of scope and should survive")
+		test:assert_eq(e.cost, e_cost, "removing Rental should restore the Joker's cost")
+		test:assert_eq(e.sell_cost, e_sell_cost, "removing Rental should restore the Joker's sell cost")
+	end)
+
+	BInt.register_test("riosodu/qol_bundle/beta_ankh_clears_expired_perishable_debuff", function(test)
+		setup(test, "QOL_BETA_ANKH_EXPIRED", "ankh_rework_enabled", "c_ankh",
+			F.get_ownership_spectral_ankh)
+		test:spawn_joker("j_joker"):assert()
+		test:spawn_joker("j_greedy_joker"):assert()
+		test:spawn_consumable("c_ankh"):assert()
+
+		local expired = G.jokers.cards[1]
+		expired:set_perishable(true)
+		expired.ability.perish_tally = 0
+		expired:set_debuff(true)
+		test:assert_true(expired.debuff, "precondition: an expired Perishable Joker is disabled")
+		test:assert_eq(expired.ability.perish_tally, 0, "precondition: the Perishable tally is exhausted")
+
+		test:use_consumable("c_ankh"):assert()
+		BInt._wait.stable_drain()
+
+		test:assert_true(not expired.ability.perishable, "the expired Perishable sticker should be removed")
+		test:assert_true(expired.ability.perish_tally == nil, "the Perishable tally should be cleared")
+		test:assert_true(not expired.debuff, "removing an expired Perishable should re-enable the Joker")
+		test:assert_true(expired.added_to_deck, "the re-enabled Joker should be back in the deck")
 	end)
 
 	BInt.register_test("riosodu/qol_bundle/beta_ankh_fewer_than_two_jokers", function(test)

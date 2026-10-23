@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Ankh rework (beta): now removes only the vanilla Eternal, Perishable and Rental stickers. Modded stickers and Pinned are left untouched, and the tooltip uses each sticker's badge colour.
+
+### Fixed
+- Ankh rework (beta): removing an expired Perishable Joker now clears its disabled state, and removing a Rental restores the Joker's cost and sell value.
+
 ## [1.13.1] - 2026-10-22
 ### Added
 - Strength rework (beta): requires selecting 2 cards; the lower rank card is raised to the higher rank.
